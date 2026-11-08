@@ -17,7 +17,7 @@ A Home Assistant integration that runs a **Marstek Venus** battery from your PV 
 - **Manual buttons** – charge, discharge, stop and back to auto.
 - **Diagnostics** – target mode, reason and the decision in words, every value behind it as attributes, a diagnostics download, and a logbook line for every command with its reasons.
 
-This is the logic of the YAML package [ha-marstek-venus-surplus](https://github.com/prusuino/ha-marstek-venus-surplus), which has run on the author's Venus A next to a Fronius/BYD system since summer 2026, rebuilt as an integration so that it needs no YAML and no helpers.
+This is the logic of the YAML package [ha-marstek-venus-surplus](https://github.com/prusuino/ha-marstek-venus-surplus), which has run on my Venus A next to my Fronius/BYD system since summer 2026, rebuilt as an integration so that it needs no YAML and no helpers.
 
 ## Requirements
 
@@ -86,6 +86,8 @@ Provided **as-is, without any warranty**. The integration writes charge and disc
 MIT – see [LICENSE](LICENSE).
 
 ## Related projects
+
+More of my Home Assistant projects:
 
 - [ha-marstek-venus-surplus](https://github.com/prusuino/ha-marstek-venus-surplus) — the same logic as a YAML package
 - [Swiss Meteo](https://github.com/prusuino/ha_swiss_meteo) — MeteoSwiss open data: local forecast, live station values, official warnings, pollen, radar, station history and dashboard cards
