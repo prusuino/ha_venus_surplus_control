@@ -1,0 +1,16 @@
+{
+  "entity": {
+    "sensor": {
+      "target_mode": {
+        "default": "mdi:state-machine",
+        "state": {
+          "charge": "mdi:battery-charging",
+          "discharge": "mdi:battery-arrow-down",
+          "stop": "mdi:pause-circle-outline",
+          "no_data": "mdi:help-circle-outline",
+          "paused": "mdi:hand-back-right"
+        }
+      }
+    }
+  }
+}

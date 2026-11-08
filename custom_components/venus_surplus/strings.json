@@ -1,0 +1,153 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Venus Surplus Control",
+        "description": "Pick the entities of your Marstek Venus (from the Marstek Venus Modbus integration) and the sensor that gives your PV surplus. Everything can be changed later under Configure.",
+        "data": {
+          "name": "Name",
+          "surplus_entity": "Surplus sensor (PV production minus house consumption, W)",
+          "surplus_invert": "The surplus sensor is a grid meter with import positive",
+          "force_mode_entity": "Venus: Force Mode (select)",
+          "charge_power_entity": "Venus: Set charge power (number)",
+          "discharge_power_entity": "Venus: Set discharge power (number)",
+          "rs485_entity": "Venus: RS485 control mode (switch)",
+          "venus_soc_entity": "Venus: Battery SoC",
+          "venus_ac_entity": "Venus: AC power",
+          "venus_ac_invert": "AC power is negative while the Venus delivers into the house",
+          "venus_state_entity": "Venus: Inverter state"
+        }
+      },
+      "optional": {
+        "title": "Optional inputs and limits",
+        "description": "Leave empty what you do not have. Without a first battery the Venus is the only storage; without a forecast the first battery always goes first.",
+        "data": {
+          "venus_pv_entities": "Venus: MPPT power sensors (Venus A/D)",
+          "venus_capacity_entity": "Venus: total battery capacity (kWh)",
+          "primary_power_entity": "First battery: power (positive = discharging)",
+          "primary_power_invert": "First battery power is positive while charging",
+          "primary_soc_entity": "First battery: SoC",
+          "forecast_today_entity": "PV forecast for today (kWh)",
+          "forecast_remaining_entity": "Remaining PV forecast for today (kWh)",
+          "forecast_factor": "Dampening of the remaining forecast",
+          "connection_entity": "Venus: Modbus connection (binary sensor)",
+          "modbus_entry_id": "Marstek Venus Modbus config entry (for the self-heal reload)",
+          "ac_charge_limit_w": "Maximum AC charge command (W)",
+          "total_charge_limit_w": "Maximum AC charge + own PV (W)",
+          "discharge_limit_w": "Maximum discharge command (W)",
+          "tick_seconds": "Decision interval (s)"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "This Venus is already controlled by another entry."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Venus Surplus Control",
+        "description": "Entities of your Venus and your surplus sensor.",
+        "data": {
+          "name": "Name",
+          "surplus_entity": "Surplus sensor (PV production minus house consumption, W)",
+          "surplus_invert": "The surplus sensor is a grid meter with import positive",
+          "force_mode_entity": "Venus: Force Mode (select)",
+          "charge_power_entity": "Venus: Set charge power (number)",
+          "discharge_power_entity": "Venus: Set discharge power (number)",
+          "rs485_entity": "Venus: RS485 control mode (switch)",
+          "venus_soc_entity": "Venus: Battery SoC",
+          "venus_ac_entity": "Venus: AC power",
+          "venus_ac_invert": "AC power is negative while the Venus delivers into the house",
+          "venus_state_entity": "Venus: Inverter state"
+        }
+      },
+      "optional": {
+        "title": "Optional inputs and limits",
+        "description": "Leave empty what you do not have.",
+        "data": {
+          "venus_pv_entities": "Venus: MPPT power sensors (Venus A/D)",
+          "venus_capacity_entity": "Venus: total battery capacity (kWh)",
+          "primary_power_entity": "First battery: power (positive = discharging)",
+          "primary_power_invert": "First battery power is positive while charging",
+          "primary_soc_entity": "First battery: SoC",
+          "forecast_today_entity": "PV forecast for today (kWh)",
+          "forecast_remaining_entity": "Remaining PV forecast for today (kWh)",
+          "forecast_factor": "Dampening of the remaining forecast",
+          "connection_entity": "Venus: Modbus connection (binary sensor)",
+          "modbus_entry_id": "Marstek Venus Modbus config entry (for the self-heal reload)",
+          "ac_charge_limit_w": "Maximum AC charge command (W)",
+          "total_charge_limit_w": "Maximum AC charge + own PV (W)",
+          "discharge_limit_w": "Maximum discharge command (W)",
+          "tick_seconds": "Decision interval (s)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "target_mode": {
+        "name": "Target mode",
+        "state": {
+          "charge": "Charge",
+          "discharge": "Discharge",
+          "stop": "Standby",
+          "no_data": "No data",
+          "paused": "Paused",
+          "unknown": "Unknown"
+        }
+      },
+      "reason": {
+        "name": "Reason",
+        "state": {
+          "charge_ok": "Surplus, first battery full",
+          "charge_parallel": "Surplus, charging in parallel",
+          "discharge_ok": "House demand",
+          "direct_pv_use": "Own PV used directly",
+          "venus_soc_protect": "Venus SoC too low",
+          "cross_trip": "Cross-charging trip",
+          "no_condition": "No condition met",
+          "data_not_ready": "Input values incomplete",
+          "manual_override": "Manual override",
+          "manual_charge": "Manual charge",
+          "manual_discharge": "Manual discharge",
+          "manual_standby": "Manual standby",
+          "unknown": "Unknown"
+        }
+      },
+      "last_decision": { "name": "Last decision" },
+      "surplus_mean": { "name": "Surplus (3 min mean)" },
+      "surplus_without_venus_mean": { "name": "Surplus without Venus (3 min mean)" },
+      "charge_headroom": { "name": "Charge headroom" },
+      "house_demand": { "name": "House demand" },
+      "charge_command": { "name": "Charge command" },
+      "discharge_command": { "name": "Discharge command" },
+      "watchdog_restores": { "name": "Watchdog restores" },
+      "dry_run_commands": { "name": "Dry-run commands" }
+    },
+    "binary_sensor": {
+      "venus_first": { "name": "Venus first" },
+      "parallel_charging_allowed": { "name": "Parallel charging allowed" },
+      "cross_charging_blocked": { "name": "Cross-charging block" },
+      "charging": { "name": "Charging" },
+      "discharging": { "name": "Discharging" }
+    },
+    "switch": {
+      "manual_override": { "name": "Manual override" },
+      "dry_run": { "name": "Dry run" }
+    },
+    "number": {
+      "discharge_cap_w": { "name": "Discharge cap" },
+      "first_forecast_kwh": { "name": "Venus first from forecast" },
+      "primary_capacity_kwh": { "name": "First battery capacity" },
+      "venus_capacity_kwh": { "name": "Venus capacity (fallback)" },
+      "house_base_load_kw": { "name": "House base load" }
+    },
+    "button": {
+      "manual_charge": { "name": "Manual charge" },
+      "manual_discharge": { "name": "Manual discharge" },
+      "manual_stop": { "name": "Manual stop" },
+      "back_to_auto": { "name": "Back to auto" }
+    }
+  }
+}

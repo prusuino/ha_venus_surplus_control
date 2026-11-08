@@ -1,0 +1,17 @@
+{
+  "domain": "venus_surplus",
+  "name": "Venus Surplus Control",
+  "codeowners": [
+    "@prusuino"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "sun"
+  ],
+  "documentation": "https://github.com/prusuino/ha_venus_surplus_control",
+  "integration_type": "service",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/prusuino/ha_venus_surplus_control/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

@@ -1,0 +1,153 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Venus Surplus Control",
+        "description": "Wähle die Entities deines Marstek Venus (aus der Integration Marstek Venus Modbus) und den Sensor für deinen PV-Überschuss. Alles lässt sich später unter Konfigurieren ändern.",
+        "data": {
+          "name": "Name",
+          "surplus_entity": "Überschuss-Sensor (PV-Erzeugung minus Hausverbrauch, W)",
+          "surplus_invert": "Der Überschuss-Sensor ist ein Netzzähler mit Bezug positiv",
+          "force_mode_entity": "Venus: Force Mode (Select)",
+          "charge_power_entity": "Venus: Ladeleistung einstellen (Number)",
+          "discharge_power_entity": "Venus: Entladeleistung einstellen (Number)",
+          "rs485_entity": "Venus: RS485-Steuermodus (Schalter)",
+          "venus_soc_entity": "Venus: Batterie-SoC",
+          "venus_ac_entity": "Venus: AC-Leistung",
+          "venus_ac_invert": "AC-Leistung ist negativ, während der Venus ins Haus liefert",
+          "venus_state_entity": "Venus: Wechselrichter-Status"
+        }
+      },
+      "optional": {
+        "title": "Optionale Eingänge und Grenzen",
+        "description": "Leer lassen, was du nicht hast. Ohne erste Batterie ist der Venus der einzige Speicher; ohne Prognose hat die erste Batterie immer Vorrang.",
+        "data": {
+          "venus_pv_entities": "Venus: MPPT-Leistungssensoren (Venus A/D)",
+          "venus_capacity_entity": "Venus: Gesamtkapazität (kWh)",
+          "primary_power_entity": "Erste Batterie: Leistung (positiv = entlädt)",
+          "primary_power_invert": "Leistung der ersten Batterie ist beim Laden positiv",
+          "primary_soc_entity": "Erste Batterie: SoC",
+          "forecast_today_entity": "PV-Prognose heute (kWh)",
+          "forecast_remaining_entity": "Verbleibende PV-Prognose heute (kWh)",
+          "forecast_factor": "Dämpfung der Restprognose",
+          "connection_entity": "Venus: Modbus-Verbindung (Binärsensor)",
+          "modbus_entry_id": "Config-Eintrag Marstek Venus Modbus (für die Selbstheilung)",
+          "ac_charge_limit_w": "Maximales AC-Ladekommando (W)",
+          "total_charge_limit_w": "Maximum AC-Ladung + eigene PV (W)",
+          "discharge_limit_w": "Maximales Entladekommando (W)",
+          "tick_seconds": "Entscheidungsintervall (s)"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Dieser Venus wird bereits von einem anderen Eintrag gesteuert."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Venus Surplus Control",
+        "description": "Entities deines Venus und dein Überschuss-Sensor.",
+        "data": {
+          "name": "Name",
+          "surplus_entity": "Überschuss-Sensor (PV-Erzeugung minus Hausverbrauch, W)",
+          "surplus_invert": "Der Überschuss-Sensor ist ein Netzzähler mit Bezug positiv",
+          "force_mode_entity": "Venus: Force Mode (Select)",
+          "charge_power_entity": "Venus: Ladeleistung einstellen (Number)",
+          "discharge_power_entity": "Venus: Entladeleistung einstellen (Number)",
+          "rs485_entity": "Venus: RS485-Steuermodus (Schalter)",
+          "venus_soc_entity": "Venus: Batterie-SoC",
+          "venus_ac_entity": "Venus: AC-Leistung",
+          "venus_ac_invert": "AC-Leistung ist negativ, während der Venus ins Haus liefert",
+          "venus_state_entity": "Venus: Wechselrichter-Status"
+        }
+      },
+      "optional": {
+        "title": "Optionale Eingänge und Grenzen",
+        "description": "Leer lassen, was du nicht hast.",
+        "data": {
+          "venus_pv_entities": "Venus: MPPT-Leistungssensoren (Venus A/D)",
+          "venus_capacity_entity": "Venus: Gesamtkapazität (kWh)",
+          "primary_power_entity": "Erste Batterie: Leistung (positiv = entlädt)",
+          "primary_power_invert": "Leistung der ersten Batterie ist beim Laden positiv",
+          "primary_soc_entity": "Erste Batterie: SoC",
+          "forecast_today_entity": "PV-Prognose heute (kWh)",
+          "forecast_remaining_entity": "Verbleibende PV-Prognose heute (kWh)",
+          "forecast_factor": "Dämpfung der Restprognose",
+          "connection_entity": "Venus: Modbus-Verbindung (Binärsensor)",
+          "modbus_entry_id": "Config-Eintrag Marstek Venus Modbus (für die Selbstheilung)",
+          "ac_charge_limit_w": "Maximales AC-Ladekommando (W)",
+          "total_charge_limit_w": "Maximum AC-Ladung + eigene PV (W)",
+          "discharge_limit_w": "Maximales Entladekommando (W)",
+          "tick_seconds": "Entscheidungsintervall (s)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "target_mode": {
+        "name": "Zielmodus",
+        "state": {
+          "charge": "Laden",
+          "discharge": "Entladen",
+          "stop": "Standby",
+          "no_data": "Keine Daten",
+          "paused": "Pausiert",
+          "unknown": "Unbekannt"
+        }
+      },
+      "reason": {
+        "name": "Grund",
+        "state": {
+          "charge_ok": "Überschuss, erste Batterie voll",
+          "charge_parallel": "Überschuss, paralleles Laden",
+          "discharge_ok": "Hausbedarf",
+          "direct_pv_use": "Eigene PV direkt genutzt",
+          "venus_soc_protect": "Venus-SoC zu tief",
+          "cross_trip": "Querlade-Stopp",
+          "no_condition": "Keine Bedingung erfüllt",
+          "data_not_ready": "Messwerte unvollständig",
+          "manual_override": "Manueller Override",
+          "manual_charge": "Manuell laden",
+          "manual_discharge": "Manuell entladen",
+          "manual_standby": "Manuell Standby",
+          "unknown": "Unbekannt"
+        }
+      },
+      "last_decision": { "name": "Letzte Entscheidung" },
+      "surplus_mean": { "name": "Überschuss (3-min-Mittel)" },
+      "surplus_without_venus_mean": { "name": "Überschuss ohne Venus (3-min-Mittel)" },
+      "charge_headroom": { "name": "Lade-Headroom" },
+      "house_demand": { "name": "Hausbedarf" },
+      "charge_command": { "name": "Ladekommando" },
+      "discharge_command": { "name": "Entladekommando" },
+      "watchdog_restores": { "name": "Watchdog-Wiederherstellungen" },
+      "dry_run_commands": { "name": "Trockenlauf-Kommandos" }
+    },
+    "binary_sensor": {
+      "venus_first": { "name": "Venus zuerst" },
+      "parallel_charging_allowed": { "name": "Paralleles Laden erlaubt" },
+      "cross_charging_blocked": { "name": "Querlade-Sperre" },
+      "charging": { "name": "Lädt" },
+      "discharging": { "name": "Entlädt" }
+    },
+    "switch": {
+      "manual_override": { "name": "Manueller Override" },
+      "dry_run": { "name": "Trockenlauf" }
+    },
+    "number": {
+      "discharge_cap_w": { "name": "Entlade-Obergrenze" },
+      "first_forecast_kwh": { "name": "Venus zuerst ab Prognose" },
+      "primary_capacity_kwh": { "name": "Kapazität erste Batterie" },
+      "venus_capacity_kwh": { "name": "Venus-Kapazität (Rückfall)" },
+      "house_base_load_kw": { "name": "Grundlast Haus" }
+    },
+    "button": {
+      "manual_charge": { "name": "Manuell laden" },
+      "manual_discharge": { "name": "Manuell entladen" },
+      "manual_stop": { "name": "Manuell Stop" },
+      "back_to_auto": { "name": "Zurück zu Auto" }
+    }
+  }
+}
