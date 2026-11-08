@@ -1,3 +1,5 @@
+![Venus Surplus Control](readme_header.png)
+
 # Venus Surplus Control
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
