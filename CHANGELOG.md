@@ -2,6 +2,7 @@
 
 ## 0.3.0 — 2026-11-09
 
+- **Version on the service card.** The integration's version now appears on its service card under Settings → Devices & services, where the entities are listed.
 - **Repair notice.** Readings that stay incomplete for about five minutes raise a notice under Settings → Repairs naming the missing or unavailable entities; it withdraws itself. No change to entities or configuration.
 
 ## 0.2.0 — 2026-11-09

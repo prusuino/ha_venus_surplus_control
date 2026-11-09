@@ -7,13 +7,14 @@ from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import Entity
 
-from .const import DOMAIN
+from .const import DOMAIN, VERSION
 from .controller import VenusController, signal_update
 
 
 def device_info(entry: ConfigEntry) -> DeviceInfo:
     return DeviceInfo(
         identifiers={(DOMAIN, entry.entry_id)},
+        sw_version=VERSION,
         name=entry.title,
         manufacturer="Venus Surplus Control",
         model="Surplus controller",
