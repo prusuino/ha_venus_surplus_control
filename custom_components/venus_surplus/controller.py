@@ -19,6 +19,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
 from . import engine
+from .issues import IssueReporter
 from .const import (
     CAP_GUARD_SECOND,
     CHARGING_STATES,
@@ -75,6 +76,11 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
+# After this many ticks without complete readings (5 minutes at the default
+# tick) the missing inputs are named under Settings > Repairs.
+NO_DATA_ISSUE_TICKS = 10
+
+
 def signal_update(entry_id: str) -> str:
     return f"{DOMAIN}_{entry_id}_update"
 
@@ -122,6 +128,7 @@ class VenusController:
         self.status = Status()
         self.state = engine.State()
         self._store: Store = Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}")
+        self.issues = IssueReporter(hass, entry.entry_id)
         self._samples: deque[tuple[datetime, float, float]] = deque()
         self._unsub: list[Callable[[], None]] = []
         self._last_master_run: datetime | None = None
@@ -205,6 +212,23 @@ class VenusController:
         async_dispatcher_send(self.hass, signal_update(self.entry.entry_id))
 
     # ------------------------------------------------------------------ readings
+    def missing_inputs(self) -> list[str]:
+        """The configured entities the engine needs that have no usable
+        state right now (missing, unknown or unavailable)."""
+        keys = [CONF_SURPLUS, CONF_VENUS_SOC, CONF_VENUS_AC, CONF_VENUS_STATE]
+        if self.has_primary:
+            keys += [CONF_PRIMARY_POWER, CONF_PRIMARY_SOC]
+        missing = []
+        for key in keys:
+            ent = self._cfg(key)
+            if not ent:
+                missing.append(key)
+                continue
+            st = self.hass.states.get(ent)
+            if st is None or st.state in ("unknown", "unavailable", "", "none"):
+                missing.append(ent)
+        return missing
+
     def _num(self, key: str, invert_key: str | None = None) -> float | None:
         ent = self._cfg(key)
         if not ent:
@@ -297,6 +321,11 @@ class VenusController:
             self._notify()
             return
         decision = engine.decide(inputs, self.params(), self.state)
+        if decision.target_mode == "no_data":
+            if decision.state.bad_data_count >= NO_DATA_ISSUE_TICKS:
+                self.issues.raise_now("inputs_missing", {"entities": ", ".join(self.missing_inputs()) or "?"})
+        else:
+            self.issues.clear("inputs_missing")
         changed_state = decision.state != self.state
         self.state = decision.state
         self.status.target_mode = decision.target_mode

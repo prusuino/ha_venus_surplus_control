@@ -115,39 +115,95 @@
           "unknown": "Unknown"
         }
       },
-      "last_decision": { "name": "Last decision" },
-      "surplus_mean": { "name": "Surplus (3 min mean)" },
-      "surplus_without_venus_mean": { "name": "Surplus without Venus (3 min mean)" },
-      "charge_headroom": { "name": "Charge headroom" },
-      "house_demand": { "name": "House demand" },
-      "charge_command": { "name": "Charge command" },
-      "discharge_command": { "name": "Discharge command" },
-      "watchdog_restores": { "name": "Watchdog restores" },
-      "dry_run_commands": { "name": "Dry-run commands" }
+      "last_decision": {
+        "name": "Last decision"
+      },
+      "surplus_mean": {
+        "name": "Surplus (3 min mean)"
+      },
+      "surplus_without_venus_mean": {
+        "name": "Surplus without Venus (3 min mean)"
+      },
+      "charge_headroom": {
+        "name": "Charge headroom"
+      },
+      "house_demand": {
+        "name": "House demand"
+      },
+      "charge_command": {
+        "name": "Charge command"
+      },
+      "discharge_command": {
+        "name": "Discharge command"
+      },
+      "watchdog_restores": {
+        "name": "Watchdog restores"
+      },
+      "dry_run_commands": {
+        "name": "Dry-run commands"
+      }
     },
     "binary_sensor": {
-      "venus_first": { "name": "Venus first" },
-      "parallel_charging_allowed": { "name": "Parallel charging allowed" },
-      "cross_charging_blocked": { "name": "Cross-charging block" },
-      "charging": { "name": "Charging" },
-      "discharging": { "name": "Discharging" }
+      "venus_first": {
+        "name": "Venus first"
+      },
+      "parallel_charging_allowed": {
+        "name": "Parallel charging allowed"
+      },
+      "cross_charging_blocked": {
+        "name": "Cross-charging block"
+      },
+      "charging": {
+        "name": "Charging"
+      },
+      "discharging": {
+        "name": "Discharging"
+      }
     },
     "switch": {
-      "manual_override": { "name": "Manual override" },
-      "dry_run": { "name": "Dry run" }
+      "manual_override": {
+        "name": "Manual override"
+      },
+      "dry_run": {
+        "name": "Dry run"
+      }
     },
     "number": {
-      "discharge_cap_w": { "name": "Discharge cap" },
-      "first_forecast_kwh": { "name": "Venus first from forecast" },
-      "primary_capacity_kwh": { "name": "First battery capacity" },
-      "venus_capacity_kwh": { "name": "Venus capacity (fallback)" },
-      "house_base_load_kw": { "name": "House base load" }
+      "discharge_cap_w": {
+        "name": "Discharge cap"
+      },
+      "first_forecast_kwh": {
+        "name": "Venus first from forecast"
+      },
+      "primary_capacity_kwh": {
+        "name": "First battery capacity"
+      },
+      "venus_capacity_kwh": {
+        "name": "Venus capacity (fallback)"
+      },
+      "house_base_load_kw": {
+        "name": "House base load"
+      }
     },
     "button": {
-      "manual_charge": { "name": "Manual charge" },
-      "manual_discharge": { "name": "Manual discharge" },
-      "manual_stop": { "name": "Manual stop" },
-      "back_to_auto": { "name": "Back to auto" }
+      "manual_charge": {
+        "name": "Manual charge"
+      },
+      "manual_discharge": {
+        "name": "Manual discharge"
+      },
+      "manual_stop": {
+        "name": "Manual stop"
+      },
+      "back_to_auto": {
+        "name": "Back to auto"
+      }
+    }
+  },
+  "issues": {
+    "inputs_missing": {
+      "title": "Venus Surplus Control: readings incomplete",
+      "description": "The controller has had no complete readings for several minutes and sends no commands (after two such ticks it puts the Venus into standby). Missing or unavailable: {entities}. Check the Marstek Venus Modbus integration and the surplus sensor, or pick other entities under Configure. This notice disappears as soon as the readings are complete again."
     }
   }
 }

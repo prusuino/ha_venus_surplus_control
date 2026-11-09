@@ -6,6 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .controller import VenusController
+from .issues import async_clear_entry_issues
 
 type VenusSurplusConfigEntry = ConfigEntry[VenusController]
 
@@ -30,4 +31,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: VenusSurplusConfigEntry
     controller: VenusController | None = getattr(entry, "runtime_data", None)
     if controller is not None:
         await controller.async_stop()
+    if ok:
+        async_clear_entry_issues(hass, entry.entry_id)
     return ok

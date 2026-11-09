@@ -77,6 +77,10 @@ Missing input values for two consecutive ticks put the Venus into standby.
 
 Leave **dry run** on for a day or two. The logbook (filter "Venus Surplus") shows every command with its reasons; `sensor.<name>_last_decision` shows the values. When the decisions match what you expect, switch dry run off. The controller then writes its standing decision to the Venus right away.
 
+## Repairs
+
+When the controller has had no complete readings for about five minutes (an entity of the Venus or the surplus sensor missing or unavailable), a notice under **Settings → Repairs** names the entities concerned; it disappears as soon as the readings are complete again.
+
 ## Removal
 
 1. Switch **dry run** on or put the Venus into standby yourself first if a command is running: the integration sends no final command when it is removed.

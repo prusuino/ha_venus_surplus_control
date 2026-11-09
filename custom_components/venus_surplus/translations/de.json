@@ -115,39 +115,95 @@
           "unknown": "Unbekannt"
         }
       },
-      "last_decision": { "name": "Letzte Entscheidung" },
-      "surplus_mean": { "name": "Überschuss (3-min-Mittel)" },
-      "surplus_without_venus_mean": { "name": "Überschuss ohne Venus (3-min-Mittel)" },
-      "charge_headroom": { "name": "Lade-Headroom" },
-      "house_demand": { "name": "Hausbedarf" },
-      "charge_command": { "name": "Ladekommando" },
-      "discharge_command": { "name": "Entladekommando" },
-      "watchdog_restores": { "name": "Watchdog-Wiederherstellungen" },
-      "dry_run_commands": { "name": "Trockenlauf-Kommandos" }
+      "last_decision": {
+        "name": "Letzte Entscheidung"
+      },
+      "surplus_mean": {
+        "name": "Überschuss (3-min-Mittel)"
+      },
+      "surplus_without_venus_mean": {
+        "name": "Überschuss ohne Venus (3-min-Mittel)"
+      },
+      "charge_headroom": {
+        "name": "Lade-Headroom"
+      },
+      "house_demand": {
+        "name": "Hausbedarf"
+      },
+      "charge_command": {
+        "name": "Ladekommando"
+      },
+      "discharge_command": {
+        "name": "Entladekommando"
+      },
+      "watchdog_restores": {
+        "name": "Watchdog-Wiederherstellungen"
+      },
+      "dry_run_commands": {
+        "name": "Trockenlauf-Kommandos"
+      }
     },
     "binary_sensor": {
-      "venus_first": { "name": "Venus zuerst" },
-      "parallel_charging_allowed": { "name": "Paralleles Laden erlaubt" },
-      "cross_charging_blocked": { "name": "Querlade-Sperre" },
-      "charging": { "name": "Lädt" },
-      "discharging": { "name": "Entlädt" }
+      "venus_first": {
+        "name": "Venus zuerst"
+      },
+      "parallel_charging_allowed": {
+        "name": "Paralleles Laden erlaubt"
+      },
+      "cross_charging_blocked": {
+        "name": "Querlade-Sperre"
+      },
+      "charging": {
+        "name": "Lädt"
+      },
+      "discharging": {
+        "name": "Entlädt"
+      }
     },
     "switch": {
-      "manual_override": { "name": "Manueller Override" },
-      "dry_run": { "name": "Trockenlauf" }
+      "manual_override": {
+        "name": "Manueller Override"
+      },
+      "dry_run": {
+        "name": "Trockenlauf"
+      }
     },
     "number": {
-      "discharge_cap_w": { "name": "Entlade-Obergrenze" },
-      "first_forecast_kwh": { "name": "Venus zuerst ab Prognose" },
-      "primary_capacity_kwh": { "name": "Kapazität erste Batterie" },
-      "venus_capacity_kwh": { "name": "Venus-Kapazität (Rückfall)" },
-      "house_base_load_kw": { "name": "Grundlast Haus" }
+      "discharge_cap_w": {
+        "name": "Entlade-Obergrenze"
+      },
+      "first_forecast_kwh": {
+        "name": "Venus zuerst ab Prognose"
+      },
+      "primary_capacity_kwh": {
+        "name": "Kapazität erste Batterie"
+      },
+      "venus_capacity_kwh": {
+        "name": "Venus-Kapazität (Rückfall)"
+      },
+      "house_base_load_kw": {
+        "name": "Grundlast Haus"
+      }
     },
     "button": {
-      "manual_charge": { "name": "Manuell laden" },
-      "manual_discharge": { "name": "Manuell entladen" },
-      "manual_stop": { "name": "Manuell Stop" },
-      "back_to_auto": { "name": "Zurück zu Auto" }
+      "manual_charge": {
+        "name": "Manuell laden"
+      },
+      "manual_discharge": {
+        "name": "Manuell entladen"
+      },
+      "manual_stop": {
+        "name": "Manuell Stop"
+      },
+      "back_to_auto": {
+        "name": "Zurück zu Auto"
+      }
+    }
+  },
+  "issues": {
+    "inputs_missing": {
+      "title": "Venus Surplus Control: Messwerte unvollständig",
+      "description": "Die Steuerung hat seit mehreren Minuten keine vollständigen Messwerte und sendet keine Befehle (nach zwei solchen Ticks stellt sie den Venus auf Standby). Fehlend oder nicht verfügbar: {entities}. Prüfe die Marstek-Venus-Modbus-Integration und den Überschuss-Sensor oder wähle unter „Konfigurieren“ andere Entitäten. Dieser Hinweis verschwindet, sobald die Messwerte wieder vollständig sind."
     }
   }
 }
