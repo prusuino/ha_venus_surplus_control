@@ -8,12 +8,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from . import engine
-from .const import DOMAIN
 from .controller import VenusController
 
 
 async def async_get_config_entry_diagnostics(hass: HomeAssistant, entry: ConfigEntry) -> dict[str, Any]:
-    c: VenusController = hass.data[DOMAIN][entry.entry_id]
+    c: VenusController = entry.runtime_data
     readings = {}
     for key, value in {**entry.data, **entry.options}.items():
         ents = value if isinstance(value, list) else [value]

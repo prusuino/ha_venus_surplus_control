@@ -7,13 +7,12 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
 from .controller import VenusController
 from .entity import VenusEntity
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
-    c: VenusController = hass.data[DOMAIN][entry.entry_id]
+    c: VenusController = entry.runtime_data
     async_add_entities([SettingSwitch(c, "manual_override", "mdi:hand-back-right"), SettingSwitch(c, "dry_run", "mdi:test-tube")])
 
 

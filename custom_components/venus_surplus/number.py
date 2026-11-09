@@ -7,13 +7,13 @@ from homeassistant.const import UnitOfEnergy, UnitOfPower
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import CONF_DISCHARGE_LIMIT, DEFAULT_DISCHARGE_LIMIT, DOMAIN
+from .const import CONF_DISCHARGE_LIMIT, DEFAULT_DISCHARGE_LIMIT
 from .controller import VenusController
 from .entity import VenusEntity
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
-    c: VenusController = hass.data[DOMAIN][entry.entry_id]
+    c: VenusController = entry.runtime_data
     limit = int(entry.options.get(CONF_DISCHARGE_LIMIT, entry.data.get(CONF_DISCHARGE_LIMIT, DEFAULT_DISCHARGE_LIMIT)))
     async_add_entities(
         [

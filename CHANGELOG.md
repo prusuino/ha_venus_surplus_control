@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.0 — 2026-11-09
+
+- **Quality scale Bronze.** The integration keeps its controller in the config entry's runtime data, the README gained removal instructions and a quality-scale section, and the manifest declares the **bronze** tier. A test suite (decision engine: readiness, charge, parallel wait, discharge, SoC protection, cross-trip, persisted state; config flow with both steps, one entry per Venus and the options flow) runs on every push. No change to entities or configuration.
+
 ## 0.1.0 — 2026-11-08
 
 First release. The controller logic of the YAML package ha-marstek-venus-surplus as an integration with a setup dialog:

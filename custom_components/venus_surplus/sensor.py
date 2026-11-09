@@ -7,7 +7,6 @@ from homeassistant.const import UnitOfPower
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
 from .controller import VenusController
 from .entity import VenusEntity
 
@@ -16,7 +15,7 @@ REASONS = ["charge_ok", "charge_parallel", "discharge_ok", "direct_pv_use", "ven
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
-    c: VenusController = hass.data[DOMAIN][entry.entry_id]
+    c: VenusController = entry.runtime_data
     async_add_entities(
         [
             TargetModeSensor(c),
