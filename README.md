@@ -41,6 +41,8 @@ Everything can be changed later under **Configure**.
 
 ## Entities
 
+![Example dashboard with the decision and its reason, the measurements, the coordination with the primary battery, the controls and the limits](docs/dashboard.png)
+
 | Entity | Meaning |
 |---|---|
 | `sensor.<name>_target_mode` | charge / discharge / standby / no data / paused, with the reason, the last command and the dry-run flag as attributes |
