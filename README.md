@@ -3,6 +3,11 @@
 # Venus Surplus Control
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/prusuino/ha_venus_surplus_control)](https://github.com/prusuino/ha_venus_surplus_control/releases)
+[![Validate](https://github.com/prusuino/ha_venus_surplus_control/actions/workflows/validate.yml/badge.svg)](https://github.com/prusuino/ha_venus_surplus_control/actions/workflows/validate.yml)
+[![Tests](https://github.com/prusuino/ha_venus_surplus_control/actions/workflows/tests.yml/badge.svg)](https://github.com/prusuino/ha_venus_surplus_control/actions/workflows/tests.yml)
+[![Home Assistant](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fprusuino%2Fha_venus_surplus_control%2Fmain%2Fhacs.json&query=%24.homeassistant&label=Home%20Assistant&suffix=%2B&color=41BDF5)](https://www.home-assistant.io/)
+[![Quality scale](https://img.shields.io/badge/Quality%20Scale-Bronze-cd7f32.svg)](https://developers.home-assistant.io/docs/core/integration-quality-scale/)
 <a href="https://www.buymeacoffee.com/prusuino"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" height="20"></a>
 
 A Home Assistant integration that runs a **Marstek Venus** battery from your PV surplus, next to an existing inverter-coupled battery or alone. No YAML: you pick your entities in the setup dialog, the controller does the rest.
