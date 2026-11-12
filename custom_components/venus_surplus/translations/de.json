@@ -172,6 +172,9 @@
       "discharge_cap_w": {
         "name": "Entlade-Obergrenze"
       },
+      "charge_reserve_w": {
+        "name": "Lade-Reserve"
+      },
       "first_forecast_kwh": {
         "name": "Venus zuerst ab Prognose"
       },

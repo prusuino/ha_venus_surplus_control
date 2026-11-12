@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0 — 2026-11-12
+
+- **Fixed: the charge power stayed low after a load peak.** On a Venus without MPPT sensors the charge power could go down but never up again while charging: after a washing machine or kettle had pushed it down, it stayed there until charging stopped and started anew. It now follows the surplus up again. With MPPT sensors a zero reading holds the power back for four ticks only; a reading that stays low is believed. Reported by @VIMVa (#1).
+- **Charge reserve is adjustable.** The new number `number.<name>_charge_reserve` (0–500 W, default 200 W as before) sets how much surplus the Venus leaves alone while charging. Lower it to use more of a small surplus.
+- **Steps up sooner.** The charge power goes one 100 W step up once the headroom is 150 W above the current target (250 W before), so less surplus stays unused after a dip.
+
 ## 0.3.0 — 2026-11-09
 
 - **Version on the service card.** The integration's version now appears on its service card under Settings → Devices & services, where the entities are listed.

@@ -172,6 +172,9 @@
       "discharge_cap_w": {
         "name": "Discharge cap"
       },
+      "charge_reserve_w": {
+        "name": "Charge reserve"
+      },
       "first_forecast_kwh": {
         "name": "Venus first from forecast"
       },

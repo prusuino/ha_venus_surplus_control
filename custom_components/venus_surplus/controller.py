@@ -49,6 +49,7 @@ from .const import (
     CONF_VENUS_STATE,
     DEFAULT_AC_CHARGE_LIMIT,
     DEFAULT_BASE_LOAD_KW,
+    DEFAULT_CHARGE_RESERVE,
     DEFAULT_DISCHARGE_CAP,
     DEFAULT_DISCHARGE_LIMIT,
     DEFAULT_FIRST_FORECAST_KWH,
@@ -90,6 +91,7 @@ class Settings:
     """The adjustable values held by the number / switch entities."""
 
     discharge_cap_w: int = DEFAULT_DISCHARGE_CAP
+    charge_reserve_w: int = DEFAULT_CHARGE_RESERVE
     first_forecast_kwh: float = DEFAULT_FIRST_FORECAST_KWH
     primary_capacity_kwh: float = DEFAULT_PRIMARY_KWH
     venus_capacity_kwh: float = DEFAULT_VENUS_KWH
@@ -156,7 +158,9 @@ class VenusController:
             primary_capacity_kwh=float(self.settings.primary_capacity_kwh),
             venus_capacity_fallback_kwh=float(self.settings.venus_capacity_kwh),
             house_base_load_kw=float(self.settings.house_base_load_kw),
+            charge_reserve_w=float(self.settings.charge_reserve_w),
             has_primary=self.has_primary,
+            has_venus_pv=bool(self._cfg(CONF_VENUS_PV)),
         )
 
     # ------------------------------------------------------------------ lifecycle
@@ -190,6 +194,7 @@ class VenusController:
                 "state": engine.state_to_dict(self.state),
                 "settings": {
                     "discharge_cap_w": self.settings.discharge_cap_w,
+                    "charge_reserve_w": self.settings.charge_reserve_w,
                     "first_forecast_kwh": self.settings.first_forecast_kwh,
                     "primary_capacity_kwh": self.settings.primary_capacity_kwh,
                     "venus_capacity_kwh": self.settings.venus_capacity_kwh,

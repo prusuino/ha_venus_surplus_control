@@ -54,7 +54,9 @@ class Params:
     primary_capacity_kwh: float = 10.0
     venus_capacity_fallback_kwh: float = 5.12
     house_base_load_kw: float = 0.5
+    charge_reserve_w: float = 200  # surplus the Venus leaves alone
     has_primary: bool = True
+    has_venus_pv: bool = False  # MPPT sensors are configured (Venus A/D)
 
     # fixed rule constants
     noise_venus_ac_w: float = 40
@@ -63,7 +65,6 @@ class Params:
     soc_min_charge_start: float = 85
     soc_min_charge_hold: float = 80
     venus_soc_max_charge: float = 100.1
-    charge_reserve_w: float = 200
     parallel_min_surplus_first_w: float = 600
     parallel_min_surplus_w: float = 1200
     parallel_min_headroom_first_w: float = 400
@@ -91,12 +92,13 @@ class Params:
     charge_hold_headroom_w: float = 80
     charge_low_headroom_ticks: int = 3
     charge_downshift_margin_w: float = 120
-    charge_upshift_margin_w: float = 250
+    charge_upshift_margin_w: float = 150
     charge_step_w: int = 100
     charge_min_w: int = 100
     discharge_min_w: int = 200
     discharge_step_w: int = 100
     venus_pv_direct_use_min_w: float = 80
+    pv_unknown_hold_ticks: int = 4
 
 
 @dataclass
@@ -110,6 +112,7 @@ class State:
     bad_data_count: int = 0
     low_headroom_count: int = 0
     cross_count: int = 0
+    pv_low_count: int = 0
     rest_latched: bool = False
     proj_latched: bool = False
 
@@ -176,10 +179,15 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     ms_soc_ctrl = round(ms_soc, 1)
     ms_grid = i.venus_ac or 0.0
 
-    # Venus' own PV with noise filter and glitch bridging
+    # Venus' own PV with noise filter and glitch bridging. The MPPT reading
+    # can drop to zero for a moment while the Venus charges: a known value is
+    # bridged, and without one the charge power is not raised for a few
+    # ticks. A reading that stays low is believed, and a Venus without MPPT
+    # sensors has nothing to wait for.
     ms_pv_filtered = 0.0 if abs(i.venus_pv) < p.noise_venus_pv_w else i.venus_pv
-    pv_glitch = mode == "charge" and s.last_charge_power > 0 and ms_pv_filtered < 50 and s.last_valid_dc_pv >= 100
-    pv_unknown = mode == "charge" and s.last_charge_power > 0 and ms_pv_filtered < 50 and s.last_valid_dc_pv < 100
+    pv_low = p.has_venus_pv and mode == "charge" and s.last_charge_power > 0 and ms_pv_filtered < 50
+    pv_glitch = pv_low and s.last_valid_dc_pv >= 100
+    pv_unknown = pv_low and s.last_valid_dc_pv < 100 and s.pv_low_count < p.pv_unknown_hold_ticks
     ms_pv = s.last_valid_dc_pv if pv_glitch else ms_pv_filtered
 
     primary_discharge = primary_w if primary_w > p.noise_primary_w else 0.0
@@ -328,6 +336,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     # ---- counters ---------------------------------------------------------
     s.low_headroom_count = min(10, s.low_headroom_count + 1) if (mode == "charge" and headroom < p.charge_hold_headroom_w) else 0
     s.cross_count = min(10, s.cross_count + 1) if (mode == "charge" and block_charge_soft and not block_charge_hard) else 0
+    s.pv_low_count = min(10, s.pv_low_count + 1) if pv_low else 0
     if ms_pv_filtered >= 50:
         s.last_valid_dc_pv = round(ms_pv_filtered)
 
@@ -356,6 +365,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         "surplus_instant_corr_w": round(d_corr),
         "house_need_w": round(house_need),
         "headroom_w": round(headroom),
+        "charge_reserve_w": round(p.charge_reserve_w),
         "venus_pv_w": round(ms_pv),
         "primary_discharge_w": round(primary_discharge),
         "primary_charge_w": round(primary_charge),
@@ -380,6 +390,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         "block_discharge": block_discharge,
         "cross_trip": cross_trip,
         "pv_glitch": pv_glitch,
+        "pv_unknown": pv_unknown,
         "current_mode": mode,
     }
     return Decision(target_mode, reason, command, power, s, text, values)

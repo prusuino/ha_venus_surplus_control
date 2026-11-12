@@ -18,6 +18,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     async_add_entities(
         [
             SettingNumber(c, "discharge_cap_w", 200, limit, 100, UnitOfPower.WATT, "mdi:battery-arrow-down-outline", NumberDeviceClass.POWER),
+            SettingNumber(c, "charge_reserve_w", 0, 500, 10, UnitOfPower.WATT, "mdi:battery-arrow-up-outline", NumberDeviceClass.POWER),
             SettingNumber(c, "first_forecast_kwh", 0, 200, 1, UnitOfEnergy.KILO_WATT_HOUR, "mdi:weather-sunny", None),
             SettingNumber(c, "primary_capacity_kwh", 0, 100, 0.1, UnitOfEnergy.KILO_WATT_HOUR, "mdi:battery-high", None),
             SettingNumber(c, "venus_capacity_kwh", 0, 50, 0.01, UnitOfEnergy.KILO_WATT_HOUR, "mdi:battery", None),
@@ -44,5 +45,5 @@ class SettingNumber(VenusEntity, NumberEntity):
         return float(getattr(self.controller.settings, self._key))
 
     async def async_set_native_value(self, value: float) -> None:
-        v: float | int = int(value) if self._key == "discharge_cap_w" else round(value, 2)
+        v: float | int = int(value) if self._key in ("discharge_cap_w", "charge_reserve_w") else round(value, 2)
         await self.controller.async_set_setting(self._key, v)

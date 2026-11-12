@@ -14,7 +14,7 @@ A Home Assistant integration that runs a **Marstek Venus** battery from your PV 
 
 ## Highlights
 
-- **Charge from real surplus only** – AC charging follows the surplus headroom in 100 W steps, capped so that AC charge plus the Venus' own PV stay below the device limit. While your first battery (BYD, Pylontech, …) is still absorbing the surplus, the Venus waits; on a good solar day ("Venus first") it may start early in parallel because both will fill up anyway.
+- **Charge from real surplus only** – AC charging follows the surplus in 100 W steps, less a reserve you set from the dashboard, capped so that AC charge plus the Venus' own PV stay below the device limit. While your first battery (BYD, Pylontech, …) is still absorbing the surplus, the Venus waits; on a good solar day ("Venus first") it may start early in parallel because both will fill up anyway.
 - **Discharge against house demand only** – 200–1000 W in steps with hysteresis, an export guard that steps down before the house would export, and only while the first battery is already delivering or empty.
 - **Standby otherwise** – and an immediate stop when the first battery suddenly works against the Venus (cross-charging). The two batteries never charge each other.
 - **RS485 watchdog** – the Venus firmware drops the RS485 control mode and resets its power registers on restarts, app or cloud access. The watchdog restores the control mode and the last command.
@@ -63,6 +63,7 @@ Everything can be changed later under **Configure**.
 | `switch.<name>_manual_override` | pauses the controller |
 | `switch.<name>_dry_run` | decide and log only |
 | `number.<name>_discharge_cap` | ceiling for the discharge power |
+| `number.<name>_charge_reserve` | surplus the Venus leaves alone while charging (default 200 W, 0–500 W). Lower it to use more of a small surplus; with a low reserve a load that starts may draw from the grid for a moment, until the three-minute mean has followed |
 | `number.<name>_venus_first_from_forecast` | today's forecast (kWh) from which the Venus may charge in parallel early (default 45) |
 | `number.<name>_first_battery_capacity`, `…_venus_capacity_fallback`, `…_house_base_load` | for the remaining-forecast rule |
 | `button.<name>_manual_charge`, `…_manual_discharge`, `…_manual_stop`, `…_back_to_auto` | manual control |
@@ -74,7 +75,7 @@ Every command also fires the event `venus_surplus_command` with `command`, `powe
 Every 30 seconds (adjustable) the controller takes a sample of the surplus and of the surplus with the Venus' own AC flow taken out, keeps three minutes of samples and decides on their means:
 
 1. **Protect** – Venus SoC ≤ 12 %: standby. First battery discharging > 500 W while the Venus charges (or charging while it discharges): standby ("cross trip").
-2. **Charge** if the AC command would be ≥ 100 W and either the first battery is ≥ 85 % (80 % to hold) or parallel charging is allowed: surplus ≥ 1200 W and headroom ≥ 500 W on an ordinary day (600 / 400 W when "Venus first"), the first battery not discharging more than 80 W and, on an ordinary day, not absorbing more than 200 W (500 W to hold). Charging is blocked while the first battery discharges more than 150 W (200 W to hold, confirmed over two ticks; 350 W immediately). Power: headroom minus 200 W reserve, floored to 100 W, start from 400 W, hold down to 80 W for three ticks, step up only 250 W above the current target, step down only 120 W below it; minus the Venus' own PV against the total limit.
+2. **Charge** if the AC command would be ≥ 100 W and either the first battery is ≥ 85 % (80 % to hold) or parallel charging is allowed: surplus ≥ 1200 W and headroom ≥ 500 W on an ordinary day (600 / 400 W when "Venus first"), the first battery not discharging more than 80 W and, on an ordinary day, not absorbing more than 200 W (500 W to hold). Charging is blocked while the first battery discharges more than 150 W (200 W to hold, confirmed over two ticks; 350 W immediately). Power: the headroom – surplus minus the charge reserve (200 W unless you change it) – floored to 100 W, start from 400 W, hold down to 80 W for three ticks, step up 150 W above the current target, step down only 120 W below it; minus the Venus' own PV against the total limit. With MPPT sensors, a reading that drops to zero while charging is bridged with the last known value; without a known value the power is not raised for four ticks, after that the reading is believed.
 3. **Discharge** if the house imports and the surplus mean is below 100 W, the Venus is above 15 % (12 % to hold), the first battery delivers ≥ 500 W or is ≤ 12 %, and the first battery is not charging more than 100 W. Power: import minus 120 W reserve, 200–1000 W in 100 W steps, one step per tick up (40 W above the next step) or down (40 W below the previous one), never above the export guard (import minus 60 W) or the discharge cap.
 4. **Standby** otherwise.
 
