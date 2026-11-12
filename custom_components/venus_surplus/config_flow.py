@@ -22,6 +22,7 @@ from .const import (
     CONF_NAME,
     CONF_PRIMARY_POWER,
     CONF_PRIMARY_POWER_INVERT,
+    CONF_PRIMARY_RESERVE,
     CONF_PRIMARY_SOC,
     CONF_RS485,
     CONF_SURPLUS,
@@ -46,7 +47,7 @@ _SENSOR = selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")
 _SENSOR_OPT = selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor"))
 
 
-def _entity(domain: str, multiple: bool = False) -> selector.EntitySelector:
+def _entity(domain: str | list[str], multiple: bool = False) -> selector.EntitySelector:
     return selector.EntitySelector(selector.EntitySelectorConfig(domain=domain, multiple=multiple))
 
 
@@ -86,6 +87,7 @@ def _optional_schema(defaults: dict[str, Any]) -> vol.Schema:
     schema[vol.Required(CONF_PRIMARY_POWER_INVERT, default=bool(d(CONF_PRIMARY_POWER_INVERT, False)))] = selector.BooleanSelector()
     for key, sel in (
         opt(CONF_PRIMARY_SOC, _entity("sensor")),
+        opt(CONF_PRIMARY_RESERVE, _entity(["sensor", "number", "input_number"])),
         opt(CONF_FORECAST_TODAY, _entity("sensor")),
         opt(CONF_FORECAST_REMAINING, _entity("sensor")),
     ):
@@ -176,11 +178,11 @@ class VenusSurplusOptionsFlow(config_entries.OptionsFlow):
                 data[key] = bool(data.get(key, False))
             # an optional entity removed in the form must disappear from the entry
             merged = dict(self.config_entry.options)
-            for key in (CONF_VENUS_PV, CONF_VENUS_CAPACITY, CONF_PRIMARY_POWER, CONF_PRIMARY_SOC, CONF_FORECAST_TODAY, CONF_FORECAST_REMAINING, CONF_CONNECTION, CONF_MODBUS_ENTRY):
+            for key in (CONF_VENUS_PV, CONF_VENUS_CAPACITY, CONF_PRIMARY_POWER, CONF_PRIMARY_SOC, CONF_PRIMARY_RESERVE, CONF_FORECAST_TODAY, CONF_FORECAST_REMAINING, CONF_CONNECTION, CONF_MODBUS_ENTRY):
                 merged.pop(key, None)
             merged.update(data)
-            if any(key in self.config_entry.data and key not in data for key in (CONF_PRIMARY_POWER, CONF_PRIMARY_SOC, CONF_FORECAST_TODAY, CONF_FORECAST_REMAINING, CONF_VENUS_PV, CONF_VENUS_CAPACITY, CONF_CONNECTION, CONF_MODBUS_ENTRY)):
-                new_data = {k: v for k, v in self.config_entry.data.items() if k in data or k not in (CONF_PRIMARY_POWER, CONF_PRIMARY_SOC, CONF_FORECAST_TODAY, CONF_FORECAST_REMAINING, CONF_VENUS_PV, CONF_VENUS_CAPACITY, CONF_CONNECTION, CONF_MODBUS_ENTRY)}
+            if any(key in self.config_entry.data and key not in data for key in (CONF_PRIMARY_POWER, CONF_PRIMARY_SOC, CONF_PRIMARY_RESERVE, CONF_FORECAST_TODAY, CONF_FORECAST_REMAINING, CONF_VENUS_PV, CONF_VENUS_CAPACITY, CONF_CONNECTION, CONF_MODBUS_ENTRY)):
+                new_data = {k: v for k, v in self.config_entry.data.items() if k in data or k not in (CONF_PRIMARY_POWER, CONF_PRIMARY_SOC, CONF_PRIMARY_RESERVE, CONF_FORECAST_TODAY, CONF_FORECAST_REMAINING, CONF_VENUS_PV, CONF_VENUS_CAPACITY, CONF_CONNECTION, CONF_MODBUS_ENTRY)}
                 self.hass.config_entries.async_update_entry(self.config_entry, data=new_data)
             return self.async_create_entry(title="", data=merged)
         return self.async_show_form(step_id="optional", data_schema=_optional_schema(self._current()))

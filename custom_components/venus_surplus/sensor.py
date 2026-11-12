@@ -11,7 +11,7 @@ from .controller import VenusController
 from .entity import VenusEntity
 
 TARGET_MODES = ["charge", "discharge", "stop", "no_data", "paused", "unknown"]
-REASONS = ["charge_ok", "charge_parallel", "discharge_ok", "direct_pv_use", "venus_soc_protect", "cross_trip", "no_condition", "data_not_ready", "manual_override", "manual_charge", "manual_discharge", "manual_standby", "unknown"]
+REASONS = ["charge_ok", "charge_parallel", "discharge_ok", "direct_pv_use", "venus_soc_protect", "cross_trip", "no_condition", "data_not_ready", "manual_override", "manual_charge", "manual_discharge", "manual_discharge_target", "manual_standby", "target_soc_reached", "unknown"]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:

@@ -26,6 +26,7 @@ CONF_MODBUS_ENTRY = "modbus_entry_id"  # config entry of the Modbus integration 
 CONF_PRIMARY_POWER = "primary_power_entity"  # first battery power [W], positive = discharging, optional
 CONF_PRIMARY_POWER_INVERT = "primary_power_invert"
 CONF_PRIMARY_SOC = "primary_soc_entity"  # optional
+CONF_PRIMARY_RESERVE = "primary_reserve_entity"  # reserve (minimum SoC) of the first battery [%], optional
 CONF_FORECAST_TODAY = "forecast_today_entity"  # kWh, optional
 CONF_FORECAST_REMAINING = "forecast_remaining_entity"  # kWh, optional
 CONF_FORECAST_FACTOR = "forecast_factor"  # dampening of the remaining forecast
@@ -49,6 +50,7 @@ DEFAULT_VENUS_KWH = 5.12
 DEFAULT_BASE_LOAD_KW = 0.5
 DEFAULT_DISCHARGE_CAP = 1000
 DEFAULT_CHARGE_RESERVE = 200
+DEFAULT_TARGET_SOC = 50
 
 MEAN_WINDOW = timedelta(minutes=3)
 WATCHDOG_SECOND = 17

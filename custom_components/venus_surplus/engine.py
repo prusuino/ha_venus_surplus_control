@@ -40,6 +40,7 @@ class Inputs:
     forecast_today_kwh: float  # 0 without forecast
     forecast_remaining_kwh: float  # dampened, 0 without forecast
     sun_hours_left: float  # hours until sunset, 0 at night
+    primary_reserve_soc: float | None = None  # reserve (minimum SoC) of the first battery, if configured
 
 
 @dataclass
@@ -57,6 +58,7 @@ class Params:
     charge_reserve_w: float = 200  # surplus the Venus leaves alone
     has_primary: bool = True
     has_venus_pv: bool = False  # MPPT sensors are configured (Venus A/D)
+    has_primary_reserve: bool = False  # a reserve input of the first battery is configured
 
     # fixed rule constants
     noise_venus_ac_w: float = 40
@@ -77,6 +79,7 @@ class Params:
     proj_venus_rate_kw: float = 1.0
     primary_discharge_start_w: float = 500
     primary_soc_empty_bypass: float = 12
+    primary_reserve_margin: float = 3
     venus_soc_resume_discharge: float = 15
     venus_soc_stop: float = 12
     pv_block_discharge_w: float = 100
@@ -113,6 +116,7 @@ class State:
     low_headroom_count: int = 0
     cross_count: int = 0
     pv_low_count: int = 0
+    last_primary_reserve: float | None = None
     rest_latched: bool = False
     proj_latched: bool = False
 
@@ -305,6 +309,19 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
 
     direct_pv_use = ms_pv >= p.venus_pv_direct_use_min_w and safe_cap >= mn and pv_corr < p.pv_block_discharge_w and not block_discharge
 
+    # The first battery counts as empty at its reserve: the inverter stops
+    # discharging it there, so waiting for it to deliver would wait all
+    # night. With a reserve input the threshold follows it (plus a margin,
+    # never below the fixed value); a reading that drops out keeps the last one.
+    if p.has_primary_reserve:
+        if i.primary_reserve_soc is not None and 0 <= i.primary_reserve_soc <= 100:
+            s.last_primary_reserve = float(i.primary_reserve_soc)
+    else:
+        s.last_primary_reserve = None
+    primary_empty_soc = p.primary_soc_empty_bypass
+    if s.last_primary_reserve is not None:
+        primary_empty_soc = max(primary_empty_soc, s.last_primary_reserve + p.primary_reserve_margin)
+
     soc_thr = p.soc_min_charge_hold if mode == "charge" else p.soc_min_charge_start
     charge_soc_allowed = primary_soc >= soc_thr
     charge_ok = (charge_soc_allowed or charge_allowed_parallel) and charge_cmd >= p.charge_min_w and ms_soc_ctrl < p.venus_soc_max_charge and not block_charge
@@ -315,7 +332,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
             ms_soc_ctrl >= p.venus_soc_resume_discharge
             and pv_corr < p.pv_block_discharge_w
             and target_discharge >= mn
-            and (primary_discharge >= p.primary_discharge_start_w or primary_soc <= p.primary_soc_empty_bypass or direct_pv_use or not p.has_primary)
+            and (primary_discharge >= p.primary_discharge_start_w or primary_soc <= primary_empty_soc or direct_pv_use or not p.has_primary)
             and not block_discharge
         )
     cross_trip = (mode == "charge" and primary_discharge > p.cross_trip_w) or (mode == "discharge" and primary_charge > p.cross_trip_w)
@@ -369,6 +386,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         "venus_pv_w": round(ms_pv),
         "primary_discharge_w": round(primary_discharge),
         "primary_charge_w": round(primary_charge),
+        "primary_empty_below_soc": round(primary_empty_soc, 1),
         "parallel_allowed": charge_allowed_parallel,
         "venus_first": venus_first,
         "forecast_today_kwh": round(i.forecast_today_kwh, 1),

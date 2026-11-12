@@ -27,6 +27,7 @@
           "primary_power_entity": "First battery: power (positive = discharging)",
           "primary_power_invert": "First battery power is positive while charging",
           "primary_soc_entity": "First battery: SoC",
+          "primary_reserve_entity": "First battery: reserve (minimum SoC, %)",
           "forecast_today_entity": "PV forecast for today (kWh)",
           "forecast_remaining_entity": "Remaining PV forecast for today (kWh)",
           "forecast_factor": "Dampening of the remaining forecast",
@@ -36,6 +37,9 @@
           "total_charge_limit_w": "Maximum AC charge + own PV (W)",
           "discharge_limit_w": "Maximum discharge command (W)",
           "tick_seconds": "Decision interval (s)"
+        },
+        "data_description": {
+          "primary_reserve_entity": "Optional. The charge level at which your inverter stops discharging the first battery. The Venus then treats it as empty 3 points above that (at least 12 %). Without it, a fixed 12 % applies."
         }
       }
     },
@@ -71,6 +75,7 @@
           "primary_power_entity": "First battery: power (positive = discharging)",
           "primary_power_invert": "First battery power is positive while charging",
           "primary_soc_entity": "First battery: SoC",
+          "primary_reserve_entity": "First battery: reserve (minimum SoC, %)",
           "forecast_today_entity": "PV forecast for today (kWh)",
           "forecast_remaining_entity": "Remaining PV forecast for today (kWh)",
           "forecast_factor": "Dampening of the remaining forecast",
@@ -80,6 +85,9 @@
           "total_charge_limit_w": "Maximum AC charge + own PV (W)",
           "discharge_limit_w": "Maximum discharge command (W)",
           "tick_seconds": "Decision interval (s)"
+        },
+        "data_description": {
+          "primary_reserve_entity": "Optional. The charge level at which your inverter stops discharging the first battery. The Venus then treats it as empty 3 points above that (at least 12 %). Without it, a fixed 12 % applies."
         }
       }
     }
@@ -111,7 +119,9 @@
           "manual_override": "Manual override",
           "manual_charge": "Manual charge",
           "manual_discharge": "Manual discharge",
+          "manual_discharge_target": "Manual discharge to target SoC",
           "manual_standby": "Manual standby",
+          "target_soc_reached": "Target SoC reached",
           "unknown": "Unknown"
         }
       },
@@ -158,6 +168,9 @@
       },
       "discharging": {
         "name": "Discharging"
+      },
+      "discharging_to_target": {
+        "name": "Discharging to target SoC"
       }
     },
     "switch": {
@@ -174,6 +187,9 @@
       },
       "charge_reserve_w": {
         "name": "Charge reserve"
+      },
+      "target_soc": {
+        "name": "Target SoC"
       },
       "first_forecast_kwh": {
         "name": "Venus first from forecast"
@@ -195,6 +211,9 @@
       "manual_discharge": {
         "name": "Manual discharge"
       },
+      "discharge_to_target": {
+        "name": "Discharge to target SoC"
+      },
       "manual_stop": {
         "name": "Manual stop"
       },
@@ -207,6 +226,14 @@
     "inputs_missing": {
       "title": "Venus Surplus Control: readings incomplete",
       "description": "The controller has had no complete readings for several minutes and sends no commands (after two such ticks it puts the Venus into standby). Missing or unavailable: {entities}. Check the Marstek Venus Modbus integration and the surplus sensor, or pick other entities under Configure. This notice disappears as soon as the readings are complete again."
+    }
+  },
+  "exceptions": {
+    "target_reached": {
+      "message": "The Venus is at {soc} %, which is already at or below the target of {target} %."
+    },
+    "soc_unknown": {
+      "message": "The SoC of the Venus is not available right now."
     }
   }
 }

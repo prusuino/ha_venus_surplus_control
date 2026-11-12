@@ -19,6 +19,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             FlagSensor(c, "cross_charging_blocked", lambda c: c.status.values.get("cross_trip") or (c.status.values.get("block_charge") and c.status.values.get("headroom_w", 0) >= 400) or (c.status.values.get("block_discharge") and c.status.values.get("house_need_w", 0) >= 200), "mdi:swap-horizontal-circle-outline", None),
             FlagSensor(c, "charging", lambda c: c.status.target_mode == "charge", "mdi:battery-charging"),
             FlagSensor(c, "discharging", lambda c: c.status.target_mode == "discharge", "mdi:battery-arrow-down"),
+            FlagSensor(c, "discharging_to_target", lambda c: c.settings.discharge_target_active, "mdi:target"),
         ]
     )
 

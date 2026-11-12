@@ -15,13 +15,13 @@ A Home Assistant integration that runs a **Marstek Venus** battery from your PV 
 ## Highlights
 
 - **Charge from real surplus only** – AC charging follows the surplus in 100 W steps, less a reserve you set from the dashboard, capped so that AC charge plus the Venus' own PV stay below the device limit. While your first battery (BYD, Pylontech, …) is still absorbing the surplus, the Venus waits; on a good solar day ("Venus first") it may start early in parallel because both will fill up anyway.
-- **Discharge against house demand only** – 200–1000 W in steps with hysteresis, an export guard that steps down before the house would export, and only while the first battery is already delivering or empty.
+- **Discharge against house demand only** – 200–1000 W in steps with hysteresis, an export guard that steps down before the house would export, and only while the first battery is already delivering or empty. "Empty" can follow the reserve you set on your inverter.
 - **Standby otherwise** – and an immediate stop when the first battery suddenly works against the Venus (cross-charging). The two batteries never charge each other.
 - **RS485 watchdog** – the Venus firmware drops the RS485 control mode and resets its power registers on restarts, app or cloud access. The watchdog restores the control mode and the last command.
 - **Discharge cap** – a ceiling you set from the dashboard that every command respects and that is enforced again when the app or a firmware reset raises the register.
 - **Modbus self-heal** – reloads the Marstek Venus Modbus integration after a long connection loss.
 - **Dry run** – new entries start in dry run: the controller decides and writes every command it *would* send to the logbook, but touches nothing. Switch it off when the decisions look right.
-- **Manual buttons** – charge, discharge, stop and back to auto.
+- **Manual buttons** – charge, discharge, discharge down to a target SoC, stop and back to auto.
 - **Diagnostics** – target mode, reason and the decision in words, every value behind it as attributes, a diagnostics download, and a logbook line for every command with its reasons.
 
 This is the logic of the YAML package [ha-marstek-venus-surplus](https://github.com/prusuino/ha-marstek-venus-surplus), which has run on my Venus A next to an inverter-coupled battery since summer 2026, rebuilt as an integration so that it needs no YAML and no helpers.
@@ -30,7 +30,7 @@ This is the logic of the YAML package [ha-marstek-venus-surplus](https://github.
 
 - A Marstek Venus (A, C, D or E) reachable over Modbus TCP and the **[Marstek Venus Modbus](https://github.com/ViperRNMC/marstek_venus_modbus)** integration by ViperRNMC. This integration uses its *Force Mode* select (options standby / charge / discharge), the *Set charge power* and *Set discharge power* numbers, the *RS485 control mode* switch, SoC, AC power and inverter state. The Venus accepts one Modbus client; do not run a second tool against it.
 - A power sensor giving **PV production minus house consumption** in W (surplus positive), or a grid meter (tick "import positive" in the setup).
-- Optional: power and SoC of your first battery, a PV forecast for today and the remaining day in kWh (for example Solcast), the Venus' MPPT power sensors (A/D), its total capacity, the Modbus connection sensor.
+- Optional: power, SoC and reserve (minimum SoC) of your first battery, a PV forecast for today and the remaining day in kWh (for example Solcast), the Venus' MPPT power sensors (A/D), its total capacity, the Modbus connection sensor.
 - Home Assistant 2025.4 or newer.
 
 ## Installation
@@ -42,7 +42,7 @@ Through the **Marketplace** (Settings → Marketplace → Add from link → `pru
 Settings → Devices & services → Add integration → **Venus Surplus Control**.
 
 1. **Required**: a name, your surplus sensor, and the seven Venus entities (Force Mode, two power numbers, RS485 switch, SoC, AC power, inverter state). Check the sign of the AC power sensor: positive must mean the Venus is *delivering* into the house; tick the invert box otherwise.
-2. **Optional**: the Venus' MPPT sensors and capacity, your first battery's power (positive = discharging; tick invert if yours is the other way round) and SoC, the forecasts, the Modbus connection sensor and the Modbus config entry (for the self-heal reload), and the device limits (AC charge 1200 W, total 1400 W, discharge 1000 W for a Venus A – raise them for a D or E).
+2. **Optional**: the Venus' MPPT sensors and capacity, your first battery's power (positive = discharging; tick invert if yours is the other way round) and SoC, its reserve if you change it now and then (a sensor, a number or a helper – see below), the forecasts, the Modbus connection sensor and the Modbus config entry (for the self-heal reload), and the device limits (AC charge 1200 W, total 1400 W, discharge 1000 W for a Venus A – raise them for a D or E).
 
 Everything can be changed later under **Configure**.
 
@@ -59,16 +59,17 @@ Everything can be changed later under **Configure**.
 | `sensor.<name>_charge_headroom`, `…_house_demand` | surplus minus reserve; grid import corrected for the Venus |
 | `sensor.<name>_charge_command`, `…_discharge_command` | the last commanded power |
 | `sensor.<name>_watchdog_restores`, `…_dry_run_commands` | counters |
-| `binary_sensor.<name>_charging`, `…_discharging`, `…_venus_first`, `…_parallel_charging_allowed`, `…_cross_charging_block` | states for your automations |
+| `binary_sensor.<name>_charging`, `…_discharging`, `…_venus_first`, `…_parallel_charging_allowed`, `…_cross_charging_block`, `…_discharging_to_target_soc` | states for your automations |
 | `switch.<name>_manual_override` | pauses the controller |
 | `switch.<name>_dry_run` | decide and log only |
 | `number.<name>_discharge_cap` | ceiling for the discharge power |
 | `number.<name>_charge_reserve` | surplus the Venus leaves alone while charging (default 200 W, 0–500 W). Lower it to use more of a small surplus; with a low reserve a load that starts may draw from the grid for a moment, until the three-minute mean has followed |
+| `number.<name>_target_soc` | where **Discharge to target SoC** stops (5–100 %, default 50) |
 | `number.<name>_venus_first_from_forecast` | today's forecast (kWh) from which the Venus may charge in parallel early (default 45) |
 | `number.<name>_first_battery_capacity`, `…_venus_capacity_fallback`, `…_house_base_load` | for the remaining-forecast rule |
-| `button.<name>_manual_charge`, `…_manual_discharge`, `…_manual_stop`, `…_back_to_auto` | manual control |
+| `button.<name>_manual_charge`, `…_manual_discharge`, `…_discharge_to_target_soc`, `…_manual_stop`, `…_back_to_auto` | manual control |
 
-Every command also fires the event `venus_surplus_command` with `command`, `power`, `reason` and `dry_run`.
+Every command of the controller also fires the event `venus_surplus_command` with `command`, `power`, `reason` and `dry_run`; so does the standby at the end of a discharge to the target SoC (reason `target_soc_reached`).
 
 ## How it decides
 
@@ -76,12 +77,20 @@ Every 30 seconds (adjustable) the controller takes a sample of the surplus and o
 
 1. **Protect** – Venus SoC ≤ 12 %: standby. First battery discharging > 500 W while the Venus charges (or charging while it discharges): standby ("cross trip").
 2. **Charge** if the AC command would be ≥ 100 W and either the first battery is ≥ 85 % (80 % to hold) or parallel charging is allowed: surplus ≥ 1200 W and headroom ≥ 500 W on an ordinary day (600 / 400 W when "Venus first"), the first battery not discharging more than 80 W and, on an ordinary day, not absorbing more than 200 W (500 W to hold). Charging is blocked while the first battery discharges more than 150 W (200 W to hold, confirmed over two ticks; 350 W immediately). Power: the headroom – surplus minus the charge reserve (200 W unless you change it) – floored to 100 W, start from 400 W, hold down to 80 W for three ticks, step up 150 W above the current target, step down only 120 W below it; minus the Venus' own PV against the total limit. With MPPT sensors, a reading that drops to zero while charging is bridged with the last known value; without a known value the power is not raised for four ticks, after that the reading is believed.
-3. **Discharge** if the house imports and the surplus mean is below 100 W, the Venus is above 15 % (12 % to hold), the first battery delivers ≥ 500 W or is ≤ 12 %, and the first battery is not charging more than 100 W. Power: import minus 120 W reserve, 200–1000 W in 100 W steps, one step per tick up (40 W above the next step) or down (40 W below the previous one), never above the export guard (import minus 60 W) or the discharge cap.
+3. **Discharge** if the house imports and the surplus mean is below 100 W, the Venus is above 15 % (12 % to hold), the first battery delivers ≥ 500 W or is empty (≤ 12 %, or its reserve plus 3 points – see below), and the first battery is not charging more than 100 W. Power: import minus 120 W reserve, 200–1000 W in 100 W steps, one step per tick up (40 W above the next step) or down (40 W below the previous one), never above the export guard (import minus 60 W) or the discharge cap.
 4. **Standby** otherwise.
 
 "Venus first" is true when today's forecast is above the threshold, when the remaining forecast covers both batteries plus the house until sunset with 20 % margin and there is real surplus now (≥ 2500 W), or when a projection from the current surplus shows the first battery full long before sunset while the Venus would not make it. The two latter latch until sunset.
 
 Missing input values for two consecutive ticks put the Venus into standby.
+
+### When the first battery counts as empty
+
+An inverter stops discharging its battery at a reserve (minimum SoC). From there on the first battery delivers nothing, and the Venus must not wait for it. By default the Venus takes over once the first battery is at 12 % or below. If you raise that reserve now and then – in winter, or to keep backup power – pick the entity that holds it as **First battery: reserve** under Configure: a sensor or number of your inverter's integration, or a number helper you set yourself. The first battery then counts as empty at the reserve plus 3 points, never below 12 %. While the reading is unavailable the last value is kept. Without a first battery none of this applies.
+
+## Discharge to a target SoC
+
+Set `number.<name>_target_soc` and press **Discharge to target SoC**. The manual override switches on and the Venus discharges at the discharge cap until its SoC is at or below the target, then it goes to standby. This run ignores the house demand, so the Venus may export to the grid. The override stays on at the end – otherwise the controller would simply go on discharging against the house demand – so press **Back to auto** when you are done. Any other manual button, or switching the override off, cancels the run; `binary_sensor.<name>_discharging_to_target_soc` is on while it lasts. A Venus with its own PV (A/D) keeps charging from its MPPTs, which cannot be switched off from here: by day the net discharge is the command minus that production, and after the stop the SoC rises again.
 
 ## Dry run and first days
 

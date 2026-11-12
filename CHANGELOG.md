@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.0 — 2026-11-12
+
+- **The first battery's "empty" can follow its reserve.** New optional input *First battery: reserve* under Configure (a sensor, a number or a number helper). With it, the Venus takes over from the first battery at the reserve plus 3 points instead of the fixed 12 % (never below 12 %), so it keeps working when you raise the reserve on your inverter, for example in winter. While the reading is unavailable the last value is kept. Without the input nothing changes.
+- **Discharge to a target SoC.** The new button `button.<name>_discharge_to_target_soc` discharges the Venus at the discharge cap until it is at `number.<name>_target_soc` (5–100 %, default 50), then puts it into standby and leaves the manual override on. `binary_sensor.<name>_discharging_to_target_soc` shows the run; the event `venus_surplus_command` fires with the reason `target_soc_reached` at the end.
+- Setups without a first battery work as before: the reserve input is not needed there, and the target discharge is only a button.
+
 ## 0.4.0 — 2026-11-12
 
 - **Fixed: the charge power stayed low after a load peak.** On a Venus without MPPT sensors the charge power could go down but never up again while charging: after a washing machine or kettle had pushed it down, it stayed there until charging stopped and started anew. It now follows the surplus up again. With MPPT sensors a zero reading holds the power back for four ticks only; a reading that stays low is believed. Reported by @VIMVa (#1).

@@ -13,6 +13,7 @@ from typing import Any, Callable
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_track_state_change_event, async_track_time_change, async_track_time_interval
 from homeassistant.helpers.storage import Store
@@ -35,6 +36,7 @@ from .const import (
     CONF_MODBUS_ENTRY,
     CONF_PRIMARY_POWER,
     CONF_PRIMARY_POWER_INVERT,
+    CONF_PRIMARY_RESERVE,
     CONF_PRIMARY_SOC,
     CONF_RS485,
     CONF_SURPLUS,
@@ -55,6 +57,7 @@ from .const import (
     DEFAULT_FIRST_FORECAST_KWH,
     DEFAULT_FORECAST_FACTOR,
     DEFAULT_PRIMARY_KWH,
+    DEFAULT_TARGET_SOC,
     DEFAULT_TICK_SECONDS,
     DEFAULT_TOTAL_CHARGE_LIMIT,
     DEFAULT_VENUS_KWH,
@@ -96,6 +99,8 @@ class Settings:
     primary_capacity_kwh: float = DEFAULT_PRIMARY_KWH
     venus_capacity_kwh: float = DEFAULT_VENUS_KWH
     house_base_load_kw: float = DEFAULT_BASE_LOAD_KW
+    target_soc: int = DEFAULT_TARGET_SOC  # for the manual discharge to a target
+    discharge_target_active: bool = False
     manual_override: bool = False
     dry_run: bool = True  # new entries start in dry run
 
@@ -161,6 +166,7 @@ class VenusController:
             charge_reserve_w=float(self.settings.charge_reserve_w),
             has_primary=self.has_primary,
             has_venus_pv=bool(self._cfg(CONF_VENUS_PV)),
+            has_primary_reserve=bool(self._cfg(CONF_PRIMARY_RESERVE)),
         )
 
     # ------------------------------------------------------------------ lifecycle
@@ -199,6 +205,8 @@ class VenusController:
                     "primary_capacity_kwh": self.settings.primary_capacity_kwh,
                     "venus_capacity_kwh": self.settings.venus_capacity_kwh,
                     "house_base_load_kw": self.settings.house_base_load_kw,
+                    "target_soc": self.settings.target_soc,
+                    "discharge_target_active": self.settings.discharge_target_active,
                     "manual_override": self.settings.manual_override,
                     "dry_run": self.settings.dry_run,
                 },
@@ -208,6 +216,8 @@ class VenusController:
 
     async def async_set_setting(self, key: str, value: Any) -> None:
         setattr(self.settings, key, value)
+        if key == "manual_override" and not value:
+            self.settings.discharge_target_active = False  # handing back cancels the run to the target
         await self._save()
         self._notify()
         if key in ("manual_override", "discharge_cap_w"):
@@ -308,6 +318,7 @@ class VenusController:
             venus_capacity_kwh=self._num(CONF_VENUS_CAPACITY),
             primary_power=self._num(CONF_PRIMARY_POWER, CONF_PRIMARY_POWER_INVERT),
             primary_soc=self._num(CONF_PRIMARY_SOC),
+            primary_reserve_soc=self._num(CONF_PRIMARY_RESERVE),
             forecast_today_kwh=self._num(CONF_FORECAST_TODAY) or 0.0,
             forecast_remaining_kwh=(self._num(CONF_FORECAST_REMAINING) or 0.0) * factor,
             sun_hours_left=self._sun_hours_left(),
@@ -319,9 +330,13 @@ class VenusController:
         self._last_master_run = now
         inputs = self.inputs(now)
         if self.settings.manual_override:
+            if self.settings.discharge_target_active:
+                await self._target_tick(inputs.venus_soc, now)
+                return
             self.status.target_mode = "paused"
-            self.status.reason = "manual_override"
-            self.status.text = "Automation paused: manual override is on."
+            if self.status.reason != "target_soc_reached":  # keep saying why the Venus stands by
+                self.status.reason = "manual_override"
+                self.status.text = "Automation paused: manual override is on."
             self.status.decided_at = now
             self._notify()
             return
@@ -342,6 +357,32 @@ class VenusController:
             await self._execute(decision.command, decision.power, decision.reason, decision.values)
         if changed_state:
             await self._save()
+        self._notify()
+
+    async def _target_tick(self, soc: float | None, now: datetime) -> None:
+        """Manual discharge to the target SoC: wait, then stand by. The
+        override stays on, otherwise the master would discharge on."""
+        target = int(self.settings.target_soc)
+        self.status.target_mode = "paused"
+        self.status.decided_at = now
+        if soc is None or soc > target:
+            shown = "unknown" if soc is None else f"{soc:.1f} %"
+            self.status.reason = "manual_discharge_target"
+            self.status.text = f"Manual: discharging until the Venus is at {target} % (now {shown})."
+            self._notify()
+            return
+        self.settings.discharge_target_active = False
+        self.state.last_charge_power = self.state.last_charge_target = self.state.last_discharge_power = 0
+        await self._save()
+        if self.settings.dry_run:
+            await self._log(f"-> DRY RUN TARGET SOC REACHED | soc={soc:.1f}% <= {target}% | would stand by")
+        else:
+            await self._write(MODE_STANDBY, 0)
+            await self._log(f"-> TARGET SOC REACHED: STANDBY | soc={soc:.1f}% <= {target}% | manual_override stays on")
+        self.hass.bus.async_fire(EVENT_COMMAND, {"entry_id": self.entry.entry_id, "command": MODE_STANDBY, "power": 0, "reason": "target_soc_reached", "dry_run": self.settings.dry_run})
+        self.status.reason = "target_soc_reached"
+        self.status.text = f"Target SoC {target} % reached ({soc:.1f} %): standby. Manual override stays on; press Back to auto to hand back."
+        self.status.last_command, self.status.last_command_power, self.status.last_command_time = MODE_STANDBY, 0, dt_util.utcnow()
         self._notify()
 
     async def _execute(self, command: str, power: int, reason: str, values: dict) -> None:
@@ -383,8 +424,12 @@ class VenusController:
     # ------------------------------------------------------------------ manual
     async def async_manual(self, action: str) -> None:
         """Buttons: charge / discharge / stop switch the override on and
-        write the command; auto stops the Venus and hands back to the master."""
+        write the command; auto stops the Venus and hands back to the master.
+        Every button ends a running discharge to the target SoC, except the
+        one that starts it."""
         p = self.params()
+        to_target = action == "discharge_target"
+        self.settings.discharge_target_active = to_target
         if action == "auto":
             self.state.last_charge_power = self.state.last_charge_target = self.state.last_discharge_power = 0
             await self._save()
@@ -401,8 +446,10 @@ class VenusController:
             power = p.ac_charge_limit_w
             self.state.last_charge_power, self.state.last_charge_target, self.state.last_discharge_power = power, power, 0
             cmd = MODE_CHARGE
-        elif action == "discharge":
-            power = min(600, max(p.discharge_min_w, min(p.discharge_limit_w, int(p.discharge_cap_w // 100) * 100)))
+        elif action in ("discharge", "discharge_target"):
+            power = max(p.discharge_min_w, min(p.discharge_limit_w, int(p.discharge_cap_w // 100) * 100))
+            if not to_target:
+                power = min(600, power)
             self.state.last_discharge_power, self.state.last_charge_power, self.state.last_charge_target = power, 0, 0
             cmd = MODE_DISCHARGE
         else:
@@ -410,16 +457,33 @@ class VenusController:
             self.state.last_charge_power = self.state.last_charge_target = self.state.last_discharge_power = 0
             cmd = MODE_STANDBY
         await self._save()
+        target = int(self.settings.target_soc)
+        note = f" | until soc <= {target}%" if to_target else ""
         if self.settings.dry_run:
-            await self._log(f"-> DRY RUN MANUAL {cmd.upper()} {power}W | manual_override=on")
+            await self._log(f"-> DRY RUN MANUAL {cmd.upper()} {power}W | manual_override=on{note}")
         else:
             await self._write(cmd, power)
-            await self._log(f"-> MANUAL {cmd.upper()} {power}W | manual_override=on")
+            await self._log(f"-> MANUAL {cmd.upper()} {power}W | manual_override=on{note}")
         self.status.target_mode = "paused"
-        self.status.reason = f"manual_{cmd}"
-        self.status.text = f"Manual: {cmd} {power} W. Override switched on."
+        if to_target:
+            self.status.reason = "manual_discharge_target"
+            self.status.text = f"Manual: discharge {power} W until the Venus is at {target} %. Override switched on."
+        else:
+            self.status.reason = f"manual_{cmd}"
+            self.status.text = f"Manual: {cmd} {power} W. Override switched on."
         self.status.last_command, self.status.last_command_power, self.status.last_command_time = cmd, power, dt_util.utcnow()
         self._notify()
+
+    async def async_discharge_to_target(self) -> None:
+        """Button: discharge at the discharge cap until the Venus is at the
+        target SoC, then stand by (see `_target_tick`)."""
+        soc = self._num(CONF_VENUS_SOC)
+        target = int(self.settings.target_soc)
+        if soc is None:
+            raise HomeAssistantError(translation_domain=DOMAIN, translation_key="soc_unknown")
+        if soc <= target:
+            raise HomeAssistantError(translation_domain=DOMAIN, translation_key="target_reached", translation_placeholders={"soc": f"{soc:.0f}", "target": str(target)})
+        await self.async_manual("discharge_target")
 
     # ------------------------------------------------------------------ watchdog
     @callback

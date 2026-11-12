@@ -20,6 +20,7 @@ from custom_components.venus_surplus.const import (
     CONF_NAME,
     CONF_PRIMARY_POWER,
     CONF_PRIMARY_POWER_INVERT,
+    CONF_PRIMARY_RESERVE,
     CONF_PRIMARY_SOC,
     CONF_RS485,
     CONF_SURPLUS,
@@ -96,3 +97,19 @@ async def test_options_flow_drops_a_removed_optional_entity(hass: HomeAssistant,
     assert entry.options[CONF_PRIMARY_POWER] == "sensor.battery_power"
     assert CONF_PRIMARY_SOC not in entry.options
     assert CONF_PRIMARY_SOC not in entry.data  # removed in the form: gone from the entry as well
+
+
+async def test_reserve_input_is_stored_and_can_be_removed(hass: HomeAssistant, enable_custom_integrations) -> None:
+    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_USER})
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], REQUIRED)
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {**OPTIONAL, CONF_PRIMARY_SOC: "sensor.battery_soc", CONF_PRIMARY_RESERVE: "number.battery_reserve"})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["data"][CONF_PRIMARY_RESERVE] == "number.battery_reserve"  # a number or a helper is accepted, not only a sensor
+    entry = result["result"]
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], REQUIRED)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {**OPTIONAL, CONF_PRIMARY_SOC: "sensor.battery_soc"})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.options[CONF_PRIMARY_SOC] == "sensor.battery_soc"
+    assert CONF_PRIMARY_RESERVE not in entry.options and CONF_PRIMARY_RESERVE not in entry.data
