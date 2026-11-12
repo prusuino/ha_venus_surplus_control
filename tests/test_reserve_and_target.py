@@ -140,6 +140,8 @@ async def test_target_soc_number_is_stored(hass: HomeAssistant, enable_custom_in
     assert entry.runtime_data.params().has_primary_reserve is False
     state = hass.states.get("number.venus_target_soc")
     assert state is not None and float(state.state) == 50
+    # The Venus does not discharge below 12 %, so a lower target could never be reached.
+    assert state.attributes["min"] == 12 and state.attributes["max"] == 100
     await hass.services.async_call("number", "set_value", {"entity_id": "number.venus_target_soc", "value": 30}, blocking=True)
     assert entry.runtime_data.settings.target_soc == 30
 

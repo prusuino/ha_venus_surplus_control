@@ -64,7 +64,7 @@ Everything can be changed later under **Configure**.
 | `switch.<name>_dry_run` | decide and log only |
 | `number.<name>_discharge_cap` | ceiling for the discharge power |
 | `number.<name>_charge_reserve` | surplus the Venus leaves alone while charging (default 200 W, 0–500 W). Lower it to use more of a small surplus; with a low reserve a load that starts may draw from the grid for a moment, until the three-minute mean has followed |
-| `number.<name>_target_soc` | where **Discharge to target SoC** stops (5–100 %, default 50) |
+| `number.<name>_target_soc` | where **Discharge to target SoC** stops (12–100 %, default 50) |
 | `number.<name>_venus_first_from_forecast` | today's forecast (kWh) from which the Venus may charge in parallel early (default 45) |
 | `number.<name>_first_battery_capacity`, `…_venus_capacity_fallback`, `…_house_base_load` | for the remaining-forecast rule |
 | `button.<name>_manual_charge`, `…_manual_discharge`, `…_discharge_to_target_soc`, `…_manual_stop`, `…_back_to_auto` | manual control |
@@ -90,7 +90,7 @@ An inverter stops discharging its battery at a reserve (minimum SoC). From there
 
 ## Discharge to a target SoC
 
-Set `number.<name>_target_soc` and press **Discharge to target SoC**. The manual override switches on and the Venus discharges at the discharge cap until its SoC is at or below the target, then it goes to standby. This run ignores the house demand, so the Venus may export to the grid. The override stays on at the end – otherwise the controller would simply go on discharging against the house demand – so press **Back to auto** when you are done. Any other manual button, or switching the override off, cancels the run; `binary_sensor.<name>_discharging_to_target_soc` is on while it lasts. A Venus with its own PV (A/D) keeps charging from its MPPTs, which cannot be switched off from here: by day the net discharge is the command minus that production, and after the stop the SoC rises again.
+Set `number.<name>_target_soc` and press **Discharge to target SoC**. The manual override switches on and the Venus discharges at the discharge cap until its SoC is at or below the target, then it goes to standby. The target starts at 12 % because the Venus does not discharge below that; if you have raised the discharge cut-off on the Venus itself, keep the target above it, or the run never reaches its end. This run ignores the house demand, so the Venus may export to the grid. The override stays on at the end – otherwise the controller would simply go on discharging against the house demand – so press **Back to auto** when you are done. Any other manual button, or switching the override off, cancels the run; `binary_sensor.<name>_discharging_to_target_soc` is on while it lasts. A Venus with its own PV (A/D) keeps charging from its MPPTs, which cannot be switched off from here: by day the net discharge is the command minus that production, and after the stop the SoC rises again.
 
 ## Dry run and first days
 
