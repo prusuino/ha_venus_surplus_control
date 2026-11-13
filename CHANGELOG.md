@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.0 — 2026-11-13
+
+- **Three more values are adjustable.** *Charge from surplus of* (headroom from which charging starts, default 400 W as before), *Reaction* (calm, normal or fast: the surplus is averaged over 5, 3 or 1 minute; normal is the 3 minutes used so far) and *Venus charges from first battery SoC* (default 85 % as before; 0 = the Venus never waits for the first battery). Without a change the behaviour stays the same. Asked for by @VIMVa (#2).
+- **A tidier device page.** The values you set once are now under *Configuration*; *Controls* keeps the buttons, the two switches, *Maximum discharge power* and *Manual discharge target SoC*.
+- **Names that say what happens.** *Discharge cap* is *Maximum discharge power*, *Charge reserve* is *Charging buffer*, *Venus first from forecast* is *Charge in parallel from daily forecast*, *Target SoC* is *Manual discharge target SoC* and its button *Manual discharge to target SoC* (the pair is for discharging by hand, the automatic control does not use it), the surplus sensors are *Surplus (mean)*. *House base load* is entered in W instead of kW (the stored value carries over). Existing entries keep their entity IDs.
+- **More help.** More fields under Configure explain themselves. The README has two new sections: "Which setting does what" as a quick table, and "Settings in detail", which describes every setting on the device page and under Configure: what it does, why it is there, an example and when to change it.
+
 ## 0.6.1 — 2026-11-13
 
 - **Fixed: an empty Venus did not charge.** At 12 % or below the SoC protection stopped everything, charging included, and the reason read "Venus SoC too low". A Venus with its own PV got out of this by itself in the morning; one without stayed empty. The protection now only blocks discharging. Reported by @VIMVa (#2).

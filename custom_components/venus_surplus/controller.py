@@ -54,6 +54,9 @@ from .const import (
     DEFAULT_AC_CHARGE_LIMIT,
     DEFAULT_BASE_LOAD_KW,
     DEFAULT_CHARGE_RESERVE,
+    DEFAULT_CHARGE_START_W,
+    DEFAULT_REACTION,
+    DEFAULT_PRIMARY_FIRST_SOC,
     DEFAULT_DISCHARGE_CAP,
     DEFAULT_DISCHARGE_LIMIT,
     DEFAULT_FEED_IN_CUSTOM,
@@ -68,9 +71,9 @@ from .const import (
     DOMAIN,
     EVENT_COMMAND,
     LOGBOOK_NAME,
-    MEAN_WINDOW,
     MODE_CHARGE,
     MODE_DISCHARGE,
+    REACTION_MINUTES,
     feed_in_limit_w,
     MODE_STANDBY,
     SELF_HEAL_AFTER,
@@ -99,6 +102,9 @@ class Settings:
 
     discharge_cap_w: int = DEFAULT_DISCHARGE_CAP
     charge_reserve_w: int = DEFAULT_CHARGE_RESERVE
+    charge_start_w: int = DEFAULT_CHARGE_START_W  # headroom from which charging starts
+    reaction: str = DEFAULT_REACTION  # calm / normal / fast: how long the surplus is averaged
+    primary_first_soc: int = DEFAULT_PRIMARY_FIRST_SOC  # first battery SoC from which the Venus charges without the parallel rule
     first_forecast_kwh: float = DEFAULT_FIRST_FORECAST_KWH
     primary_capacity_kwh: float = DEFAULT_PRIMARY_KWH
     venus_capacity_kwh: float = DEFAULT_VENUS_KWH
@@ -181,6 +187,9 @@ class VenusController:
             venus_capacity_fallback_kwh=float(self.settings.venus_capacity_kwh),
             house_base_load_kw=float(self.settings.house_base_load_kw),
             charge_reserve_w=float(self.settings.charge_reserve_w),
+            charge_start_headroom_w=float(self.settings.charge_start_w),
+            soc_min_charge_start=float(self.settings.primary_first_soc),
+            soc_min_charge_hold=max(0.0, float(self.settings.primary_first_soc) - 5),
             has_primary=self.has_primary,
             has_venus_pv=bool(self._cfg(CONF_VENUS_PV)),
             has_primary_reserve=bool(self._cfg(CONF_PRIMARY_RESERVE)),
@@ -221,6 +230,9 @@ class VenusController:
                 "settings": {
                     "discharge_cap_w": self.settings.discharge_cap_w,
                     "charge_reserve_w": self.settings.charge_reserve_w,
+                    "charge_start_w": self.settings.charge_start_w,
+                    "reaction": self.settings.reaction,
+                    "primary_first_soc": self.settings.primary_first_soc,
                     "first_forecast_kwh": self.settings.first_forecast_kwh,
                     "primary_capacity_kwh": self.settings.primary_capacity_kwh,
                     "venus_capacity_kwh": self.settings.venus_capacity_kwh,
@@ -307,13 +319,13 @@ class VenusController:
         return max(0.0, (t - dt_util.utcnow()).total_seconds() / 3600)
 
     def _sample(self, now: datetime) -> tuple[float | None, float | None, float | None]:
-        """Take the 30-second sample and return (mean, mean without Venus, instant)."""
+        """Take the sample of this tick and return (mean, mean without Venus, instant)."""
         surplus = self._num(CONF_SURPLUS, CONF_SURPLUS_INVERT)
         ms = self._num(CONF_VENUS_AC, CONF_VENUS_AC_INVERT)
         if surplus is not None:
             ms_c = ms if ms is not None and abs(ms) > 40 else 0.0
             self._samples.append((now, surplus, surplus - ms_c))
-        cutoff = now - MEAN_WINDOW
+        cutoff = now - timedelta(minutes=REACTION_MINUTES.get(self.settings.reaction, REACTION_MINUTES[DEFAULT_REACTION]))
         while self._samples and self._samples[0][0] < cutoff:
             self._samples.popleft()
         if not self._samples:

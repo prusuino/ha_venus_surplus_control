@@ -10,7 +10,7 @@ from .issues import async_clear_entry_issues
 
 type VenusSurplusConfigEntry = ConfigEntry[VenusController]
 
-PLATFORMS = ["sensor", "binary_sensor", "switch", "number", "button"]
+PLATFORMS = ["sensor", "binary_sensor", "switch", "number", "select", "button"]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: VenusSurplusConfigEntry) -> bool:

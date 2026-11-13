@@ -27,7 +27,7 @@ from datetime import datetime
 class Inputs:
     """Readings of one tick. Power in W, energy in kWh, SoC in %."""
 
-    surplus_mean: float | None  # 3-minute mean of PV minus house
+    surplus_mean: float | None  # mean of PV minus house over the averaging window
     surplus_instant: float | None
     surplus_ex_venus_mean: float | None  # mean with the Venus' AC flow taken out
     venus_soc: float | None

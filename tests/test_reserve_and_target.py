@@ -138,11 +138,11 @@ async def test_reserve_input_reaches_the_engine_and_is_never_a_missing_input(has
 async def test_target_soc_number_is_stored(hass: HomeAssistant, enable_custom_integrations, expected_lingering_timers: bool) -> None:
     entry = await _setup(hass)
     assert entry.runtime_data.params().has_primary_reserve is False
-    state = hass.states.get("number.venus_target_soc")
+    state = hass.states.get("number.venus_manual_discharge_target_soc")
     assert state is not None and float(state.state) == 50
     # The Venus does not discharge below 12 %, so a lower target could never be reached.
     assert state.attributes["min"] == 12 and state.attributes["max"] == 100
-    await hass.services.async_call("number", "set_value", {"entity_id": "number.venus_target_soc", "value": 30}, blocking=True)
+    await hass.services.async_call("number", "set_value", {"entity_id": "number.venus_manual_discharge_target_soc", "value": 30}, blocking=True)
     assert entry.runtime_data.settings.target_soc == 30
 
     assert await hass.config_entries.async_reload(entry.entry_id)
@@ -158,7 +158,7 @@ async def test_discharges_to_the_target_then_stands_by_with_the_override_on(hass
     calls = _live(controller)
     events = async_capture_events(hass, EVENT_COMMAND)
 
-    await _press(hass, "button.venus_discharge_to_target_soc")
+    await _press(hass, "button.venus_manual_discharge_to_target_soc")
     assert controller.settings.manual_override is True and controller.settings.discharge_target_active is True
     assert controller.state.last_discharge_power == 1000  # the discharge cap, kept by the watchdog
     assert _writes(calls) == [("number", "set_value", 1000), ("select", "select_option", "discharge")]
@@ -196,11 +196,11 @@ async def test_target_run_is_refused_at_or_below_the_target_and_without_a_readin
     controller = entry.runtime_data
     calls = _live(controller)
     with pytest.raises(HomeAssistantError) as err:
-        await _press(hass, "button.venus_discharge_to_target_soc")
+        await _press(hass, "button.venus_manual_discharge_to_target_soc")
     assert err.value.translation_key == "target_reached"
     hass.states.async_set("sensor.venus_soc", "unavailable")
     with pytest.raises(HomeAssistantError) as err:
-        await _press(hass, "button.venus_discharge_to_target_soc")
+        await _press(hass, "button.venus_manual_discharge_to_target_soc")
     assert err.value.translation_key == "soc_unknown"
     assert controller.settings.manual_override is False and controller.settings.discharge_target_active is False
     assert _writes(calls) == []
@@ -212,17 +212,17 @@ async def test_target_run_is_cancelled_by_the_override_switch_and_by_other_butto
     controller = entry.runtime_data
     _live(controller)
 
-    await _press(hass, "button.venus_discharge_to_target_soc")
+    await _press(hass, "button.venus_manual_discharge_to_target_soc")
     assert controller.settings.discharge_target_active is True
     await hass.services.async_call("switch", "turn_off", {"entity_id": "switch.venus_manual_override"}, blocking=True)
     assert controller.settings.discharge_target_active is False and controller.settings.manual_override is False
 
-    await _press(hass, "button.venus_discharge_to_target_soc")
+    await _press(hass, "button.venus_manual_discharge_to_target_soc")
     await _press(hass, "button.venus_manual_stop")
     assert controller.settings.discharge_target_active is False and controller.settings.manual_override is True
     assert controller.status.reason == "manual_standby"
 
-    await _press(hass, "button.venus_discharge_to_target_soc")
+    await _press(hass, "button.venus_manual_discharge_to_target_soc")
     await _press(hass, "button.venus_manual_discharge")
     assert controller.settings.discharge_target_active is False
     assert controller.state.last_discharge_power == 600  # the plain manual button keeps its 600 W
@@ -234,7 +234,7 @@ async def test_target_run_uses_the_discharge_cap_and_survives_a_reload(hass: Hom
     controller = entry.runtime_data
     controller.settings.discharge_cap_w = 450
     calls = _live(controller)
-    await _press(hass, "button.venus_discharge_to_target_soc")
+    await _press(hass, "button.venus_manual_discharge_to_target_soc")
     assert _writes(calls)[0] == ("number", "set_value", 400)
 
     assert await hass.config_entries.async_reload(entry.entry_id)
@@ -248,8 +248,25 @@ async def test_target_run_in_dry_run_writes_nothing(hass: HomeAssistant, enable_
     controller = entry.runtime_data
     controller._call = AsyncMock()
     assert controller.settings.dry_run is True
-    await _press(hass, "button.venus_discharge_to_target_soc")
+    await _press(hass, "button.venus_manual_discharge_to_target_soc")
     hass.states.async_set("sensor.venus_soc", "40")
     await controller._tick(dt_util.utcnow())
     assert controller.settings.discharge_target_active is False and controller.status.reason == "target_soc_reached"
     assert _writes(controller._call) == []
+
+
+@pytest.mark.parametrize("expected_lingering_timers", [True])
+async def test_house_base_load_is_shown_in_watts(hass: HomeAssistant, enable_custom_integrations, expected_lingering_timers: bool) -> None:
+    entry = await _setup(hass)
+    assert float(hass.states.get("number.venus_house_base_load").state) == 500
+    await hass.services.async_call("number", "set_value", {"entity_id": "number.venus_house_base_load", "value": 750}, blocking=True)
+    assert entry.runtime_data.settings.house_base_load_kw == 0.75
+    assert entry.runtime_data.params().house_base_load_kw == 0.75
+
+
+@pytest.mark.parametrize("expected_lingering_timers", [True])
+async def test_reaction_select_sets_the_averaging(hass: HomeAssistant, enable_custom_integrations, expected_lingering_timers: bool) -> None:
+    entry = await _setup(hass)
+    assert hass.states.get("select.venus_reaction").state == "normal"
+    await hass.services.async_call("select", "select_option", {"entity_id": "select.venus_reaction", "option": "fast"}, blocking=True)
+    assert entry.runtime_data.settings.reaction == "fast"

@@ -71,8 +71,12 @@ DEFAULT_BASE_LOAD_KW = 0.5
 DEFAULT_DISCHARGE_CAP = 1000
 DEFAULT_CHARGE_RESERVE = 200
 DEFAULT_TARGET_SOC = 50
+DEFAULT_REACTION = "normal"
+# how quickly the controller follows the surplus: minutes the surplus is averaged over
+REACTION_MINUTES: dict[str, float] = {"calm": 5.0, "normal": 3.0, "fast": 1.0}
+DEFAULT_CHARGE_START_W = 400
+DEFAULT_PRIMARY_FIRST_SOC = 85
 
-MEAN_WINDOW = timedelta(minutes=3)
 WATCHDOG_SECOND = 17
 WATCHDOG_MINUTES = (0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55)
 CAP_GUARD_SECOND = 47

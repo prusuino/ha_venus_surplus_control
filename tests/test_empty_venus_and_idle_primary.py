@@ -69,3 +69,17 @@ def test_first_battery_taking_the_surplus_is_not_idle():
         d = decide(_idle(primary_power=-450.0), p, s)
         s = d.state
     assert d.target_mode == "stop" and s.primary_idle_count == 0
+
+
+def test_charge_start_threshold_is_a_parameter():
+    i = _inputs(surplus_mean=450.0, surplus_instant=450.0, primary_soc=96.0)
+    assert decide(i, Params(), State()).target_mode == "stop"  # headroom 250 W < 400 W
+    d = decide(i, Params(charge_start_headroom_w=200), State())
+    assert d.target_mode == "charge" and d.power == 200
+
+
+def test_first_battery_first_until_zero_never_waits():
+    i = _inputs(surplus_mean=900.0, surplus_instant=900.0, primary_soc=20.0, primary_power=-600.0)
+    assert decide(i, Params(), State()).target_mode == "stop"
+    d = decide(i, Params(soc_min_charge_start=0, soc_min_charge_hold=0), State())
+    assert d.target_mode == "charge" and d.reason == "charge_ok"

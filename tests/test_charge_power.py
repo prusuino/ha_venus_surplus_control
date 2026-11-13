@@ -108,9 +108,9 @@ async def test_charge_reserve_number_reaches_the_engine_and_is_stored(hass: Home
     controller = entry.runtime_data
     assert controller.params().charge_reserve_w == 200 and controller.params().has_venus_pv is False
 
-    state = hass.states.get("number.venus_charge_reserve")
+    state = hass.states.get("number.venus_charging_buffer")
     assert state is not None and float(state.state) == 200
-    await hass.services.async_call("number", "set_value", {"entity_id": "number.venus_charge_reserve", "value": 50}, blocking=True)
+    await hass.services.async_call("number", "set_value", {"entity_id": "number.venus_charging_buffer", "value": 50}, blocking=True)
     assert controller.settings.charge_reserve_w == 50 and controller.params().charge_reserve_w == 50
 
     assert await hass.config_entries.async_reload(entry.entry_id)

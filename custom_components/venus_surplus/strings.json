@@ -16,6 +16,9 @@
           "venus_ac_entity": "Venus: AC power",
           "venus_ac_invert": "AC power is negative while the Venus delivers into the house",
           "venus_state_entity": "Venus: Inverter state"
+        },
+        "data_description": {
+          "surplus_entity": "PV production minus house consumption in W, positive while there is surplus. A grid meter works too: tick the box below if it is positive while importing."
         }
       },
       "optional": {
@@ -44,7 +47,12 @@
           "primary_reserve_entity": "Optional. The charge level at which your inverter stops discharging the first battery. The Venus then treats it as empty 3 points above that (at least 12 %). Without it, a fixed 12 % applies.",
           "discharge_limit_w": "What the Venus can deliver at most (Venus A 1000 W; raise it for a D or E). A feed-in limit below lowers it further.",
           "feed_in_limit": "What a plug-in device may deliver into the house wiring. Applies to discharging only, charging is not limited. The integration caps the discharge command and, on a Venus with its own PV, the measured AC delivery, so that PV and battery together stay below the limit. Check the rules that apply to your installation.",
-          "feed_in_limit_custom_w": "Used only with \"Own value\"."
+          "feed_in_limit_custom_w": "Used only with \"Own value\".",
+          "venus_pv_entities": "Only for a Venus with its own PV inputs (A, D). Leave empty for a C or E.",
+          "forecast_factor": "The remaining forecast is multiplied by this before it is compared with what both batteries still need. Below 1 is cautious.",
+          "ac_charge_limit_w": "The highest charge command the integration sends.",
+          "total_charge_limit_w": "Charge command plus the Venus' own PV together. Without own PV set it to the same value as the AC charge limit.",
+          "tick_seconds": "How often the controller decides. Shorter reacts faster, longer is calmer. The values you tune (charge from surplus of, charging buffer, reaction) are on the device page under Configuration, not here."
         }
       }
     },
@@ -69,6 +77,9 @@
           "venus_ac_entity": "Venus: AC power",
           "venus_ac_invert": "AC power is negative while the Venus delivers into the house",
           "venus_state_entity": "Venus: Inverter state"
+        },
+        "data_description": {
+          "surplus_entity": "PV production minus house consumption in W, positive while there is surplus. A grid meter works too: tick the box below if it is positive while importing."
         }
       },
       "optional": {
@@ -97,7 +108,12 @@
           "primary_reserve_entity": "Optional. The charge level at which your inverter stops discharging the first battery. The Venus then treats it as empty 3 points above that (at least 12 %). Without it, a fixed 12 % applies.",
           "discharge_limit_w": "What the Venus can deliver at most (Venus A 1000 W; raise it for a D or E). A feed-in limit below lowers it further.",
           "feed_in_limit": "What a plug-in device may deliver into the house wiring. Applies to discharging only, charging is not limited. The integration caps the discharge command and, on a Venus with its own PV, the measured AC delivery, so that PV and battery together stay below the limit. Check the rules that apply to your installation.",
-          "feed_in_limit_custom_w": "Used only with \"Own value\"."
+          "feed_in_limit_custom_w": "Used only with \"Own value\".",
+          "venus_pv_entities": "Only for a Venus with its own PV inputs (A, D). Leave empty for a C or E.",
+          "forecast_factor": "The remaining forecast is multiplied by this before it is compared with what both batteries still need. Below 1 is cautious.",
+          "ac_charge_limit_w": "The highest charge command the integration sends.",
+          "total_charge_limit_w": "Charge command plus the Venus' own PV together. Without own PV set it to the same value as the AC charge limit.",
+          "tick_seconds": "How often the controller decides. Shorter reacts faster, longer is calmer. The values you tune (charge from surplus of, charging buffer, reaction) are on the device page under Configuration, not here."
         }
       }
     }
@@ -140,10 +156,10 @@
         "name": "Last decision"
       },
       "surplus_mean": {
-        "name": "Surplus (3 min mean)"
+        "name": "Surplus (mean)"
       },
       "surplus_without_venus_mean": {
-        "name": "Surplus without Venus (3 min mean)"
+        "name": "Surplus without Venus (mean)"
       },
       "charge_headroom": {
         "name": "Charge headroom"
@@ -194,16 +210,22 @@
     },
     "number": {
       "discharge_cap_w": {
-        "name": "Discharge cap"
+        "name": "Maximum discharge power"
       },
       "charge_reserve_w": {
-        "name": "Charge reserve"
+        "name": "Charging buffer"
+      },
+      "charge_start_w": {
+        "name": "Charge from surplus of"
+      },
+      "primary_first_soc": {
+        "name": "Venus charges from first battery SoC"
       },
       "target_soc": {
-        "name": "Target SoC"
+        "name": "Manual discharge target SoC"
       },
       "first_forecast_kwh": {
-        "name": "Venus first from forecast"
+        "name": "Charge in parallel from daily forecast"
       },
       "primary_capacity_kwh": {
         "name": "First battery capacity"
@@ -215,6 +237,16 @@
         "name": "House base load"
       }
     },
+    "select": {
+      "reaction": {
+        "name": "Reaction",
+        "state": {
+          "calm": "Calm (5 min average)",
+          "normal": "Normal (3 min average)",
+          "fast": "Fast (1 min average)"
+        }
+      }
+    },
     "button": {
       "manual_charge": {
         "name": "Manual charge"
@@ -223,7 +255,7 @@
         "name": "Manual discharge"
       },
       "discharge_to_target": {
-        "name": "Discharge to target SoC"
+        "name": "Manual discharge to target SoC"
       },
       "manual_stop": {
         "name": "Manual stop"

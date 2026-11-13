@@ -16,6 +16,9 @@
           "venus_ac_entity": "Venus: AC-Leistung",
           "venus_ac_invert": "AC-Leistung ist negativ, während der Venus ins Haus liefert",
           "venus_state_entity": "Venus: Wechselrichter-Status"
+        },
+        "data_description": {
+          "surplus_entity": "PV-Erzeugung minus Hausverbrauch in W, positiv bei Überschuss. Ein Netzzähler geht auch: Haken unten setzen, wenn er bei Bezug positiv ist."
         }
       },
       "optional": {
@@ -44,7 +47,12 @@
           "primary_reserve_entity": "Optional. Der Ladestand, bei dem dein Wechselrichter die erste Batterie nicht weiter entlädt. Der Venus behandelt sie dann 3 Punkte darüber als leer (mindestens 12 %). Ohne Angabe gelten fest 12 %.",
           "discharge_limit_w": "Was der Venus höchstens abgeben kann (Venus A 1000 W; für D oder E erhöhen). Eine tiefere Einspeisegrenze senkt den Wert weiter.",
           "feed_in_limit": "Was ein steckbares Gerät ins Hausnetz abgeben darf. Gilt nur fürs Entladen, das Laden ist nicht begrenzt. Die Integration begrenzt das Entladekommando und bei einem Venus mit eigener PV die gemessene AC-Abgabe, damit PV und Batterie zusammen unter der Grenze bleiben. Prüfe die Regeln, die für deine Installation gelten.",
-          "feed_in_limit_custom_w": "Wird nur bei «Eigener Wert» verwendet."
+          "feed_in_limit_custom_w": "Wird nur bei «Eigener Wert» verwendet.",
+          "venus_pv_entities": "Nur für einen Venus mit eigenen PV-Eingängen (A, D). Bei C oder E leer lassen.",
+          "forecast_factor": "Die Restprognose wird damit multipliziert, bevor sie mit dem Bedarf beider Batterien verglichen wird. Unter 1 ist vorsichtig.",
+          "ac_charge_limit_w": "Das höchste Ladekommando, das die Integration sendet.",
+          "total_charge_limit_w": "Ladekommando plus eigene PV des Venus zusammen. Ohne eigene PV gleich wie die AC-Ladegrenze setzen.",
+          "tick_seconds": "Wie oft die Regelung entscheidet. Kürzer reagiert schneller, länger ist ruhiger. Die Werte zum Abstimmen (Laden ab Überschuss, Puffer beim Laden, Reaktion) stehen auf der Geräteseite unter Konfiguration, nicht hier."
         }
       }
     },
@@ -69,6 +77,9 @@
           "venus_ac_entity": "Venus: AC-Leistung",
           "venus_ac_invert": "AC-Leistung ist negativ, während der Venus ins Haus liefert",
           "venus_state_entity": "Venus: Wechselrichter-Status"
+        },
+        "data_description": {
+          "surplus_entity": "PV-Erzeugung minus Hausverbrauch in W, positiv bei Überschuss. Ein Netzzähler geht auch: Haken unten setzen, wenn er bei Bezug positiv ist."
         }
       },
       "optional": {
@@ -97,7 +108,12 @@
           "primary_reserve_entity": "Optional. Der Ladestand, bei dem dein Wechselrichter die erste Batterie nicht weiter entlädt. Der Venus behandelt sie dann 3 Punkte darüber als leer (mindestens 12 %). Ohne Angabe gelten fest 12 %.",
           "discharge_limit_w": "Was der Venus höchstens abgeben kann (Venus A 1000 W; für D oder E erhöhen). Eine tiefere Einspeisegrenze senkt den Wert weiter.",
           "feed_in_limit": "Was ein steckbares Gerät ins Hausnetz abgeben darf. Gilt nur fürs Entladen, das Laden ist nicht begrenzt. Die Integration begrenzt das Entladekommando und bei einem Venus mit eigener PV die gemessene AC-Abgabe, damit PV und Batterie zusammen unter der Grenze bleiben. Prüfe die Regeln, die für deine Installation gelten.",
-          "feed_in_limit_custom_w": "Wird nur bei «Eigener Wert» verwendet."
+          "feed_in_limit_custom_w": "Wird nur bei «Eigener Wert» verwendet.",
+          "venus_pv_entities": "Nur für einen Venus mit eigenen PV-Eingängen (A, D). Bei C oder E leer lassen.",
+          "forecast_factor": "Die Restprognose wird damit multipliziert, bevor sie mit dem Bedarf beider Batterien verglichen wird. Unter 1 ist vorsichtig.",
+          "ac_charge_limit_w": "Das höchste Ladekommando, das die Integration sendet.",
+          "total_charge_limit_w": "Ladekommando plus eigene PV des Venus zusammen. Ohne eigene PV gleich wie die AC-Ladegrenze setzen.",
+          "tick_seconds": "Wie oft die Regelung entscheidet. Kürzer reagiert schneller, länger ist ruhiger. Die Werte zum Abstimmen (Laden ab Überschuss, Puffer beim Laden, Reaktion) stehen auf der Geräteseite unter Konfiguration, nicht hier."
         }
       }
     }
@@ -140,10 +156,10 @@
         "name": "Letzte Entscheidung"
       },
       "surplus_mean": {
-        "name": "Überschuss (3-min-Mittel)"
+        "name": "Überschuss (Durchschnitt)"
       },
       "surplus_without_venus_mean": {
-        "name": "Überschuss ohne Venus (3-min-Mittel)"
+        "name": "Überschuss ohne Venus (Durchschnitt)"
       },
       "charge_headroom": {
         "name": "Lade-Headroom"
@@ -194,16 +210,22 @@
     },
     "number": {
       "discharge_cap_w": {
-        "name": "Entlade-Obergrenze"
+        "name": "Maximale Entladeleistung"
       },
       "charge_reserve_w": {
-        "name": "Lade-Reserve"
+        "name": "Puffer beim Laden"
+      },
+      "charge_start_w": {
+        "name": "Laden ab Überschuss"
+      },
+      "primary_first_soc": {
+        "name": "Venus lädt ab Ladestand erste Batterie"
       },
       "target_soc": {
-        "name": "Ziel-SoC"
+        "name": "Manuell entladen Ziel-SoC"
       },
       "first_forecast_kwh": {
-        "name": "Venus zuerst ab Prognose"
+        "name": "Parallel laden ab Tagesprognose"
       },
       "primary_capacity_kwh": {
         "name": "Kapazität erste Batterie"
@@ -215,6 +237,16 @@
         "name": "Grundlast Haus"
       }
     },
+    "select": {
+      "reaction": {
+        "name": "Reaktion",
+        "state": {
+          "calm": "Ruhig (Durchschnitt über 5 min)",
+          "normal": "Normal (Durchschnitt über 3 min)",
+          "fast": "Schnell (Durchschnitt über 1 min)"
+        }
+      }
+    },
     "button": {
       "manual_charge": {
         "name": "Manuell laden"
@@ -223,7 +255,7 @@
         "name": "Manuell entladen"
       },
       "discharge_to_target": {
-        "name": "Entladen bis Ziel-SoC"
+        "name": "Manuell entladen bis Ziel-SoC"
       },
       "manual_stop": {
         "name": "Manuell Stop"
