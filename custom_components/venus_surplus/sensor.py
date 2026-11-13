@@ -55,6 +55,7 @@ class TargetModeSensor(VenusEntity, SensorEntity):
             "last_command_power": s.last_command_power,
             "last_command_time": s.last_command_time.isoformat() if s.last_command_time else None,
             "dry_run": self.controller.settings.dry_run,
+            **self.controller.card_sources(),
         }
 
 

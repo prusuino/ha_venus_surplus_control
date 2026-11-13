@@ -46,6 +46,18 @@ Settings → Devices & services → Add integration → **Venus Surplus Control*
 
 Everything can be changed later under **Configure**.
 
+### Without a first battery
+
+The Venus can be your only storage. Leave **First battery: power**, **SoC** and **reserve** empty in the setup, and the controller works with the Venus alone:
+
+- **Charging** starts as soon as the surplus minus the *Charging buffer* reaches *Charge from surplus of* (default 400 W). The Venus waits for nothing.
+- **Discharging** follows the house demand whenever the house imports and the Venus is above its SoC protection.
+- **Standby** otherwise.
+
+The settings that refer to a first battery have no effect then: *Venus charges from first battery SoC*, *Charge in parallel from daily forecast*, *First battery capacity* and the cross-charging protection. The forecast sensors are not needed either. Everything else works the same: the charging buffer, the reaction, the device limits, the feed-in limit at the plug, the watchdog and the manual buttons.
+
+If you add a battery to your inverter later, pick its two sensors under **Configure** and the coordination is on.
+
 ## Entities
 
 ![Example dashboard with the decision and its reason, the measurements, the coordination with the primary battery, the controls and the limits](docs/dashboard.png)
@@ -75,6 +87,37 @@ Everything can be changed later under **Configure**.
 The two numbers at the top and the buttons are under **Controls** on the device page, the others under **Configuration**. Entity IDs follow these names (`number.<name>_maximum_discharge_power`, `select.<name>_reaction`, …); entries set up before 0.7.0 keep the IDs they have (`…_discharge_cap`, `…_charge_reserve`, `…_target_soc`, `…_venus_first_from_forecast`, `sensor.…_surplus_3_min_mean`, `button.…_discharge_to_target_soc`).
 
 Every command of the controller also fires the event `venus_surplus_command` with `command`, `power`, `reason` and `dry_run`; so does the standby at the end of a discharge to the target SoC (reason `target_soc_reached`).
+
+## Dashboard card
+
+The integration ships a Lovelace card, **Venus Surplus** (`custom:venus-surplus-card`), with a visual editor. It shows the state of charge as a gauge, charge and discharge power, the energy in the battery, the Venus' own PV if you picked the MPPT sensors, what the controller is doing and why, and a chart of the last hours. If you picked the Venus' MPPT sensors, its own PV appears by itself as soon as an input delivers: a tile with the total, one bar per active MPPT input, a small panel on the Venus in the graphic and a line in the chart. If your setup has a first battery, it stands next to the Venus in the graphic and gets its own tile with SoC and power. The card only shows; the buttons stay on the device page.
+
+The card file is served by the integration. Registering it as a Lovelace resource is a one-time step that is left to you, because the resource list is part of your dashboard configuration:
+
+**Settings → Dashboards → ⋮ (top right) → Resources → + Add resource**
+
+| Field | Value |
+|---|---|
+| URL | `/venus_surplus_files/venus-surplus-card.js` |
+| Resource type | JavaScript module |
+
+Then reload the page (Ctrl/Cmd+Shift+R). The card appears in the card picker as **Venus Surplus**. Point it at the **Target mode** sensor; it finds the Venus entities of your setup by itself.
+
+```yaml
+type: custom:venus-surplus-card
+entity: sensor.venus_target_mode
+```
+
+| Option | Default | |
+|---|---|---|
+| `entity` | – | the *Target mode* sensor of the controller |
+| `title` | device name | heading of the card |
+| `first_battery_name` | – | name shown for the first battery, for example its brand |
+| `hours` | `6` | hours the chart covers (1–48) |
+| `show_illustration` | `true` | the graphic with panel, battery and house; it hides itself on narrow cards |
+| `show_chart` | `true` | the chart of charge power, discharge power and state of charge |
+
+The chart reads the history of your Venus' AC power and SoC sensors from the recorder; if you exclude them there, it stays empty.
 
 ## How it decides
 

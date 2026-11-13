@@ -195,6 +195,22 @@ class VenusController:
             has_primary_reserve=bool(self._cfg(CONF_PRIMARY_RESERVE)),
         )
 
+    def card_sources(self) -> dict[str, Any]:
+        """The Venus entities the bundled card reads, live and for its chart.
+        They belong to other integrations, so the card cannot find them by
+        itself; the names do not change between ticks."""
+        return {
+            "soc_entity": self._cfg(CONF_VENUS_SOC),
+            "ac_power_entity": self._cfg(CONF_VENUS_AC),
+            "ac_power_inverted": bool(self._cfg(CONF_VENUS_AC_INVERT)),
+            "pv_entities": list(self._cfg(CONF_VENUS_PV) or []),
+            "capacity_entity": self._cfg(CONF_VENUS_CAPACITY),
+            "capacity_fallback_kwh": float(self.settings.venus_capacity_kwh),
+            "primary_power_entity": self._cfg(CONF_PRIMARY_POWER),
+            "primary_power_inverted": bool(self._cfg(CONF_PRIMARY_POWER_INVERT)),
+            "primary_soc_entity": self._cfg(CONF_PRIMARY_SOC),
+        }
+
     # ------------------------------------------------------------------ lifecycle
     async def async_start(self) -> None:
         data = await self._store.async_load()

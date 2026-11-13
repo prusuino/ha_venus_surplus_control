@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **A dashboard card.** The integration ships the card *Venus Surplus* (`custom:venus-surplus-card`): state of charge as a gauge, charge and discharge power, energy in the battery, what the controller is doing and why with the commanded power, and a chart of the last hours. A first battery stands next to the Venus with its own SoC and power, and the Venus' own PV appears by itself, one bar per MPPT input, as soon as an input delivers. It is pointed at the *Target mode* sensor, whose attributes now name the Venus entities of the setup. Registering the card as a dashboard resource is a one-time step, see the README.
+- **README: running the Venus without a first battery.** A new section under Setup says which fields to leave empty, how the Venus then charges and discharges, and which settings have no effect.
+
 ## 0.7.0 — 2026-11-13
 
 - **Three more values are adjustable.** *Charge from surplus of* (headroom from which charging starts, default 400 W as before), *Reaction* (calm, normal or fast: the surplus is averaged over 5, 3 or 1 minute; normal is the 3 minutes used so far) and *Venus charges from first battery SoC* (default 85 % as before; 0 = the Venus never waits for the first battery). Without a change the behaviour stays the same. Asked for by @VIMVa (#2).

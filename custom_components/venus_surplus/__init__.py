@@ -6,6 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .controller import VenusController
+from .frontend import async_serve_card
 from .issues import async_clear_entry_issues
 
 type VenusSurplusConfigEntry = ConfigEntry[VenusController]
@@ -17,6 +18,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: VenusSurplusConfigEntry)
     controller = VenusController(hass, entry)
     entry.runtime_data = controller
     await controller.async_start()
+    await async_serve_card(hass)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     return True
