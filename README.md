@@ -96,6 +96,8 @@ Every command of the controller also fires the event `venus_surplus_command` wit
 
 The integration ships a Lovelace card, **Venus Surplus** (`custom:venus-surplus-card`), with a visual editor. It shows the state of charge as a gauge, charge and discharge power, the energy in the battery, the Venus' own PV if you picked the MPPT sensors, what the controller is doing and why, and a chart of the last hours. If you picked the Venus' MPPT sensors, its own PV appears by itself as soon as an input delivers: a tile with the total, one bar per MPPT input, a small panel on the Venus in the graphic and a line in the chart. An input that has delivered once stays and reads 0 W in the night; inputs with nothing connected stay hidden. If your setup has a first battery, it stands next to the Venus in the graphic and gets its own tile with SoC and power. The card only shows; the buttons stay on the device page.
 
+![The Venus Surplus card: a graphic with panel, first battery, Venus and house, the state of charge as a gauge, tiles for charge power, discharge power, energy in the battery, first battery and own PV, the reason and the commanded power, one bar per MPPT input and a chart of the last six hours](docs/card.png)
+
 The card file is served by the integration. Registering it as a Lovelace resource is a one-time step that is left to you, because the resource list is part of your dashboard configuration:
 
 **Settings → Dashboards → ⋮ (top right) → Resources → + Add resource**
