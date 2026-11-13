@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.6 — 2026-11-13
+
+- **French and Italian.** The setup forms, the entity names, the reasons and the repair notices are now translated into French and Italian, next to English and German. The card already was.
+
 ## 0.8.5 — 2026-11-13
 
 - **Calmer discharging with a small base load.** Discharging starts at about 300 W of house demand and used to stop again below 260 W. In a house whose base load sits around that, every fridge cycle switched the Venus on and off. A discharge running at the minimum of 200 W now keeps going until the house needs less than 160 W; in that band up to 40 W are exported. Starting, the steps above 200 W and the export guard for them are unchanged.
