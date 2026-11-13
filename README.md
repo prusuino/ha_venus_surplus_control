@@ -41,8 +41,8 @@ Through the **Marketplace** (Settings → Marketplace → Add from link → `pru
 
 Settings → Devices & services → Add integration → **Venus Surplus Control**.
 
-1. **Required**: a name, your surplus sensor, and the seven Venus entities (Force Mode, two power numbers, RS485 switch, SoC, AC power, inverter state). Check the sign of the AC power sensor: positive must mean the Venus is *delivering* into the house; tick the invert box otherwise.
-2. **Optional**: the Venus' MPPT sensors and capacity, your first battery's power (positive = discharging; tick invert if yours is the other way round) and SoC, its reserve if you change it now and then (a sensor, a number or a helper – see below), the forecasts, the Modbus connection sensor and the Modbus config entry (for the self-heal reload), and the device limits (AC charge 1200 W, total 1400 W, discharge 1000 W for a Venus A – raise them for a D or E) and the feed-in limit at the plug (see below).
+1. **Required**: a name, your surplus sensor, and the seven Venus entities (Force Mode, two power numbers, RS485 switch, SoC, AC power, inverter state). The Venus entities are filled in from the Marstek Venus Modbus integration where they are found, whatever language or names they have; check them and change any that does not fit. Check the sign of the AC power sensor: positive must mean the Venus is *delivering* into the house; tick the invert box otherwise.
+2. **Optional**: the Venus' MPPT sensors and capacity (suggested as well, together with the Modbus connection sensor and the Modbus config entry; MPPT inputs your model does not have are left out), your first battery's power (positive = discharging; tick invert if yours is the other way round) and SoC, its reserve if you change it now and then (a sensor, a number or a helper – see below), the forecasts, the Modbus connection sensor and the Modbus config entry (for the self-heal reload), and the device limits (AC charge 1200 W, total 1400 W, discharge 1000 W for a Venus A – raise them for a D or E) and the feed-in limit at the plug (see below).
 
 Everything can be changed later under **Configure**.
 

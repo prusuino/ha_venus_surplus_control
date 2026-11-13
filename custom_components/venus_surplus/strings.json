@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Venus Surplus Control",
-        "description": "Pick the entities of your Marstek Venus (from the Marstek Venus Modbus integration) and the sensor that gives your PV surplus. Everything can be changed later under Configure.",
+        "description": "The entities of your Marstek Venus are filled in from the Marstek Venus Modbus integration where they are found; check them and correct any that does not fit. Then pick the sensor that gives your PV surplus. Everything can be changed later under Configure.",
         "data": {
           "name": "Name",
           "surplus_entity": "Surplus sensor (PV production minus house consumption, W)",

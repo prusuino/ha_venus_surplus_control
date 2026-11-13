@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.3 — 2026-11-13
+
+- **The setup finds your Venus.** The entities of the Marstek Venus Modbus integration (Force Mode, the two power numbers, RS485 switch, SoC, AC power, inverter state, MPPT inputs, capacity, connection sensor and the Modbus entry) are filled in when you add the integration, whatever they are called in your language. They are suggestions: change or remove any of them before you save. With more than one Venus, the first one without a controller is suggested. Existing entries are not touched.
+
 ## 0.8.2 — 2026-11-13
 
 - **A first battery that is switched off no longer stops the Venus.** New option under Configure, *Carry on without the first battery when its readings are missing* (off by default): after 5 minutes without power or SoC readings of the first battery, the controller runs the Venus alone and says so in a repair notice; when the readings return, the first battery counts again. Without the option nothing changes: the controller waits in standby.

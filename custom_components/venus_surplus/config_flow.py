@@ -5,8 +5,8 @@ from typing import Any
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.core import callback
-from homeassistant.helpers import selector
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import entity_registry as er, selector
 
 from .const import (
     CONF_AC_CHARGE_LIMIT,
@@ -131,6 +131,53 @@ def _optional_schema(defaults: dict[str, Any]) -> vol.Schema:
     return vol.Schema(schema)
 
 
+# The Marstek Venus Modbus integration gives every entity the unique id
+# "<its config entry id>_<key>". These keys are the entities the controller
+# needs, so the setup can fill them in.
+MODBUS_DOMAIN = "marstek_modbus"
+_MODBUS_KEYS: dict[str, tuple[str, str]] = {
+    CONF_FORCE_MODE: ("select", "force_mode"),
+    CONF_CHARGE_POWER: ("number", "set_charge_power"),
+    CONF_DISCHARGE_POWER: ("number", "set_discharge_power"),
+    CONF_RS485: ("switch", "rs485_control_mode"),
+    CONF_VENUS_SOC: ("sensor", "battery_soc"),
+    CONF_VENUS_AC: ("sensor", "ac_power"),
+    CONF_VENUS_STATE: ("sensor", "inverter_state"),
+    CONF_VENUS_CAPACITY: ("sensor", "battery_total_energy"),
+    CONF_CONNECTION: ("binary_sensor", "modbus_connection"),
+}
+_MODBUS_PV_KEYS = ("mppt1_power", "mppt2_power", "mppt3_power", "mppt4_power")
+
+
+@callback
+def discover_venus(hass: HomeAssistant) -> dict[str, Any]:
+    """The entities of a Venus set up in the Marstek Venus Modbus
+    integration, as suggestions for the setup form. With several Venus the
+    first one that has no controller yet is taken. Disabled entities are
+    left out (MPPT inputs a model does not have). Empty when nothing is found."""
+    registry = er.async_get(hass)
+    taken = {
+        {**entry.data, **entry.options}.get(CONF_FORCE_MODE)
+        for entry in hass.config_entries.async_entries(DOMAIN)
+    }
+    for modbus_entry in hass.config_entries.async_entries(MODBUS_DOMAIN):
+        by_key: dict[tuple[str, str], str] = {}
+        prefix = f"{modbus_entry.entry_id}_"
+        for ent in er.async_entries_for_config_entry(registry, modbus_entry.entry_id):
+            if ent.platform != MODBUS_DOMAIN or ent.disabled_by is not None or not ent.unique_id.startswith(prefix):
+                continue
+            by_key[(ent.domain, ent.unique_id[len(prefix):])] = ent.entity_id
+        found: dict[str, Any] = {conf: by_key[key] for conf, key in _MODBUS_KEYS.items() if key in by_key}
+        if not found.get(CONF_FORCE_MODE) or found[CONF_FORCE_MODE] in taken:
+            continue
+        pv = [by_key[("sensor", key)] for key in _MODBUS_PV_KEYS if ("sensor", key) in by_key]
+        if pv:
+            found[CONF_VENUS_PV] = pv
+        found[CONF_MODBUS_ENTRY] = modbus_entry.entry_id
+        return found
+    return {}
+
+
 def _clean(user_input: dict[str, Any]) -> dict[str, Any]:
     """Drop empty optional selections so `None` never ends up in the entry."""
     out = {}
@@ -146,13 +193,17 @@ class VenusSurplusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self) -> None:
         self._data: dict[str, Any] = {}
+        # what was found in the Modbus integration: only ever a suggestion in
+        # the forms, never written to the entry behind the user's back
+        self._found: dict[str, Any] = {}
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None):
         errors: dict[str, str] = {}
         if user_input is not None:
             self._data = _clean(user_input)
             return await self.async_step_optional()
-        return self.async_show_form(step_id="user", data_schema=_required_schema(self._data), errors=errors)
+        self._found = discover_venus(self.hass)
+        return self.async_show_form(step_id="user", data_schema=_required_schema({**self._found, **self._data}), errors=errors)
 
     async def async_step_optional(self, user_input: dict[str, Any] | None = None):
         if user_input is not None:
@@ -162,7 +213,9 @@ class VenusSurplusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             await self.async_set_unique_id(f"{DOMAIN}_{data[CONF_FORCE_MODE]}")
             self._abort_if_unique_id_configured()
             return self.async_create_entry(title=data[CONF_NAME], data=data)
-        return self.async_show_form(step_id="optional", data_schema=_optional_schema(self._data))
+        # the optional suggestions belong to the Venus picked in the first step
+        suggest = self._found if self._found.get(CONF_FORCE_MODE) == self._data.get(CONF_FORCE_MODE) else {}
+        return self.async_show_form(step_id="optional", data_schema=_optional_schema({**suggest, **self._data}))
 
     @staticmethod
     @callback
