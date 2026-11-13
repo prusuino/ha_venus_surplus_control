@@ -26,6 +26,7 @@ CONF_MODBUS_ENTRY = "modbus_entry_id"  # config entry of the Modbus integration 
 CONF_PRIMARY_POWER = "primary_power_entity"  # first battery power [W], positive = discharging, optional
 CONF_PRIMARY_POWER_INVERT = "primary_power_invert"
 CONF_PRIMARY_SOC = "primary_soc_entity"  # optional
+CONF_PRIMARY_MISSING_ALONE = "primary_missing_alone"  # carry on without the first battery while its readings are gone
 CONF_PRIMARY_RESERVE = "primary_reserve_entity"  # reserve (minimum SoC) of the first battery [%], optional
 CONF_FORECAST_TODAY = "forecast_today_entity"  # kWh, optional
 CONF_FORECAST_REMAINING = "forecast_remaining_entity"  # kWh, optional

@@ -22,6 +22,7 @@ from .const import (
     CONF_FORECAST_TODAY,
     CONF_MODBUS_ENTRY,
     CONF_NAME,
+    CONF_PRIMARY_MISSING_ALONE,
     CONF_PRIMARY_POWER,
     CONF_PRIMARY_POWER_INVERT,
     CONF_PRIMARY_RESERVE,
@@ -93,6 +94,10 @@ def _optional_schema(defaults: dict[str, Any]) -> vol.Schema:
     for key, sel in (
         opt(CONF_PRIMARY_SOC, _entity("sensor")),
         opt(CONF_PRIMARY_RESERVE, _entity(["sensor", "number", "input_number"])),
+    ):
+        schema[key] = sel
+    schema[vol.Required(CONF_PRIMARY_MISSING_ALONE, default=bool(d(CONF_PRIMARY_MISSING_ALONE, False)))] = selector.BooleanSelector()
+    for key, sel in (
         opt(CONF_FORECAST_TODAY, _entity("sensor")),
         opt(CONF_FORECAST_REMAINING, _entity("sensor")),
     ):
@@ -152,7 +157,7 @@ class VenusSurplusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_optional(self, user_input: dict[str, Any] | None = None):
         if user_input is not None:
             data = {**self._data, **_clean(user_input)}
-            for key in (CONF_SURPLUS_INVERT, CONF_VENUS_AC_INVERT, CONF_PRIMARY_POWER_INVERT):
+            for key in (CONF_SURPLUS_INVERT, CONF_VENUS_AC_INVERT, CONF_PRIMARY_POWER_INVERT, CONF_PRIMARY_MISSING_ALONE):
                 data[key] = bool(data.get(key, False))
             await self.async_set_unique_id(f"{DOMAIN}_{data[CONF_FORCE_MODE]}")
             self._abort_if_unique_id_configured()
@@ -185,7 +190,7 @@ class VenusSurplusOptionsFlow(config_entries.OptionsFlow):
     async def async_step_optional(self, user_input: dict[str, Any] | None = None):
         if user_input is not None:
             data = {**self._data, **_clean(user_input)}
-            for key in (CONF_SURPLUS_INVERT, CONF_VENUS_AC_INVERT, CONF_PRIMARY_POWER_INVERT):
+            for key in (CONF_SURPLUS_INVERT, CONF_VENUS_AC_INVERT, CONF_PRIMARY_POWER_INVERT, CONF_PRIMARY_MISSING_ALONE):
                 data[key] = bool(data.get(key, False))
             # an optional entity removed in the form must disappear from the entry
             merged = dict(self.config_entry.options)

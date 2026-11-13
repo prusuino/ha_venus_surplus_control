@@ -41,7 +41,8 @@
           "discharge_limit_w": "Maximales Entladekommando (W)",
           "feed_in_limit": "Einspeisegrenze am Stecker",
           "feed_in_limit_custom_w": "Eigene Einspeisegrenze (W)",
-          "tick_seconds": "Entscheidungsintervall (s)"
+          "tick_seconds": "Entscheidungsintervall (s)",
+          "primary_missing_alone": "Ohne erste Batterie weiterarbeiten, wenn ihre Werte fehlen"
         },
         "data_description": {
           "primary_reserve_entity": "Optional. Der Ladestand, bei dem dein Wechselrichter die erste Batterie nicht weiter entlädt. Der Venus behandelt sie dann 3 Punkte darüber als leer (mindestens 12 %). Ohne Angabe gelten fest 12 %.",
@@ -52,7 +53,8 @@
           "forecast_factor": "Die Restprognose wird damit multipliziert, bevor sie mit dem Bedarf beider Batterien verglichen wird. Unter 1 ist vorsichtig.",
           "ac_charge_limit_w": "Das höchste Ladekommando, das die Integration sendet.",
           "total_charge_limit_w": "Ladekommando plus eigene PV des Venus zusammen. Ohne eigene PV gleich wie die AC-Ladegrenze setzen.",
-          "tick_seconds": "Wie oft die Regelung entscheidet. Kürzer reagiert schneller, länger ist ruhiger. Die Werte zum Abstimmen (Laden ab Überschuss, Puffer beim Laden, Reaktion) stehen auf der Geräteseite unter Konfiguration, nicht hier."
+          "tick_seconds": "Wie oft die Regelung entscheidet. Kürzer reagiert schneller, länger ist ruhiger. Die Werte zum Abstimmen (Laden ab Überschuss, Puffer beim Laden, Reaktion) stehen auf der Geräteseite unter Konfiguration, nicht hier.",
+          "primary_missing_alone": "Aus: Solange Leistung oder SoC der ersten Batterie nicht verfügbar sind, sendet die Steuerung keine Kommandos und stellt den Venus auf Standby. Ein: Nach 5 Minuten ohne Werte betreibt sie den Venus allein, als wäre keine erste Batterie eingerichtet, und wechselt zurück, sobald die Werte wieder da sind. Für eine erste Batterie, die du ab und zu ausschaltest. Lass es aus, wenn dein Überschuss-Sensor ein Netzzähler ist und die Batterie weiterarbeiten kann, während ihre Sensoren fehlen: Der Venus könnte dann in sie entladen."
         }
       }
     },
@@ -102,7 +104,8 @@
           "discharge_limit_w": "Maximales Entladekommando (W)",
           "feed_in_limit": "Einspeisegrenze am Stecker",
           "feed_in_limit_custom_w": "Eigene Einspeisegrenze (W)",
-          "tick_seconds": "Entscheidungsintervall (s)"
+          "tick_seconds": "Entscheidungsintervall (s)",
+          "primary_missing_alone": "Ohne erste Batterie weiterarbeiten, wenn ihre Werte fehlen"
         },
         "data_description": {
           "primary_reserve_entity": "Optional. Der Ladestand, bei dem dein Wechselrichter die erste Batterie nicht weiter entlädt. Der Venus behandelt sie dann 3 Punkte darüber als leer (mindestens 12 %). Ohne Angabe gelten fest 12 %.",
@@ -113,7 +116,8 @@
           "forecast_factor": "Die Restprognose wird damit multipliziert, bevor sie mit dem Bedarf beider Batterien verglichen wird. Unter 1 ist vorsichtig.",
           "ac_charge_limit_w": "Das höchste Ladekommando, das die Integration sendet.",
           "total_charge_limit_w": "Ladekommando plus eigene PV des Venus zusammen. Ohne eigene PV gleich wie die AC-Ladegrenze setzen.",
-          "tick_seconds": "Wie oft die Regelung entscheidet. Kürzer reagiert schneller, länger ist ruhiger. Die Werte zum Abstimmen (Laden ab Überschuss, Puffer beim Laden, Reaktion) stehen auf der Geräteseite unter Konfiguration, nicht hier."
+          "tick_seconds": "Wie oft die Regelung entscheidet. Kürzer reagiert schneller, länger ist ruhiger. Die Werte zum Abstimmen (Laden ab Überschuss, Puffer beim Laden, Reaktion) stehen auf der Geräteseite unter Konfiguration, nicht hier.",
+          "primary_missing_alone": "Aus: Solange Leistung oder SoC der ersten Batterie nicht verfügbar sind, sendet die Steuerung keine Kommandos und stellt den Venus auf Standby. Ein: Nach 5 Minuten ohne Werte betreibt sie den Venus allein, als wäre keine erste Batterie eingerichtet, und wechselt zurück, sobald die Werte wieder da sind. Für eine erste Batterie, die du ab und zu ausschaltest. Lass es aus, wenn dein Überschuss-Sensor ein Netzzähler ist und die Batterie weiterarbeiten kann, während ihre Sensoren fehlen: Der Venus könnte dann in sie entladen."
         }
       }
     }
@@ -269,6 +273,10 @@
     "inputs_missing": {
       "title": "Venus Surplus Control: Messwerte unvollständig",
       "description": "Die Steuerung hat seit mehreren Minuten keine vollständigen Messwerte und sendet keine Befehle (nach zwei solchen Ticks stellt sie den Venus auf Standby). Fehlend oder nicht verfügbar: {entities}. Prüfe die Marstek-Venus-Modbus-Integration und den Überschuss-Sensor oder wähle unter „Konfigurieren“ andere Entitäten. Dieser Hinweis verschwindet, sobald die Messwerte wieder vollständig sind."
+    },
+    "primary_missing": {
+      "title": "Venus Surplus Control: erste Batterie ohne Werte",
+      "description": "Die erste Batterie liefert seit 5 Minuten keine Werte ({entities}). Wie unter Konfigurieren gewählt, betreibt die Steuerung den Venus allein, bis sie zurück sind: Er lädt aus jedem Überschuss und entlädt gegen den Hausbedarf, die Regeln zur Abstimmung der beiden Batterien sind aus. Dieser Hinweis verschwindet, sobald die Werte wieder da sind."
     }
   },
   "exceptions": {

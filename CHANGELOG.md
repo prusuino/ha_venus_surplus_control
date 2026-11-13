@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.2 — 2026-11-13
+
+- **A first battery that is switched off no longer stops the Venus.** New option under Configure, *Carry on without the first battery when its readings are missing* (off by default): after 5 minutes without power or SoC readings of the first battery, the controller runs the Venus alone and says so in a repair notice; when the readings return, the first battery counts again. Without the option nothing changes: the controller waits in standby.
+
 ## 0.8.1 — 2026-11-13
 
 - **Card: MPPT inputs stay once they have delivered.** An input that has delivered power once keeps its bar on the card and reads 0 W in the night, instead of disappearing until the next morning. Inputs with nothing connected stay hidden. The controller remembers which inputs have delivered, across restarts.

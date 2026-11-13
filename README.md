@@ -58,6 +58,8 @@ The settings that refer to a first battery have no effect then: *Venus charges f
 
 If you add a battery to your inverter later, pick its two sensors under **Configure** and the coordination is on.
 
+If you have a first battery but switch it off now and then, keep its sensors and tick **Carry on without the first battery when its readings are missing** under Configure: the Venus then works alone while the battery is off.
+
 ## Entities
 
 ![Example dashboard with the decision and its reason, the measurements, the coordination with the primary battery, the controls and the limits](docs/dashboard.png)
@@ -231,6 +233,8 @@ The four manual buttons switch the manual override on; only *Back to auto* (or t
 **Venus: total battery capacity** – the capacity sensor of the Modbus integration. It follows an extension battery by itself. Without it the fallback number is used.
 
 **First battery: power and SoC** – of the battery on your PV inverter, if you have one. Power positive while discharging (invert box otherwise). They are what keeps the two batteries from charging each other. Without them the Venus is the only storage: it charges from any surplus and discharges against any import, and all first-battery rules are off.
+
+**Carry on without the first battery when its readings are missing** – off by default. While the power or SoC of the first battery is unavailable, the controller has no complete picture: it sends no commands and puts the Venus into standby. That is right for a short outage, but not for a first battery you switch off for a while, because the Venus would stand by for as long as it is off. With this option on, the controller waits 5 minutes and then runs the Venus alone, as if no first battery were set up; a repair notice says so. As soon as the readings return, the first battery counts again. Leave it off if your surplus sensor is a grid meter and the battery may keep working while its sensors are gone (an integration that drops out, for example): the Venus could then discharge into it.
 
 **First battery: reserve** – the minimum SoC at which your inverter stops discharging it, as a sensor, number or helper. See [When the first battery counts as empty](#when-the-first-battery-counts-as-empty). Leave empty if you never change it or if your battery may go down to 0 %.
 

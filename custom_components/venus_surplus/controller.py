@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 from collections import deque
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 from typing import Any, Callable
 
@@ -36,6 +36,7 @@ from .const import (
     CONF_FORECAST_REMAINING,
     CONF_FORECAST_TODAY,
     CONF_MODBUS_ENTRY,
+    CONF_PRIMARY_MISSING_ALONE,
     CONF_PRIMARY_POWER,
     CONF_PRIMARY_POWER_INVERT,
     CONF_PRIMARY_RESERVE,
@@ -92,6 +93,9 @@ _LOGGER = logging.getLogger(__name__)
 NO_DATA_ISSUE_TICKS = 10
 
 
+# Readings of the first battery missing for this long: with the option set,
+# the controller carries on with the Venus alone.
+PRIMARY_ABSENT_AFTER = timedelta(minutes=5)
 PV_SEEN_MIN_W = 5  # an MPPT input counts as connected once it delivers this much
 
 
@@ -156,6 +160,7 @@ class VenusController:
         # MPPT inputs that have delivered at least once: the card keeps
         # showing them at night instead of dropping them at 0 W.
         self._pv_seen: set[str] = set()
+        self._primary_missing_since: datetime | None = None
 
     # ------------------------------------------------------------------ config
     def _cfg(self, key: str, default: Any = None) -> Any:
@@ -301,6 +306,20 @@ class VenusController:
                 missing.append(ent)
         return missing
 
+    def primary_absent(self, now: datetime) -> bool:
+        """The first battery's readings have been missing for a while and
+        the user chose to carry on without it then. Switched off for good,
+        its sensors go unavailable; without this the controller would stand
+        by for as long as it stays off."""
+        if not self.has_primary:
+            return False
+        if self._num(CONF_PRIMARY_POWER) is not None and self._num(CONF_PRIMARY_SOC) is not None:
+            self._primary_missing_since = None
+            return False
+        if self._primary_missing_since is None:
+            self._primary_missing_since = now
+        return bool(self._cfg(CONF_PRIMARY_MISSING_ALONE)) and now - self._primary_missing_since >= PRIMARY_ABSENT_AFTER
+
     def _num(self, key: str, invert_key: str | None = None) -> float | None:
         ent = self._cfg(key)
         if not ent:
@@ -401,7 +420,18 @@ class VenusController:
             self.status.decided_at = now
             self._notify()
             return
-        decision = engine.decide(inputs, self.params(), self.state)
+        params = self.params()
+        absent = self.primary_absent(now)
+        if absent:
+            # as if no first battery were configured: the Venus is the only storage
+            params = replace(params, has_primary=False, has_primary_reserve=False)
+            inputs = replace(inputs, primary_power=None, primary_soc=None, primary_reserve_soc=None)
+            self.issues.raise_now("primary_missing", {"entities": ", ".join(e for e in (self._cfg(CONF_PRIMARY_POWER), self._cfg(CONF_PRIMARY_SOC)) if e)})
+        else:
+            self.issues.clear("primary_missing")
+        decision = engine.decide(inputs, params, self.state)
+        if absent:
+            decision.values["first_battery_readings_missing"] = True
         if decision.target_mode == "no_data":
             if decision.state.bad_data_count >= NO_DATA_ISSUE_TICKS:
                 self.issues.raise_now("inputs_missing", {"entities": ", ".join(self.missing_inputs()) or "?"})

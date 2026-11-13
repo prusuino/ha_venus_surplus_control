@@ -41,7 +41,8 @@
           "discharge_limit_w": "Maximum discharge command (W)",
           "feed_in_limit": "Feed-in limit at the plug",
           "feed_in_limit_custom_w": "Own feed-in limit (W)",
-          "tick_seconds": "Decision interval (s)"
+          "tick_seconds": "Decision interval (s)",
+          "primary_missing_alone": "Carry on without the first battery when its readings are missing"
         },
         "data_description": {
           "primary_reserve_entity": "Optional. The charge level at which your inverter stops discharging the first battery. The Venus then treats it as empty 3 points above that (at least 12 %). Without it, a fixed 12 % applies.",
@@ -52,7 +53,8 @@
           "forecast_factor": "The remaining forecast is multiplied by this before it is compared with what both batteries still need. Below 1 is cautious.",
           "ac_charge_limit_w": "The highest charge command the integration sends.",
           "total_charge_limit_w": "Charge command plus the Venus' own PV together. Without own PV set it to the same value as the AC charge limit.",
-          "tick_seconds": "How often the controller decides. Shorter reacts faster, longer is calmer. The values you tune (charge from surplus of, charging buffer, reaction) are on the device page under Configuration, not here."
+          "tick_seconds": "How often the controller decides. Shorter reacts faster, longer is calmer. The values you tune (charge from surplus of, charging buffer, reaction) are on the device page under Configuration, not here.",
+          "primary_missing_alone": "Off: while the power or SoC of the first battery is unavailable, the controller sends no commands and puts the Venus into standby. On: after 5 minutes without readings it runs the Venus alone, as if no first battery were set up, and goes back as soon as the readings return. For a first battery you switch off now and then. Leave it off if your surplus sensor is a grid meter and the battery may keep working while its sensors are gone: the Venus could then discharge into it."
         }
       }
     },
@@ -102,7 +104,8 @@
           "discharge_limit_w": "Maximum discharge command (W)",
           "feed_in_limit": "Feed-in limit at the plug",
           "feed_in_limit_custom_w": "Own feed-in limit (W)",
-          "tick_seconds": "Decision interval (s)"
+          "tick_seconds": "Decision interval (s)",
+          "primary_missing_alone": "Carry on without the first battery when its readings are missing"
         },
         "data_description": {
           "primary_reserve_entity": "Optional. The charge level at which your inverter stops discharging the first battery. The Venus then treats it as empty 3 points above that (at least 12 %). Without it, a fixed 12 % applies.",
@@ -113,7 +116,8 @@
           "forecast_factor": "The remaining forecast is multiplied by this before it is compared with what both batteries still need. Below 1 is cautious.",
           "ac_charge_limit_w": "The highest charge command the integration sends.",
           "total_charge_limit_w": "Charge command plus the Venus' own PV together. Without own PV set it to the same value as the AC charge limit.",
-          "tick_seconds": "How often the controller decides. Shorter reacts faster, longer is calmer. The values you tune (charge from surplus of, charging buffer, reaction) are on the device page under Configuration, not here."
+          "tick_seconds": "How often the controller decides. Shorter reacts faster, longer is calmer. The values you tune (charge from surplus of, charging buffer, reaction) are on the device page under Configuration, not here.",
+          "primary_missing_alone": "Off: while the power or SoC of the first battery is unavailable, the controller sends no commands and puts the Venus into standby. On: after 5 minutes without readings it runs the Venus alone, as if no first battery were set up, and goes back as soon as the readings return. For a first battery you switch off now and then. Leave it off if your surplus sensor is a grid meter and the battery may keep working while its sensors are gone: the Venus could then discharge into it."
         }
       }
     }
@@ -269,6 +273,10 @@
     "inputs_missing": {
       "title": "Venus Surplus Control: readings incomplete",
       "description": "The controller has had no complete readings for several minutes and sends no commands (after two such ticks it puts the Venus into standby). Missing or unavailable: {entities}. Check the Marstek Venus Modbus integration and the surplus sensor, or pick other entities under Configure. This notice disappears as soon as the readings are complete again."
+    },
+    "primary_missing": {
+      "title": "Venus Surplus Control: first battery without readings",
+      "description": "The first battery has delivered no readings for 5 minutes ({entities}). As chosen under Configure, the controller runs the Venus alone until they return: it charges from any surplus and discharges against house demand, and the rules that coordinate the two batteries are off. This notice disappears as soon as the readings are back."
     }
   },
   "exceptions": {
