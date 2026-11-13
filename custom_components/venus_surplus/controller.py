@@ -61,11 +61,9 @@ from .const import (
     DEFAULT_PRIMARY_FIRST_SOC,
     DEFAULT_DISCHARGE_CAP,
     DEFAULT_DISCHARGE_MIN,
-    DISCHARGE_MIN_SMALL,
-    DISCHARGE_MIN_STANDARD,
+    DISCHARGE_MIN_AUTO,
     NIGHT_LOAD_MIN_HOURS,
     NIGHT_LOAD_NIGHTS,
-    NIGHT_LOAD_SMALL_W,
     DEFAULT_DISCHARGE_LIMIT,
     DEFAULT_FEED_IN_CUSTOM,
     DEFAULT_FIRST_FORECAST_KWH,
@@ -207,14 +205,9 @@ class VenusController:
 
     @property
     def discharge_min_w(self) -> int:
-        """The smallest discharge command. Set by hand, or picked from the
-        learned night load: a house that draws little at night is only
-        served with the small minimum, the Venus would stand by otherwise."""
+        """The smallest discharge command: set by hand, or 100 W."""
         chosen = int(self.settings.discharge_min_w)
-        if chosen > 0:
-            return chosen
-        night = self.learned_night_load_w
-        return DISCHARGE_MIN_SMALL if night is not None and night < NIGHT_LOAD_SMALL_W else DISCHARGE_MIN_STANDARD
+        return chosen if chosen > 0 else DISCHARGE_MIN_AUTO
 
     def _learn_night_load(self, inputs: engine.Inputs) -> None:
         """One sample per tick while the sun is down; the night is closed

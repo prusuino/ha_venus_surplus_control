@@ -84,8 +84,16 @@ class Params:
     venus_soc_resume_discharge: float = 15
     venus_soc_stop: float = 12
     pv_block_discharge_w: float = 100
+    # What the Venus leaves to the grid while discharging, so that a load
+    # switching off does not turn into export. Both grow with the house
+    # demand up to the values here: 120 W off a demand of 220 W would leave
+    # more than half of a small house to the grid.
     discharge_reserve_w: float = 120
+    discharge_reserve_share: float = 0.2
+    discharge_reserve_min_w: float = 40
     discharge_export_guard_w: float = 60
+    discharge_export_guard_share: float = 0.1
+    discharge_export_guard_min_w: float = 30
     # A running discharge at the minimum power keeps going until the house
     # needs this much less than the minimum. Starting needs the minimum plus
     # about 100 W; stopping 60 W above the minimum already made the Venus
@@ -106,10 +114,11 @@ class Params:
     charge_step_w: int = 100
     charge_min_w: int = 100
     discharge_min_w: int = 200
-    discharge_step_w: int = 100
+    discharge_step_w: int = 50
     venus_pv_direct_use_min_w: float = 80
     pv_unknown_hold_ticks: int = 4
     primary_idle_confirm_ticks: int = 6
+    primary_rest_confirm_ticks: int = 6  # first battery delivers nothing although the house imports
 
 
 @dataclass
@@ -125,6 +134,7 @@ class State:
     cross_count: int = 0
     pv_low_count: int = 0
     primary_idle_count: int = 0
+    primary_rest_count: int = 0  # ticks the first battery has delivered nothing while the house imports
     last_primary_reserve: float | None = None
     rest_latched: bool = False
     proj_latched: bool = False
@@ -293,7 +303,9 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     charge_cmd = 0 if rounded < p.charge_min_w else min(p.ac_charge_limit_w, rounded)
 
     # ---- discharge target with hysteresis -----------------------------------
-    need = max(0.0, house_need - p.discharge_reserve_w)
+    reserve = min(p.discharge_reserve_w, max(p.discharge_reserve_min_w, p.discharge_reserve_share * house_need))
+    export_guard = min(p.discharge_export_guard_w, max(p.discharge_export_guard_min_w, p.discharge_export_guard_share * house_need))
+    need = max(0.0, house_need - reserve)
     lim, mn, st = p.discharge_limit_w, p.discharge_min_w, p.discharge_step_w
     last_d = s.last_discharge_power
     hold_need = max(0.0, mn - p.discharge_hold_below_min_w)
@@ -312,7 +324,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
             requested = last_d
         else:
             requested = mn if need >= mn - 20 else 0
-    safe_raw = max(0.0, house_need - p.discharge_export_guard_w)
+    safe_raw = max(0.0, house_need - export_guard)
     if safe_raw >= mn:
         safe_cap = min(lim, _floor_step(safe_raw, st))
     elif mode == "discharge" and last_d >= mn and house_need >= hold_need:
@@ -363,6 +375,12 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     primary_idle_now = p.has_primary and primary_charge == 0 and primary_discharge == 0 and headroom >= idle_headroom
     s.primary_idle_count = min(10, s.primary_idle_count + 1) if primary_idle_now else 0
     primary_idle = s.primary_idle_count >= p.primary_idle_confirm_ticks
+    # The same at night: a first battery that neither charges nor discharges
+    # while the house imports (paused, in standby, at a limit) is not going
+    # to deliver. Waiting for it would leave a charged Venus standing by.
+    primary_rest_now = p.has_primary and primary_charge == 0 and primary_discharge == 0 and house_need >= mn and pv_corr < p.pv_block_discharge_w
+    s.primary_rest_count = min(10, s.primary_rest_count + 1) if primary_rest_now else 0
+    primary_rest = s.primary_rest_count >= p.primary_rest_confirm_ticks
     charge_ok = (charge_soc_allowed or charge_allowed_parallel or primary_idle) and charge_cmd >= p.charge_min_w and ms_soc_ctrl < p.venus_soc_max_charge and not block_charge
     if mode == "discharge":
         discharge_ok = ms_soc_ctrl > p.venus_soc_stop and pv_corr < p.pv_block_discharge_w and target_discharge >= mn and not block_discharge
@@ -371,7 +389,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
             ms_soc_ctrl >= p.venus_soc_resume_discharge
             and pv_corr < p.pv_block_discharge_w
             and target_discharge >= mn
-            and (primary_discharge >= p.primary_discharge_start_w or primary_soc <= primary_empty_soc or direct_pv_use or not p.has_primary)
+            and (primary_discharge >= p.primary_discharge_start_w or primary_soc <= primary_empty_soc or direct_pv_use or primary_rest or not p.has_primary)
             and not block_discharge
         )
     cross_trip = (mode == "charge" and primary_discharge > p.cross_trip_w) or (mode == "discharge" and primary_charge > p.cross_trip_w)
@@ -392,7 +410,12 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         target_mode, reason = "stop", "venus_soc_protect"
     elif discharge_ok:
         target_mode = "discharge"
-        reason = "direct_pv_use" if direct_pv_use and mode != "discharge" else "discharge_ok"
+        if direct_pv_use and mode != "discharge":
+            reason = "direct_pv_use"
+        elif mode != "discharge" and primary_rest and primary_discharge < p.primary_discharge_start_w and primary_soc > primary_empty_soc:
+            reason = "discharge_primary_idle"
+        else:
+            reason = "discharge_ok"
     else:
         target_mode, reason = "stop", "no_condition"
 
@@ -435,6 +458,8 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         "primary_empty_below_soc": round(primary_empty_soc, 1),
         "parallel_allowed": charge_allowed_parallel,
         "primary_idle": primary_idle,
+        "primary_rest": primary_rest,
+        "discharge_reserve_w": round(reserve),
         "primary_idle_count": s.primary_idle_count,
         "venus_first": venus_first,
         "forecast_today_kwh": round(i.forecast_today_kwh, 1),

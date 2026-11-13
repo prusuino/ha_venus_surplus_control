@@ -142,6 +142,7 @@
           "charge_parallel": "Excedente, carga en paralelo",
           "charge_primary_idle": "Excedente, la primera batería no absorbe nada",
           "discharge_ok": "Demanda de la casa",
+          "discharge_primary_idle": "Demanda de la casa, la primera batería no entrega nada",
           "direct_pv_use": "FV propia usada directamente",
           "venus_soc_protect": "Estado de carga del Venus demasiado bajo",
           "cross_trip": "Parada por carga cruzada",

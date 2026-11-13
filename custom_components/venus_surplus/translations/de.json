@@ -142,6 +142,7 @@
           "charge_parallel": "Überschuss, paralleles Laden",
           "charge_primary_idle": "Überschuss, erste Batterie nimmt nichts",
           "discharge_ok": "Hausbedarf",
+          "discharge_primary_idle": "Hausbedarf, erste Batterie liefert nichts",
           "direct_pv_use": "Eigene PV direkt genutzt",
           "venus_soc_protect": "Venus-SoC zu tief",
           "cross_trip": "Querlade-Stopp",

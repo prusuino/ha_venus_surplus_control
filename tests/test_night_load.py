@@ -1,5 +1,5 @@
-"""The controller learns what the house draws at night and picks the minimum
-discharge power from it; a value set by hand wins."""
+"""The controller learns what the house draws at night (a diagnostic value);
+the minimum discharge power is 100 W unless it is set by hand."""
 from __future__ import annotations
 
 from homeassistant.core import HomeAssistant
@@ -29,14 +29,14 @@ async def _night(hass, controller, house_w, ticks=300):
     await hass.async_block_till_done()
 
 
-async def test_nothing_learned_keeps_the_standard_minimum(hass: HomeAssistant, enable_custom_integrations) -> None:
+async def test_nothing_learned_yet(hass: HomeAssistant, enable_custom_integrations) -> None:
     controller = _controller(hass)
     assert controller.learned_night_load_w is None
-    assert controller.discharge_min_w == 200
+    assert controller.discharge_min_w == 100
     await controller.async_stop()
 
 
-async def test_a_small_night_load_lowers_the_minimum(hass: HomeAssistant, enable_custom_integrations) -> None:
+async def test_a_night_is_learned_and_survives_a_restart(hass: HomeAssistant, enable_custom_integrations) -> None:
     controller = _controller(hass)
     await _night(hass, controller, 240)
     assert controller.learned_night_load_w == 240
@@ -52,11 +52,11 @@ async def test_a_small_night_load_lowers_the_minimum(hass: HomeAssistant, enable
     await hass.async_block_till_done()
 
 
-async def test_a_larger_night_load_keeps_200_w(hass: HomeAssistant, enable_custom_integrations) -> None:
+async def test_the_minimum_does_not_depend_on_the_night_load(hass: HomeAssistant, enable_custom_integrations) -> None:
     controller = _controller(hass)
     await _night(hass, controller, 600)
     assert controller.learned_night_load_w == 600
-    assert controller.discharge_min_w == 200
+    assert controller.discharge_min_w == 100
     await controller.async_stop()
 
 

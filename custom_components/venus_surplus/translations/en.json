@@ -142,6 +142,7 @@
           "charge_parallel": "Surplus, charging in parallel",
           "charge_primary_idle": "Surplus, first battery takes nothing",
           "discharge_ok": "House demand",
+          "discharge_primary_idle": "House demand, first battery delivers nothing",
           "direct_pv_use": "Own PV used directly",
           "venus_soc_protect": "Venus SoC too low",
           "cross_trip": "Cross-charging trip",

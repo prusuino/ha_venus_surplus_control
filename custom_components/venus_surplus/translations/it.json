@@ -142,6 +142,7 @@
           "charge_parallel": "Eccedenza, carica in parallelo",
           "charge_primary_idle": "Eccedenza, la prima batteria non assorbe nulla",
           "discharge_ok": "Fabbisogno della casa",
+          "discharge_primary_idle": "Fabbisogno della casa, la prima batteria non eroga nulla",
           "direct_pv_use": "FV proprio usato direttamente",
           "venus_soc_protect": "Stato di carica del Venus troppo basso",
           "cross_trip": "Arresto per carica incrociata",

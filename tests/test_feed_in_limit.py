@@ -50,14 +50,14 @@ def test_measured_extra_steps_the_command_down():
     # commanded 600 W, the Venus delivers 750 W: PV comes on top
     p = Params(has_primary=False, has_venus_pv=True, discharge_limit_w=600, feed_in_limit_w=600)
     d = decide(_inputs(venus_state="discharging", venus_ac=750.0, venus_pv=150.0), p, State(last_discharge_power=600))
-    assert d.command == "discharge" and d.power == 400
+    assert d.command == "discharge" and d.power == 450  # 600 W limit minus the 150 W that came on top
 
 
 def test_stable_once_below_the_limit():
     p = Params(has_primary=False, has_venus_pv=True, discharge_limit_w=600, feed_in_limit_w=600)
-    d = decide(_inputs(venus_state="discharging", venus_ac=550.0, venus_pv=150.0), p, State(last_discharge_power=400))
+    d = decide(_inputs(venus_state="discharging", venus_ac=600.0, venus_pv=150.0), p, State(last_discharge_power=450))
     assert d.command is None and d.target_mode == "discharge"
-    assert d.state.last_discharge_power == 400
+    assert d.state.last_discharge_power == 450
     assert d.values["feed_in_exceeded"] is False
 
 

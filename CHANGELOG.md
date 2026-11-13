@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.8 — 2026-11-13
+
+- **Fixed: a house with a small night load was served badly.** With a demand of 180–250 W the Venus either did not start discharging at all, or, since 0.8.5, delivered only 100 W and left more than half of the house to the grid: the fixed reserve of 120 W and the 100 W steps were made for larger loads. Discharging now moves in 50 W steps, the reserve is 20 % of the demand (40 to 120 W), the export guard 10 % (30 to 60 W), and the minimum is 100 W for every house. A house drawing 220 W now gets 150 W from the Venus. Above 600 W of demand the reserve and the guard are as before; only the steps are finer. Reported by @VIMVa (#2).
+- **Fixed: a paused first battery kept the Venus from discharging.** The Venus waited for the first battery to deliver or to be empty. One that is paused or in standby does neither, so the Venus stood by all night with a charged battery. If the first battery delivers nothing although the house has been importing for six ticks, the Venus now takes over (new reason *House demand, first battery delivers nothing*). Reported by @VIMVa (#2).
+- **The learned night load no longer sets the minimum discharge power.** The rule from 0.8.5 (100 W below 300 W of night load, 200 W otherwise) made a small house worse off, not better, and did nothing in the first night. The sensor *Learned night load* stays as a diagnostic value.
+- A feed-in limit is now kept in 50 W steps as well (a Venus delivering 150 W of own PV on top of a 600 W command is set to 450 W instead of 400 W).
+
 ## 0.8.7 — 2026-11-13
 
 - **Dutch and Spanish.** The setup forms, the entity names, the reasons, the repair notices and the card are now also available in Dutch and Spanish, next to English, German, French and Italian.

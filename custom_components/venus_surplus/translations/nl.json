@@ -142,6 +142,7 @@
           "charge_parallel": "Overschot, parallel laden",
           "charge_primary_idle": "Overschot, eerste batterij neemt niets op",
           "discharge_ok": "Huisbehoefte",
+          "discharge_primary_idle": "Huisbehoefte, eerste batterij levert niets",
           "direct_pv_use": "Eigen PV direct gebruikt",
           "venus_soc_protect": "Laadtoestand van de Venus te laag",
           "cross_trip": "Uitschakeling wegens kruisladen",

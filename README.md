@@ -15,7 +15,7 @@ A Home Assistant integration that runs a **Marstek Venus** battery from your PV 
 ## Highlights
 
 - **Charge from real surplus only** – AC charging follows the surplus in 100 W steps, less a buffer you set, capped so that AC charge plus the Venus' own PV stay below the device limit. While your first battery (BYD, Pylontech, …) is still absorbing the surplus, the Venus waits; on a good solar day ("Venus first") it may start early in parallel because both will fill up anyway.
-- **Discharge against house demand only** – 200–1000 W in steps with hysteresis, an export guard that steps down before the house would export, and only while the first battery is already delivering or empty. "Empty" can follow the reserve you set on your inverter.
+- **Discharge against house demand only** – 100–1000 W in 50 W steps with hysteresis, a reserve and an export guard that follow the demand, so that a house drawing 200 W at night is served as well as one drawing 2 kW. With a first battery, only while it is already delivering, empty, or delivering nothing at all. "Empty" can follow the reserve you set on your inverter.
 - **Standby otherwise** – and an immediate stop when the first battery suddenly works against the Venus (cross-charging). The two batteries never charge each other.
 - **RS485 watchdog** – the Venus firmware drops the RS485 control mode and resets its power registers on restarts, app or cloud access. The watchdog restores the control mode and the last command.
 - **Discharge cap** – a ceiling you set from the dashboard that every command respects and that is enforced again when the app or a firmware reset raises the register.
@@ -77,8 +77,8 @@ If you have a first battery but switch it off now and then, keep its sensors and
 | `switch.<name>_manual_override` | pauses the controller |
 | `switch.<name>_dry_run` | decide and log only |
 | number **Maximum discharge power** | ceiling for the discharge power; its maximum is the device limit or the feed-in limit |
-| number **Minimum discharge power** | smallest discharge command. 0 (default) = automatic: 100 W for a house that draws less than 300 W at night, 200 W otherwise. 100–500 W to set it yourself |
-| `sensor.<name>_learned_night_load` | diagnostic: what the house typically draws at night, learned by the controller, and the minimum discharge power it takes from it |
+| number **Minimum discharge power** | smallest discharge command. 0 (default) = automatic, which is 100 W. 100–500 W to set it yourself |
+| `sensor.<name>_learned_night_load` | diagnostic: what the house typically draws at night, learned by the controller from the last seven nights |
 | number **Manual discharge target SoC** | where the button **Manual discharge to target SoC** stops (12–100 %, default 50). Only for that button: the automatic control always discharges down to 12 %, and it has nothing to do with charging |
 | number **Charge from surplus of** | headroom (surplus minus the charging buffer) from which charging starts (default 400 W, 100–1500 W). Lower it to start on a small surplus |
 | number **Charging buffer** | surplus the Venus leaves alone while charging (default 200 W, 0–500 W) |
@@ -131,8 +131,7 @@ Every 30 seconds (adjustable) the controller takes a sample of the surplus and o
 
 1. **Protect** – Venus SoC ≤ 12 %: no discharging (it may still charge). First battery discharging > 500 W while the Venus charges (or charging while it discharges): standby ("cross trip").
 2. **Charge** if the AC command would be ≥ 100 W and either the first battery is ≥ 85 % (80 % to hold) or the first battery takes nothing (neither charging nor discharging for six ticks with at least 400 W of headroom – in standby or limited, for example), or parallel charging is allowed: surplus ≥ 1200 W and headroom ≥ 500 W on an ordinary day (600 / 400 W when "Venus first"), the first battery not discharging more than 80 W and, on an ordinary day, not absorbing more than 200 W (500 W to hold). Charging is blocked while the first battery discharges more than 150 W (200 W to hold, confirmed over two ticks; 350 W immediately). Power: the headroom – surplus minus the charge reserve (200 W unless you change it) – floored to 100 W, start from 400 W, hold down to 80 W for three ticks, step up 150 W above the current target, step down only 120 W below it; minus the Venus' own PV against the total limit. With MPPT sensors, a reading that drops to zero while charging is bridged with the last known value; without a known value the power is not raised for four ticks, after that the reading is believed.
-3. **Discharge** if the house imports and the surplus mean is below 100 W, the Venus is above 15 % (12 % to hold), the first battery delivers ≥ 500 W or is empty (≤ 12 %, or its reserve plus 3 points – see below), and the first battery is not charging more than 100 W. Power: import minus 120 W reserve, 200–1000 W in 100 W steps, one step per tick up (40 W above the next step) or down (40 W below the previous one), never above the export guard (import minus 60 W) or the discharge cap. A discharge that runs at the minimum (200 W, or 100 W for a house with a small night load, see *Minimum discharge power*) keeps going until the house needs 40 W less than that, so that a small base load with a fridge cycling on top does not switch the Venus on and off; in that band up to 40 W are exported.
-4. **Standby** otherwise.
+3. **Discharge** if the house imports and the surplus mean is below 100 W, the Venus is above 15 % (12 % to hold), and the first battery is not charging more than 100 W. With a first battery, one of these must hold as well: it delivers ≥ 500 W, it is empty (≤ 12 %, or its reserve plus 3 points – see below), or it delivers nothing at all although the house has been importing for six ticks (paused, in standby, at a limit). Power: the house demand minus a reserve, 100–1000 W in 50 W steps, one step per tick up or down, never above the export guard or the discharge cap. Reserve and export guard follow the demand: the reserve is 20 % of it, at least 40 W and at most 120 W; the guard 10 %, at least 30 W and at most 60 W. A house that draws 220 W gets 150 W from the Venus, one that draws 900 W gets 750 W. A discharge that runs at the minimum keeps going until the house needs 40 W less than that, so that a small base load with a fridge cycling on top does not switch the Venus on and off; in that band up to 40 W are exported.
 
 "Venus first" is true when today's forecast is above the threshold, when the remaining forecast covers both batteries plus the house until sunset with 20 % margin and there is real surplus now (≥ 2500 W), or when a projection from the current surplus shows the first battery full long before sunset while the Venus would not make it. The two latter latch until sunset.
 
@@ -153,7 +152,7 @@ The values to tune are on the device page under **Configuration**; **Configure**
 | the Venus to charge although the first battery is not full | lower **Venus charges from first battery SoC** (default 85 %); 0 means the Venus never waits |
 | the Venus to charge in parallel on good days | lower **Charge in parallel from daily forecast** to a value your forecast reaches on such days |
 | less discharge power | lower **Maximum discharge power**, or set a feed-in limit under Configure |
-| the Venus to cover a small base load at night | nothing: the controller learns the night load and lowers the minimum discharge power by itself. **Minimum discharge power** overrides it |
+| the Venus to cover a small base load at night | nothing: it discharges from about 130 W of house demand. **Minimum discharge power** raises that |
 | to empty the Venus to a level by hand | **Manual discharge target SoC** and the button **Manual discharge to target SoC** – this pair does nothing else |
 
 The sensor **Reason** says why the controller does what it does, **Last decision** shows the numbers behind it. Every setting is described in the next section: what it does, why it is there and when to change it.
@@ -211,11 +210,10 @@ The four manual buttons switch the manual override on; only *Back to auto* (or t
 - *Example:* the sun comes out and the surplus jumps from 0 to 1000 W. With the default start at 600 W of surplus the Venus begins after about 2 minutes on *Normal*, after about 40 seconds on *Fast* and after about 3 minutes on *Calm*.
 - *When to change:* *Fast* if the Venus should catch short sunny spells and you accept that it also reacts to short dips. *Calm* if it switches too often. How often the controller decides at all is the *Decision interval* under Configure.
 
-**Minimum discharge power** – 0 = automatic (default), or 100–500 W in 100 W steps.
-- *What it does:* the smallest discharge command. Discharging starts once the house needs about 100 W more than this, in 100 W steps from here up, and a running discharge at this power stops when the house needs 40 W less than it.
-- *Automatic:* while the sun is down, the surplus sensor shows nothing but the house. The controller takes the median of each night and, from the last seven nights, what your house typically draws (the sensor *Learned night load* shows it). Below 300 W it uses a minimum of 100 W, otherwise 200 W. Until the first full night it uses 200 W.
-- *Why it is there:* below the minimum the Venus stands by and the house imports. With 200 W, a house that draws 250 W at night is never served, although the battery is charged.
-- *When to change:* normally not at all. Set a value if you want to decide yourself, for example 200 W if you find your Venus inefficient at 100 W.
+**Minimum discharge power** – 0 = automatic (default, 100 W), or 100–500 W in 100 W steps.
+- *What it does:* the smallest discharge command. Discharging starts once the house needs roughly this much plus the reserve, and a running discharge at this power stops when the house needs 40 W less than it.
+- *Why it is there:* below the minimum the Venus stands by and the house imports. With 100 W, a house that draws 150 W at night is still served.
+- *When to change:* normally not at all. Raise it if you want the Venus to work only for larger loads, or if you find yours inefficient at 100 W.
 
 **Venus charges from first battery SoC** – 0–100 %, default 85 %. Only with a first battery.
 - *What it does:* below this level of the first battery the Venus leaves the surplus to it. From this level on the Venus charges from whatever surplus is left. Once charging, it keeps going until the first battery is 5 points below the value.
@@ -269,7 +267,7 @@ The four manual buttons switch the manual override on; only *Back to auto* (or t
 
 ### What is fixed
 
-Some values are part of the control behaviour and not adjustable, because changing them makes the Venus hunt back and forth: charging and discharging move in 100 W steps; the charge power goes up when the headroom is 150 W above the current target and down when it is 120 W below; discharging needs at least 200 W, leaves 120 W of the house demand to the grid and steps down before the house would export; the Venus does not discharge below 12 % and resumes at 15 %.
+Some values are part of the control behaviour and not adjustable, because changing them makes the Venus hunt back and forth: charging moves in 100 W steps, discharging in 50 W steps; the charge power goes up when the headroom is 150 W above the current target and down when it is 120 W below; discharging leaves a reserve of 20 % of the house demand to the grid (40 to 120 W) and steps down before the house would export; the Venus does not discharge below 12 % and resumes at 15 %.
 
 ## Feed-in limit at the plug
 
@@ -280,7 +278,7 @@ The limit applies to discharging only; charging from the grid is not limited.
 - The discharge command, the number *Maximum discharge power* (its maximum follows) and the manual discharge buttons never go above it.
 - The discharge command is what the Venus delivers at the plug. On a Venus with its own PV (A, D) the PV goes into the battery and does not come on top: my Venus A delivered 983 W at a 1000 W command while its MPPTs produced about 500 W.
 - As a safeguard, the controller compares the measured AC power with the command while discharging. Should the Venus deliver more, it steps the command down by the difference. Differences under 40 W are taken as measurement noise.
-- The command never goes below the minimum of 200 W because of the limit. Standing by instead would only send the PV into the Venus' own battery while the house draws from the grid. If the measured AC power is still above the limit, the diagnostic value `feed_in_exceeded` is true.
+- The command never goes below the minimum discharge power because of the limit. Standing by instead would only send the PV into the Venus' own battery while the house draws from the grid. If the measured AC power is still above the limit, the diagnostic value `feed_in_exceeded` is true.
 - The manual buttons and *Manual discharge to target SoC* cap the command, but do not subtract the PV.
 
 The diagnostics show `feed_in_limit_w`, `discharge_feed_in_cap_w`, `feed_in_extra_w` and `feed_in_exceeded`.

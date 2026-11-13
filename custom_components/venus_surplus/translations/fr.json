@@ -142,6 +142,7 @@
           "charge_parallel": "Surplus, charge en parallèle",
           "charge_primary_idle": "Surplus, la première batterie ne prend rien",
           "discharge_ok": "Besoin de la maison",
+          "discharge_primary_idle": "Besoin de la maison, la première batterie ne fournit rien",
           "direct_pv_use": "PV propre utilisé directement",
           "venus_soc_protect": "État de charge du Venus trop bas",
           "cross_trip": "Arrêt pour charge croisée",
