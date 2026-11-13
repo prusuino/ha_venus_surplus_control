@@ -103,6 +103,7 @@ class Params:
     discharge_step_w: int = 100
     venus_pv_direct_use_min_w: float = 80
     pv_unknown_hold_ticks: int = 4
+    primary_idle_confirm_ticks: int = 6
 
 
 @dataclass
@@ -117,6 +118,7 @@ class State:
     low_headroom_count: int = 0
     cross_count: int = 0
     pv_low_count: int = 0
+    primary_idle_count: int = 0
     last_primary_reserve: float | None = None
     rest_latched: bool = False
     proj_latched: bool = False
@@ -340,7 +342,16 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
 
     soc_thr = p.soc_min_charge_hold if mode == "charge" else p.soc_min_charge_start
     charge_soc_allowed = primary_soc >= soc_thr
-    charge_ok = (charge_soc_allowed or charge_allowed_parallel) and charge_cmd >= p.charge_min_w and ms_soc_ctrl < p.venus_soc_max_charge and not block_charge
+    # The first battery goes first only while it takes the surplus. One that
+    # takes nothing for several ticks although there is headroom (standby,
+    # charge limit, fault) leaves the surplus to the grid: then the Venus may
+    # have it. The moment the first battery charges or discharges again, the
+    # count starts over and the normal rules apply.
+    idle_headroom = p.charge_hold_headroom_w if mode == "charge" else p.charge_start_headroom_w
+    primary_idle_now = p.has_primary and primary_charge == 0 and primary_discharge == 0 and headroom >= idle_headroom
+    s.primary_idle_count = min(10, s.primary_idle_count + 1) if primary_idle_now else 0
+    primary_idle = s.primary_idle_count >= p.primary_idle_confirm_ticks
+    charge_ok = (charge_soc_allowed or charge_allowed_parallel or primary_idle) and charge_cmd >= p.charge_min_w and ms_soc_ctrl < p.venus_soc_max_charge and not block_charge
     if mode == "discharge":
         discharge_ok = ms_soc_ctrl > p.venus_soc_stop and pv_corr < p.pv_block_discharge_w and target_discharge >= mn and not block_discharge
     else:
@@ -353,13 +364,20 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         )
     cross_trip = (mode == "charge" and primary_discharge > p.cross_trip_w) or (mode == "discharge" and primary_charge > p.cross_trip_w)
 
-    if ms_soc_ctrl <= p.venus_soc_stop:
-        target_mode, reason = "stop", "venus_soc_protect"
-    elif cross_trip:
+    # The SoC protection only keeps the Venus from discharging; an empty Venus
+    # must still be allowed to charge, so charging is decided first.
+    if cross_trip:
         target_mode, reason = "stop", "cross_trip"
     elif charge_ok:
         target_mode = "charge"
-        reason = "charge_parallel" if charge_allowed_parallel and not charge_soc_allowed else "charge_ok"
+        if charge_soc_allowed:
+            reason = "charge_ok"
+        elif charge_allowed_parallel:
+            reason = "charge_parallel"
+        else:
+            reason = "charge_primary_idle"
+    elif ms_soc_ctrl <= p.venus_soc_stop:
+        target_mode, reason = "stop", "venus_soc_protect"
     elif discharge_ok:
         target_mode = "discharge"
         reason = "direct_pv_use" if direct_pv_use and mode != "discharge" else "discharge_ok"
@@ -404,6 +422,8 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         "primary_charge_w": round(primary_charge),
         "primary_empty_below_soc": round(primary_empty_soc, 1),
         "parallel_allowed": charge_allowed_parallel,
+        "primary_idle": primary_idle,
+        "primary_idle_count": s.primary_idle_count,
         "venus_first": venus_first,
         "forecast_today_kwh": round(i.forecast_today_kwh, 1),
         "forecast_remaining_kwh": round(rest_fc, 1),

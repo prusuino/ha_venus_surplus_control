@@ -120,6 +120,7 @@
         "state": {
           "charge_ok": "Überschuss, erste Batterie voll",
           "charge_parallel": "Überschuss, paralleles Laden",
+          "charge_primary_idle": "Überschuss, erste Batterie nimmt nichts",
           "discharge_ok": "Hausbedarf",
           "direct_pv_use": "Eigene PV direkt genutzt",
           "venus_soc_protect": "Venus-SoC zu tief",

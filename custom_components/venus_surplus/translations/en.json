@@ -120,6 +120,7 @@
         "state": {
           "charge_ok": "Surplus, first battery full",
           "charge_parallel": "Surplus, charging in parallel",
+          "charge_primary_idle": "Surplus, first battery takes nothing",
           "discharge_ok": "House demand",
           "direct_pv_use": "Own PV used directly",
           "venus_soc_protect": "Venus SoC too low",

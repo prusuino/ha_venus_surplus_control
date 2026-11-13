@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.1 — 2026-11-13
+
+- **Fixed: an empty Venus did not charge.** At 12 % or below the SoC protection stopped everything, charging included, and the reason read "Venus SoC too low". A Venus with its own PV got out of this by itself in the morning; one without stayed empty. The protection now only blocks discharging. Reported by @VIMVa (#2).
+- **A first battery that takes nothing leaves the surplus to the Venus.** If the first battery neither charges nor discharges for six ticks (three minutes at the default interval) although there is at least 400 W of headroom, for example because it is in standby or limited, the Venus charges from that surplus whatever the first battery's SoC. As soon as the first battery charges or discharges again, the usual rules apply. New reason `charge_primary_idle`.
+
 ## 0.6.0 — 2026-11-13
 
 - **Feed-in limit at the plug.** New setting under Configure: *None*, *600 W* (common limit in Switzerland), *800 W* (Germany, Austria) or your own value. The discharge command, the discharge cap and the manual buttons stay below it; a discharge cap set higher is lowered at the next start. The command is what the Venus delivers at the plug; its own PV goes into the battery, not on top. As a safeguard, AC measured above the command while discharging is taken off the command, but never below 200 W and never into standby; `feed_in_exceeded` in the diagnostics shows when the AC delivery is still above the limit. Charging is not limited. Without a choice nothing changes.
