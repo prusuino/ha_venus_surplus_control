@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfPower
+from homeassistant.const import EntityCategory, UnitOfPower
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -27,6 +27,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             PowerSensor(c, "house_demand", lambda c: c.status.values.get("house_need_w")),
             PowerSensor(c, "charge_command", lambda c: c.state.last_charge_power),
             PowerSensor(c, "discharge_command", lambda c: c.state.last_discharge_power),
+            NightLoadSensor(c),
             CounterSensor(c, "watchdog_restores", lambda c: c.status.watchdog_restores),
             CounterSensor(c, "dry_run_commands", lambda c: c.status.dry_run_commands),
         ]
@@ -102,6 +103,27 @@ class PowerSensor(VenusEntity, SensorEntity):
     @property
     def native_value(self) -> float | None:
         return self._getter(self.controller)
+
+
+class NightLoadSensor(PowerSensor):
+    """What the controller has learned about the house at night, and the
+    minimum discharge power it takes from it."""
+
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:home-clock-outline"
+
+    def __init__(self, c: VenusController) -> None:
+        super().__init__(c, "night_load", lambda c: c.learned_night_load_w)
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        c = self.controller
+        return {
+            "nights": len(c._night_medians),
+            "per_night_w": [round(v) for v in c._night_medians],
+            "minimum_discharge_power_w": c.discharge_min_w,
+            "minimum_discharge_power_automatic": int(c.settings.discharge_min_w) <= 0,
+        }
 
 
 class CounterSensor(VenusEntity, SensorEntity):

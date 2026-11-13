@@ -182,6 +182,9 @@
       },
       "dry_run_commands": {
         "name": "Trockenlauf-Kommandos"
+      },
+      "night_load": {
+        "name": "Gelernte Nachtlast"
       }
     },
     "binary_sensor": {
@@ -215,6 +218,9 @@
     "number": {
       "discharge_cap_w": {
         "name": "Maximale Entladeleistung"
+      },
+      "discharge_min_w": {
+        "name": "Minimale Entladeleistung"
       },
       "charge_reserve_w": {
         "name": "Puffer beim Laden"

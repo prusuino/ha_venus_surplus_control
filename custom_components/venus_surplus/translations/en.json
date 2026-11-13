@@ -182,6 +182,9 @@
       },
       "dry_run_commands": {
         "name": "Dry-run commands"
+      },
+      "night_load": {
+        "name": "Learned night load"
       }
     },
     "binary_sensor": {
@@ -215,6 +218,9 @@
     "number": {
       "discharge_cap_w": {
         "name": "Maximum discharge power"
+      },
+      "discharge_min_w": {
+        "name": "Minimum discharge power"
       },
       "charge_reserve_w": {
         "name": "Charging buffer"

@@ -9,6 +9,7 @@ import logging
 from collections import deque
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
+from statistics import median
 from typing import Any, Callable
 
 from homeassistant.config_entries import ConfigEntry
@@ -59,6 +60,12 @@ from .const import (
     DEFAULT_REACTION,
     DEFAULT_PRIMARY_FIRST_SOC,
     DEFAULT_DISCHARGE_CAP,
+    DEFAULT_DISCHARGE_MIN,
+    DISCHARGE_MIN_SMALL,
+    DISCHARGE_MIN_STANDARD,
+    NIGHT_LOAD_MIN_HOURS,
+    NIGHT_LOAD_NIGHTS,
+    NIGHT_LOAD_SMALL_W,
     DEFAULT_DISCHARGE_LIMIT,
     DEFAULT_FEED_IN_CUSTOM,
     DEFAULT_FIRST_FORECAST_KWH,
@@ -108,6 +115,7 @@ class Settings:
     """The adjustable values held by the number / switch entities."""
 
     discharge_cap_w: int = DEFAULT_DISCHARGE_CAP
+    discharge_min_w: int = DEFAULT_DISCHARGE_MIN  # smallest discharge command, 0 = automatic
     charge_reserve_w: int = DEFAULT_CHARGE_RESERVE
     charge_start_w: int = DEFAULT_CHARGE_START_W  # headroom from which charging starts
     reaction: str = DEFAULT_REACTION  # calm / normal / fast: how long the surplus is averaged
@@ -161,6 +169,11 @@ class VenusController:
         # showing them at night instead of dropping them at 0 W.
         self._pv_seen: set[str] = set()
         self._primary_missing_since: datetime | None = None
+        # What the house draws at night, learned from the surplus sensor while
+        # the sun is down: the samples of the running night and the medians
+        # of the last nights.
+        self._night_samples: list[float] = []
+        self._night_medians: list[float] = []
 
     # ------------------------------------------------------------------ config
     def _cfg(self, key: str, default: Any = None) -> Any:
@@ -186,12 +199,55 @@ class VenusController:
         feed_in = self.feed_in_limit_w
         return min(limit, feed_in) if feed_in > 0 else limit
 
+    @property
+    def learned_night_load_w(self) -> int | None:
+        """What the house typically draws at night, in W: the median of the
+        last nights' medians. None until one night has been measured."""
+        return round(median(self._night_medians)) if self._night_medians else None
+
+    @property
+    def discharge_min_w(self) -> int:
+        """The smallest discharge command. Set by hand, or picked from the
+        learned night load: a house that draws little at night is only
+        served with the small minimum, the Venus would stand by otherwise."""
+        chosen = int(self.settings.discharge_min_w)
+        if chosen > 0:
+            return chosen
+        night = self.learned_night_load_w
+        return DISCHARGE_MIN_SMALL if night is not None and night < NIGHT_LOAD_SMALL_W else DISCHARGE_MIN_STANDARD
+
+    def _learn_night_load(self, inputs: engine.Inputs) -> None:
+        """One sample per tick while the sun is down; the night is closed
+        when it rises. At night the surplus sensor shows nothing but the
+        house: minus the surplus, with the Venus' own flow taken out (and,
+        behind a grid meter, with what the first battery delivers put back)."""
+        sun = self.hass.states.get("sun.sun")
+        if sun is None:
+            return
+        if sun.state == "below_horizon":
+            if inputs.surplus_instant is None or inputs.venus_ac is None:
+                return
+            house = -(inputs.surplus_instant - inputs.venus_ac)
+            if self._cfg(CONF_SURPLUS_INVERT) and inputs.primary_power is not None:
+                house += inputs.primary_power
+            if len(self._night_samples) < 5000:
+                self._night_samples.append(max(0.0, house))
+            return
+        if not self._night_samples:
+            return
+        samples, self._night_samples = self._night_samples, []
+        if len(samples) * self.tick_seconds / 3600 < NIGHT_LOAD_MIN_HOURS:
+            return
+        self._night_medians = (self._night_medians + [float(median(samples))])[-NIGHT_LOAD_NIGHTS:]
+        self.hass.async_create_task(self._save())
+
     def params(self) -> engine.Params:
         return engine.Params(
             ac_charge_limit_w=int(self._cfg(CONF_AC_CHARGE_LIMIT, DEFAULT_AC_CHARGE_LIMIT)),
             total_charge_limit_w=int(self._cfg(CONF_TOTAL_CHARGE_LIMIT, DEFAULT_TOTAL_CHARGE_LIMIT)),
             discharge_limit_w=self.discharge_limit_w,
             discharge_cap_w=int(self.settings.discharge_cap_w),
+            discharge_min_w=self.discharge_min_w,
             feed_in_limit_w=self.feed_in_limit_w,
             first_forecast_kwh=float(self.settings.first_forecast_kwh),
             primary_capacity_kwh=float(self.settings.primary_capacity_kwh),
@@ -234,6 +290,7 @@ class VenusController:
                     setattr(self.settings, k, v)
             self.status.watchdog_restores = int(data.get("watchdog_restores", 0))
             self._pv_seen = {e for e in data.get("pv_seen") or [] if isinstance(e, str)}
+            self._night_medians = [float(v) for v in data.get("night_load") or [] if isinstance(v, (int, float))][-NIGHT_LOAD_NIGHTS:]
         # a lowered limit (device or feed-in) also lowers a cap set above it
         if int(self.settings.discharge_cap_w) > self.discharge_limit_w:
             self.settings.discharge_cap_w = self.discharge_limit_w
@@ -258,6 +315,7 @@ class VenusController:
                 "state": engine.state_to_dict(self.state),
                 "settings": {
                     "discharge_cap_w": self.settings.discharge_cap_w,
+                    "discharge_min_w": self.settings.discharge_min_w,
                     "charge_reserve_w": self.settings.charge_reserve_w,
                     "charge_start_w": self.settings.charge_start_w,
                     "reaction": self.settings.reaction,
@@ -273,6 +331,7 @@ class VenusController:
                 },
                 "watchdog_restores": self.status.watchdog_restores,
                 "pv_seen": sorted(self._pv_seen),
+                "night_load": [round(v) for v in self._night_medians],
             }
         )
 
@@ -409,6 +468,7 @@ class VenusController:
         now = dt_util.utcnow()
         self._last_master_run = now
         inputs = self.inputs(now)
+        self._learn_night_load(inputs)
         if self.settings.manual_override:
             if self.settings.discharge_target_active:
                 await self._target_tick(inputs.venus_soc, now)
@@ -460,11 +520,11 @@ class VenusController:
         _LOGGER.debug(
             "%s: tick | target=%s reason=%s command=%s power=%s dry_run=%s | surplus mean=%s ex_venus=%s instant=%s corrected=%s"
             " | headroom=%s house_need=%s | venus soc=%s ac=%s pv=%s state=%s | first battery soc=%s power=%s"
-            " | charge_cmd=%s discharge_target=%s | venus_first=%s parallel=%s block_charge=%s block_discharge=%s cross_trip=%s bad_data=%s",
+            " | charge_cmd=%s discharge_target=%s min_discharge=%s night_load=%s | venus_first=%s parallel=%s block_charge=%s block_discharge=%s cross_trip=%s bad_data=%s",
             self.entry.title, decision.target_mode, decision.reason, decision.command, decision.power, self.settings.dry_run,
             inputs.surplus_mean, inputs.surplus_ex_venus_mean, inputs.surplus_instant, v.get("surplus_corr_w"),
             v.get("headroom_w"), v.get("house_need_w"), inputs.venus_soc, inputs.venus_ac, inputs.venus_pv, inputs.venus_state,
-            inputs.primary_soc, inputs.primary_power, v.get("charge_command_w"), v.get("discharge_target_w"),
+            inputs.primary_soc, inputs.primary_power, v.get("charge_command_w"), v.get("discharge_target_w"), self.discharge_min_w, self.learned_night_load_w,
             v.get("venus_first"), v.get("parallel_allowed"), v.get("block_charge"), v.get("block_discharge"), v.get("cross_trip"),
             decision.state.bad_data_count,
         )
@@ -620,7 +680,7 @@ class VenusController:
         if not force and self._last_master_run and (dt_util.utcnow() - self._last_master_run).total_seconds() < 10:
             return  # the master just wrote; helpers and registers may still differ
         expected = self.state.expected_mode()
-        cap = max(200, min(self.params().discharge_limit_w, int(self.settings.discharge_cap_w // 100) * 100))
+        cap = max(self.discharge_min_w, min(self.params().discharge_limit_w, int(self.settings.discharge_cap_w // 100) * 100))
         last_charge = self.state.last_charge_power
         last_discharge = min(self.state.last_discharge_power, cap)
         rs485_lost = rs.state == "off"
@@ -666,7 +726,7 @@ class VenusController:
         await self._cap_guard()
 
     async def _cap_guard(self) -> None:
-        cap = max(200, min(self.params().discharge_limit_w, int(self.settings.discharge_cap_w // 100) * 100))
+        cap = max(self.discharge_min_w, min(self.params().discharge_limit_w, int(self.settings.discharge_cap_w // 100) * 100))
         reg = self._reg(CONF_DISCHARGE_POWER)
         helper = self.state.last_discharge_power
         if reg is None or (reg <= cap and helper <= cap):

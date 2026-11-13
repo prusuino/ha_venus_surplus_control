@@ -86,6 +86,12 @@ class Params:
     pv_block_discharge_w: float = 100
     discharge_reserve_w: float = 120
     discharge_export_guard_w: float = 60
+    # A running discharge at the minimum power keeps going until the house
+    # needs this much less than the minimum. Starting needs the minimum plus
+    # about 100 W; stopping 60 W above the minimum already made the Venus
+    # switch on and off with every fridge cycle in a house with a small base
+    # load. In that band up to this many W are exported instead.
+    discharge_hold_below_min_w: float = 40
     block_charge_start_w: float = 150
     block_charge_hold_w: float = 200
     block_charge_hard_w: float = 350
@@ -290,6 +296,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     need = max(0.0, house_need - p.discharge_reserve_w)
     lim, mn, st = p.discharge_limit_w, p.discharge_min_w, p.discharge_step_w
     last_d = s.last_discharge_power
+    hold_need = max(0.0, mn - p.discharge_hold_below_min_w)
     if mode != "discharge":
         requested = min(lim, max(mn, _floor_step(need + 40, st))) if need >= mn - 20 else 0
     else:
@@ -299,14 +306,19 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
             requested = up
         elif last_d > mn and need < down - 40:
             requested = max(mn, down)
-        elif last_d >= mn and need < mn / 2:
+        elif last_d >= mn and house_need < hold_need:
             requested = 0
         elif last_d >= mn:
             requested = last_d
         else:
             requested = mn if need >= mn - 20 else 0
     safe_raw = max(0.0, house_need - p.discharge_export_guard_w)
-    safe_cap = min(lim, _floor_step(safe_raw, st)) if safe_raw >= mn else 0
+    if safe_raw >= mn:
+        safe_cap = min(lim, _floor_step(safe_raw, st))
+    elif mode == "discharge" and last_d >= mn and house_need >= hold_need:
+        safe_cap = mn  # hold the minimum instead of stopping, see discharge_hold_below_min_w
+    else:
+        safe_cap = 0
     user_cap = max(mn, min(lim, _floor_step(p.discharge_cap_w, st)))
     # Feed-in limit at the plug: the AC the Venus delivers, not just the
     # command. The command is the AC setpoint (a Venus A with 500 W on its

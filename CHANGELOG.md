@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.5 — 2026-11-13
+
+- **Calmer discharging with a small base load.** Discharging starts at about 300 W of house demand and used to stop again below 260 W. In a house whose base load sits around that, every fridge cycle switched the Venus on and off. A discharge running at the minimum of 200 W now keeps going until the house needs less than 160 W; in that band up to 40 W are exported. Starting, the steps above 200 W and the export guard for them are unchanged.
+- **The controller learns your night load.** While the sun is down the surplus sensor shows nothing but the house; the controller takes what the house typically draws from the last seven nights (new diagnostic sensor *Learned night load*). A house below 300 W gets a minimum discharge power of 100 W instead of 200 W, so that the Venus serves it at night instead of standing by with a charged battery. Above 300 W, and until the first full night, nothing changes.
+- **Minimum discharge power can be set by hand.** New number under *Configuration* on the device page: 0 = automatic as above (default), or 100–500 W.
+
 ## 0.8.4 — 2026-11-13
 
 - **A debug log worth downloading.** With *Enable debug logging* on the integration's page switched on, the controller writes one line per tick: what it read, what it decided and why. Switch it off again and Home Assistant offers the log as a download. Numbers and flags only, no entity names; nothing is written while debug logging is off.

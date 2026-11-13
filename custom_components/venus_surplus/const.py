@@ -70,6 +70,12 @@ DEFAULT_PRIMARY_KWH = 10.0
 DEFAULT_VENUS_KWH = 5.12
 DEFAULT_BASE_LOAD_KW = 0.5
 DEFAULT_DISCHARGE_CAP = 1000
+DEFAULT_DISCHARGE_MIN = 0  # smallest discharge command; 0 = picked from the learned night load
+DISCHARGE_MIN_STANDARD = 200  # until a night has been learned, and for a house that draws more
+DISCHARGE_MIN_SMALL = 100  # for a house whose night load is below NIGHT_LOAD_SMALL_W
+NIGHT_LOAD_SMALL_W = 300
+NIGHT_LOAD_NIGHTS = 7  # nights the learned value is taken from
+NIGHT_LOAD_MIN_HOURS = 2.0  # shorter nights (a restart in the small hours) are not counted
 DEFAULT_CHARGE_RESERVE = 200
 DEFAULT_TARGET_SOC = 50
 DEFAULT_REACTION = "normal"
