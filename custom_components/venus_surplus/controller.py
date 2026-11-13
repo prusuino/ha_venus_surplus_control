@@ -414,6 +414,7 @@ class VenusController:
                 await self._target_tick(inputs.venus_soc, now)
                 return
             self.status.target_mode = "paused"
+            _LOGGER.debug("%s: tick | paused, manual override is on | venus soc=%s ac=%s state=%s", self.entry.title, inputs.venus_soc, inputs.venus_ac, inputs.venus_state)
             if self.status.reason != "target_soc_reached":  # keep saying why the Venus stands by
                 self.status.reason = "manual_override"
                 self.status.text = "Automation paused: manual override is on."
@@ -432,6 +433,8 @@ class VenusController:
         decision = engine.decide(inputs, params, self.state)
         if absent:
             decision.values["first_battery_readings_missing"] = True
+        if _LOGGER.isEnabledFor(logging.DEBUG):
+            self._debug_tick(inputs, decision)
         if decision.target_mode == "no_data":
             if decision.state.bad_data_count >= NO_DATA_ISSUE_TICKS:
                 self.issues.raise_now("inputs_missing", {"entities": ", ".join(self.missing_inputs()) or "?"})
@@ -449,6 +452,22 @@ class VenusController:
         if changed_state:
             await self._save()
         self._notify()
+
+    def _debug_tick(self, inputs: engine.Inputs, decision: engine.Decision) -> None:
+        """One line per tick for the debug log: what was read, what was
+        decided and why. Only numbers and flags, no entity names."""
+        v = decision.values
+        _LOGGER.debug(
+            "%s: tick | target=%s reason=%s command=%s power=%s dry_run=%s | surplus mean=%s ex_venus=%s instant=%s corrected=%s"
+            " | headroom=%s house_need=%s | venus soc=%s ac=%s pv=%s state=%s | first battery soc=%s power=%s"
+            " | charge_cmd=%s discharge_target=%s | venus_first=%s parallel=%s block_charge=%s block_discharge=%s cross_trip=%s bad_data=%s",
+            self.entry.title, decision.target_mode, decision.reason, decision.command, decision.power, self.settings.dry_run,
+            inputs.surplus_mean, inputs.surplus_ex_venus_mean, inputs.surplus_instant, v.get("surplus_corr_w"),
+            v.get("headroom_w"), v.get("house_need_w"), inputs.venus_soc, inputs.venus_ac, inputs.venus_pv, inputs.venus_state,
+            inputs.primary_soc, inputs.primary_power, v.get("charge_command_w"), v.get("discharge_target_w"),
+            v.get("venus_first"), v.get("parallel_allowed"), v.get("block_charge"), v.get("block_discharge"), v.get("cross_trip"),
+            decision.state.bad_data_count,
+        )
 
     async def _target_tick(self, soc: float | None, now: datetime) -> None:
         """Manual discharge to the target SoC: wait, then stand by. The

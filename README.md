@@ -282,6 +282,15 @@ Set the number **Manual discharge target SoC** and press **Manual discharge to t
 
 Leave **dry run** on for a day or two. The logbook (filter "Venus Surplus") shows every command with its reasons; `sensor.<name>_last_decision` shows the values. When the decisions match what you expect, switch dry run off. The controller then writes its standing decision to the Venus right away.
 
+## Diagnostics and debug log
+
+Two ways to see what the controller does, both on the integration's page under Settings → Devices & services:
+
+- **Download diagnostics** (⋮ on the entry): a snapshot with the chosen entities and limits, the settings, the last decision with every value behind it, and the current reading of each entity.
+- **Enable debug logging**: while it is on, the controller writes one line per tick with what it read, what it decided and why (surplus, headroom, house demand, SoC and power of both batteries, the command, the flags). Let it run through the situation you want to look at, then switch it off; Home Assistant offers the log as a download. The lines hold numbers and flags only, no entity names. Without debug logging nothing of this is written.
+
+For a bug report, the debug log of ten minutes around the problem says more than a screenshot.
+
 ## Repairs
 
 When the controller has had no complete readings for about five minutes (an entity of the Venus or the surplus sensor missing or unavailable), a notice under **Settings → Repairs** names the entities concerned; it disappears as soon as the readings are complete again.

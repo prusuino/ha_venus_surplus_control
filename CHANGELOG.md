@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.4 — 2026-11-13
+
+- **A debug log worth downloading.** With *Enable debug logging* on the integration's page switched on, the controller writes one line per tick: what it read, what it decided and why. Switch it off again and Home Assistant offers the log as a download. Numbers and flags only, no entity names; nothing is written while debug logging is off.
+
 ## 0.8.3 — 2026-11-13
 
 - **The setup finds your Venus.** The entities of the Marstek Venus Modbus integration (Force Mode, the two power numbers, RS485 switch, SoC, AC power, inverter state, MPPT inputs, capacity, connection sensor and the Modbus entry) are filled in when you add the integration, whatever they are called in your language. They are suggestions: change or remove any of them before you save. With more than one Venus, the first one without a controller is suggested. Existing entries are not touched.
