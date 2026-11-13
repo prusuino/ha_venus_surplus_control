@@ -92,6 +92,9 @@ _LOGGER = logging.getLogger(__name__)
 NO_DATA_ISSUE_TICKS = 10
 
 
+PV_SEEN_MIN_W = 5  # an MPPT input counts as connected once it delivers this much
+
+
 def signal_update(entry_id: str) -> str:
     return f"{DOMAIN}_{entry_id}_update"
 
@@ -150,6 +153,9 @@ class VenusController:
         self._unsub: list[Callable[[], None]] = []
         self._last_master_run: datetime | None = None
         self._connection_lost_since: datetime | None = None
+        # MPPT inputs that have delivered at least once: the card keeps
+        # showing them at night instead of dropping them at 0 W.
+        self._pv_seen: set[str] = set()
 
     # ------------------------------------------------------------------ config
     def _cfg(self, key: str, default: Any = None) -> Any:
@@ -204,6 +210,7 @@ class VenusController:
             "ac_power_entity": self._cfg(CONF_VENUS_AC),
             "ac_power_inverted": bool(self._cfg(CONF_VENUS_AC_INVERT)),
             "pv_entities": list(self._cfg(CONF_VENUS_PV) or []),
+            "pv_seen": [e for e in self._cfg(CONF_VENUS_PV) or [] if e in self._pv_seen],
             "capacity_entity": self._cfg(CONF_VENUS_CAPACITY),
             "capacity_fallback_kwh": float(self.settings.venus_capacity_kwh),
             "primary_power_entity": self._cfg(CONF_PRIMARY_POWER),
@@ -221,6 +228,7 @@ class VenusController:
                 if hasattr(self.settings, k):
                     setattr(self.settings, k, v)
             self.status.watchdog_restores = int(data.get("watchdog_restores", 0))
+            self._pv_seen = {e for e in data.get("pv_seen") or [] if isinstance(e, str)}
         # a lowered limit (device or feed-in) also lowers a cap set above it
         if int(self.settings.discharge_cap_w) > self.discharge_limit_w:
             self.settings.discharge_cap_w = self.discharge_limit_w
@@ -259,6 +267,7 @@ class VenusController:
                     "dry_run": self.settings.dry_run,
                 },
                 "watchdog_restores": self.status.watchdog_restores,
+                "pv_seen": sorted(self._pv_seen),
             }
         )
 
@@ -312,9 +321,13 @@ class VenusController:
         for ent in self._cfg(CONF_VENUS_PV) or []:
             st = self.hass.states.get(ent)
             try:
-                total += float(st.state) if st else 0.0
+                value = float(st.state) if st else 0.0
             except (TypeError, ValueError):
-                pass
+                continue
+            total += value
+            if value >= PV_SEEN_MIN_W and ent not in self._pv_seen:
+                self._pv_seen.add(ent)
+                self.hass.async_create_task(self._save())
         return total
 
     def _venus_state(self) -> str | None:

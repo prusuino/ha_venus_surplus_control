@@ -25,6 +25,7 @@ async def test_card_sources_name_the_venus_entities(hass: HomeAssistant, enable_
         "ac_power_entity": "sensor.venus_ac_power",
         "ac_power_inverted": True,
         "pv_entities": ["sensor.venus_mppt1", "sensor.venus_mppt2"],
+        "pv_seen": [],
         "capacity_entity": None,
         "capacity_fallback_kwh": 5.12,
         "primary_power_entity": None,
@@ -51,3 +52,27 @@ async def test_setup_serves_the_card_and_fills_the_attributes(hass: HomeAssistan
     card = Path(__file__).parents[1] / "custom_components" / DOMAIN / "frontend" / CARD_FILENAME
     assert card.is_file()
     assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_an_mppt_input_that_delivered_once_stays_known(hass: HomeAssistant, enable_custom_integrations) -> None:
+    data = {**DATA, CONF_VENUS_PV: ["sensor.venus_mppt1", "sensor.venus_mppt2"]}
+    entry = MockConfigEntry(domain=DOMAIN, unique_id=f"{DOMAIN}_select.venus_force_mode", title="Venus", data=data)
+    entry.add_to_hass(hass)
+    controller = VenusController(hass, entry)
+    hass.states.async_set("sensor.venus_mppt1", "0")
+    hass.states.async_set("sensor.venus_mppt2", "120")
+    assert controller._venus_pv() == 120
+    await hass.async_block_till_done()
+    assert controller.card_sources()["pv_seen"] == ["sensor.venus_mppt2"]
+
+    # at night the input reads 0 W and is still known; the unused one never appears
+    hass.states.async_set("sensor.venus_mppt2", "0")
+    assert controller._venus_pv() == 0
+    assert controller.card_sources()["pv_seen"] == ["sensor.venus_mppt2"]
+
+    # and it survives a restart
+    restarted = VenusController(hass, entry)
+    await restarted.async_start()
+    assert restarted.card_sources()["pv_seen"] == ["sensor.venus_mppt2"]
+    await restarted.async_stop()
+    await hass.async_block_till_done()

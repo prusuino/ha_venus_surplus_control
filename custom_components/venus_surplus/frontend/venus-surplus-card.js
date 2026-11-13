@@ -12,7 +12,7 @@
  * Served by the integration at /venus_surplus_files/venus-surplus-card.js.
  */
 
-const VSC_CARD_VERSION = "0.1.0";
+const VSC_CARD_VERSION = "0.2.0";
 
 const VSC_LABELS = {
   soc: { de: "Ladezustand", en: "State of charge", fr: "État de charge", it: "Stato di carica" },
@@ -168,11 +168,14 @@ class VenusSurplusCard extends HTMLElement {
     if (capacity === null || capacity <= 0) capacity = Number(a.capacity_fallback_kwh) || null;
     const pvIds = Array.isArray(a.pv_entities) ? a.pv_entities.filter((e) => typeof e === "string") : [];
     let pv = null;
+    // An input that has delivered once stays on the card, at 0 W in the
+    // night; one that never delivered (nothing connected) stays hidden.
+    const pvSeen = Array.isArray(a.pv_seen) ? a.pv_seen : [];
     const pvList = [];
     pvIds.forEach((id, i) => {
       const v = vscValue(hass, id, "power");
       if (v !== null) pv = (pv || 0) + v;
-      pvList.push({ n: i + 1, w: v });
+      pvList.push({ n: i + 1, w: v, show: pvSeen.includes(id) || (v !== null && v >= VSC_PV_MIN_W) });
     });
     // The first battery, if the setup has one: power positive = discharging.
     let primary = null;
@@ -232,7 +235,7 @@ class VenusSurplusCard extends HTMLElement {
       return;
     }
     const signature = [
-      d.st.state, d.a.decided_at, d.a.dry_run, d.a.reason, d.a.last_command, d.a.last_command_power, d.primary && d.primary.soc, d.primary && d.primary.mode, d.soc, d.charge, d.discharge, d.energy, d.pv, d.pvList.map((x) => x.w).join(","), d.sunUp, vscLang(hass),
+      d.st.state, d.a.decided_at, d.a.dry_run, d.a.reason, d.a.last_command, d.a.last_command_power, d.primary && d.primary.soc, d.primary && d.primary.mode, d.soc, d.charge, d.discharge, d.energy, d.pv, d.pvList.map((x) => `${x.w}/${x.show}`).join(","), d.sunUp, vscLang(hass),
       this._config.title, this._config.show_illustration, this._config.first_battery_name,
     ].join("|");
     if (signature !== this._signature) {
@@ -293,14 +296,15 @@ class VenusSurplusCard extends HTMLElement {
       tiles.push(tile(`f m-${d.primary.mode}`, "mdi:home-battery", d.primary.soc === null ? "–" : vscNum(hass, d.primary.soc, 0), "%", sub, d.primary.mode !== "idle"));
     }
     // The Venus' own PV shows up by itself once an MPPT input delivers.
-    const mpptOn = d.pvList.filter((x) => x.w !== null && x.w >= VSC_PV_MIN_W);
-    if (mpptOn.length) tiles.push(tile("p", "mdi:solar-power", watt(d.pv), "W", vscL(hass, "pv"), true));
-    const mpptTop = Math.max(1, ...mpptOn.map((x) => x.w));
+    const mpptOn = d.pvList.filter((x) => x.show);
+    const pvLive = d.pv !== null && d.pv >= VSC_PV_MIN_W;
+    if (mpptOn.length) tiles.push(tile("p", "mdi:solar-power", watt(d.pv), "W", vscL(hass, "pv"), pvLive));
+    const mpptTop = Math.max(1, ...mpptOn.map((x) => x.w || 0));
     const mppt = mpptOn.length
       ? `<div class="mppt">${mpptOn
           .map(
             (x) => `<div class="mp"><div class="mp-h"><span>MPPT ${Number(x.n)}</span><b>${watt(x.w)} W</b></div>
-              <div class="mp-bar"><i style="width:${Math.max(4, Math.round((100 * x.w) / mpptTop))}%"></i></div></div>`
+              <div class="mp-bar"><i style="width:${x.w ? Math.max(4, Math.round((100 * x.w) / mpptTop)) : 0}%"></i></div></div>`
           )
           .join("")}</div>`
       : "";
@@ -373,7 +377,7 @@ class VenusSurplusCard extends HTMLElement {
         <path class="flow${flowIn}" d="M88 76 H108" /><path class="tip${flowIn}" d="M104 70 L111 76 L104 82" />
         ${two ? box(114, "mode-" + d.primary.mode, d.primary.soc, firstName.length > 9 ? firstName.slice(0, 8) + "…" : firstName) : ""}
         ${box(114 + shift, "mode-" + mode, d.soc, "Venus")}
-        ${d.pv !== null && d.pv >= VSC_PV_MIN_W ? `<path class="panel own" d="M${117 + shift} 27 L${145 + shift} 23 L${147 + shift} 34 L${115 + shift} 38 Z" /><path class="pv-flow" d="M${131 + shift} 37 V45" />` : ""}
+        ${d.pvList.some((x) => x.show) ? `<path class="panel own" d="M${117 + shift} 27 L${145 + shift} 23 L${147 + shift} 34 L${115 + shift} 38 Z" />${d.pv !== null && d.pv >= VSC_PV_MIN_W ? `<path class="pv-flow" d="M${131 + shift} 37 V45" />` : `<path class="pv-wire" d="M${131 + shift} 37 V45" />`}` : ""}
         <g transform="translate(${shift} 0)">
           <path class="flow${flowOut}" d="M152 76 H172" /><path class="tip${flowOut}" d="M168 70 L175 76 L168 82" />
           <path class="wall" d="M186 70 L186 112 L246 112 L246 70 Z" />
@@ -644,6 +648,7 @@ const VSC_STYLE = `
   .art .cap-name { font-size: 9.5px; fill: var(--secondary-text-color); }
 
   .art .panel.own { stroke-width: 1.2; }
+  .art .pv-wire { fill: none; stroke: color-mix(in srgb, var(--primary-text-color) 18%, transparent); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 3 4; }
   .art .pv-flow { fill: none; stroke: var(--vsc-pv); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 3 4; animation: vsc-in 0.9s linear infinite; }
   .mppt { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 12px; }
   .mp { padding: 8px 12px; border-radius: 12px; border: 1px solid var(--divider-color); background: color-mix(in srgb, var(--primary-text-color) 4%, transparent); }

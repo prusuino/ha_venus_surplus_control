@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.1 — 2026-11-13
+
+- **Card: MPPT inputs stay once they have delivered.** An input that has delivered power once keeps its bar on the card and reads 0 W in the night, instead of disappearing until the next morning. Inputs with nothing connected stay hidden. The controller remembers which inputs have delivered, across restarts.
+
 ## 0.8.0 — 2026-11-13
 
 - **A dashboard card.** The integration ships the card *Venus Surplus* (`custom:venus-surplus-card`): state of charge as a gauge, charge and discharge power, energy in the battery, what the controller is doing and why with the commanded power, and a chart of the last hours. A first battery stands next to the Venus with its own SoC and power, and the Venus' own PV appears by itself, one bar per MPPT input, as soon as an input delivers. It is pointed at the *Target mode* sensor, whose attributes now name the Venus entities of the setup. Registering the card as a dashboard resource is a one-time step, see the README.
