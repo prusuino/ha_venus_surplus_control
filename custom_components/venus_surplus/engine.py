@@ -51,6 +51,7 @@ class Params:
     total_charge_limit_w: int = 1400
     discharge_limit_w: int = 1000
     discharge_cap_w: int = 1000
+    feed_in_limit_w: int = 0  # AC the Venus may deliver into the house, 0 = none
     first_forecast_kwh: float = 45.0
     primary_capacity_kwh: float = 10.0
     venus_capacity_fallback_kwh: float = 5.12
@@ -305,7 +306,22 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     safe_raw = max(0.0, house_need - p.discharge_export_guard_w)
     safe_cap = min(lim, _floor_step(safe_raw, st)) if safe_raw >= mn else 0
     user_cap = max(mn, min(lim, _floor_step(p.discharge_cap_w, st)))
-    target_discharge = min(requested, safe_cap, user_cap)
+    # Feed-in limit at the plug: the AC the Venus delivers, not just the
+    # command. The command is the AC setpoint (a Venus A with 500 W on its
+    # MPPTs delivered 983 W at a 1000 W command; the PV went into the pack),
+    # so the limit caps the command. As a safeguard, AC measured above the
+    # command while discharging (beyond the noise) is taken off. The cap never
+    # goes below the minimum command: standing by would only send the PV into
+    # the Venus' own battery while the house imports. Without a limit: no cap.
+    feed_in_cap = lim
+    feed_in_extra = 0.0
+    if p.feed_in_limit_w > 0:
+        if mode == "discharge" and last_d > 0:
+            over = ms_grid - last_d
+            feed_in_extra = over if over > p.noise_venus_ac_w else 0.0
+        feed_in_cap = min(lim, max(mn, _floor_step(p.feed_in_limit_w - feed_in_extra, st)))
+    feed_in_exceeded = p.feed_in_limit_w > 0 and mode == "discharge" and ms_grid > p.feed_in_limit_w + p.noise_venus_ac_w
+    target_discharge = min(requested, safe_cap, user_cap, feed_in_cap)
 
     direct_pv_use = ms_pv >= p.venus_pv_direct_use_min_w and safe_cap >= mn and pv_corr < p.pv_block_discharge_w and not block_discharge
 
@@ -402,6 +418,10 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         "discharge_requested_w": requested,
         "discharge_safe_cap_w": safe_cap,
         "discharge_target_w": target_discharge,
+        "feed_in_limit_w": p.feed_in_limit_w,
+        "discharge_feed_in_cap_w": feed_in_cap,
+        "feed_in_extra_w": round(feed_in_extra),
+        "feed_in_exceeded": feed_in_exceeded,
         "low_headroom_count": s.low_headroom_count,
         "cross_count": s.cross_count,
         "block_charge": block_charge,

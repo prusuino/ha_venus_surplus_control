@@ -7,14 +7,13 @@ from homeassistant.const import PERCENTAGE, UnitOfEnergy, UnitOfPower
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import CONF_DISCHARGE_LIMIT, DEFAULT_DISCHARGE_LIMIT
 from .controller import VenusController
 from .entity import VenusEntity
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     c: VenusController = entry.runtime_data
-    limit = int(entry.options.get(CONF_DISCHARGE_LIMIT, entry.data.get(CONF_DISCHARGE_LIMIT, DEFAULT_DISCHARGE_LIMIT)))
+    limit = c.discharge_limit_w  # the device limit, or the feed-in limit if lower
     async_add_entities(
         [
             SettingNumber(c, "discharge_cap_w", 200, limit, 100, UnitOfPower.WATT, "mdi:battery-arrow-down-outline", NumberDeviceClass.POWER),

@@ -28,6 +28,8 @@ from .const import (
     CONF_CHARGE_POWER,
     CONF_CONNECTION,
     CONF_DISCHARGE_LIMIT,
+    CONF_FEED_IN_CUSTOM,
+    CONF_FEED_IN_LIMIT,
     CONF_DISCHARGE_POWER,
     CONF_FORCE_MODE,
     CONF_FORECAST_FACTOR,
@@ -54,6 +56,7 @@ from .const import (
     DEFAULT_CHARGE_RESERVE,
     DEFAULT_DISCHARGE_CAP,
     DEFAULT_DISCHARGE_LIMIT,
+    DEFAULT_FEED_IN_CUSTOM,
     DEFAULT_FIRST_FORECAST_KWH,
     DEFAULT_FORECAST_FACTOR,
     DEFAULT_PRIMARY_KWH,
@@ -68,6 +71,7 @@ from .const import (
     MEAN_WINDOW,
     MODE_CHARGE,
     MODE_DISCHARGE,
+    feed_in_limit_w,
     MODE_STANDBY,
     SELF_HEAL_AFTER,
     SELF_HEAL_MINUTES,
@@ -153,12 +157,25 @@ class VenusController:
     def tick_seconds(self) -> int:
         return int(self._cfg(CONF_TICK_SECONDS, DEFAULT_TICK_SECONDS))
 
+    @property
+    def feed_in_limit_w(self) -> int:
+        """Feed-in limit at the plug in W, 0 = none."""
+        return feed_in_limit_w(self._cfg(CONF_FEED_IN_LIMIT), self._cfg(CONF_FEED_IN_CUSTOM, DEFAULT_FEED_IN_CUSTOM))
+
+    @property
+    def discharge_limit_w(self) -> int:
+        """The device's discharge limit, lowered to the feed-in limit if one is set."""
+        limit = int(self._cfg(CONF_DISCHARGE_LIMIT, DEFAULT_DISCHARGE_LIMIT))
+        feed_in = self.feed_in_limit_w
+        return min(limit, feed_in) if feed_in > 0 else limit
+
     def params(self) -> engine.Params:
         return engine.Params(
             ac_charge_limit_w=int(self._cfg(CONF_AC_CHARGE_LIMIT, DEFAULT_AC_CHARGE_LIMIT)),
             total_charge_limit_w=int(self._cfg(CONF_TOTAL_CHARGE_LIMIT, DEFAULT_TOTAL_CHARGE_LIMIT)),
-            discharge_limit_w=int(self._cfg(CONF_DISCHARGE_LIMIT, DEFAULT_DISCHARGE_LIMIT)),
+            discharge_limit_w=self.discharge_limit_w,
             discharge_cap_w=int(self.settings.discharge_cap_w),
+            feed_in_limit_w=self.feed_in_limit_w,
             first_forecast_kwh=float(self.settings.first_forecast_kwh),
             primary_capacity_kwh=float(self.settings.primary_capacity_kwh),
             venus_capacity_fallback_kwh=float(self.settings.venus_capacity_kwh),
@@ -179,6 +196,9 @@ class VenusController:
                 if hasattr(self.settings, k):
                     setattr(self.settings, k, v)
             self.status.watchdog_restores = int(data.get("watchdog_restores", 0))
+        # a lowered limit (device or feed-in) also lowers a cap set above it
+        if int(self.settings.discharge_cap_w) > self.discharge_limit_w:
+            self.settings.discharge_cap_w = self.discharge_limit_w
         self._unsub.append(async_track_time_interval(self.hass, self._tick, timedelta(seconds=self.tick_seconds)))
         self._unsub.append(async_track_time_change(self.hass, self._watchdog_tick, minute=list(WATCHDOG_MINUTES), second=WATCHDOG_SECOND))
         self._unsub.append(async_track_time_change(self.hass, self._cap_guard_tick, second=CAP_GUARD_SECOND))

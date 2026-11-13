@@ -35,12 +35,32 @@ CONF_FORECAST_FACTOR = "forecast_factor"  # dampening of the remaining forecast
 CONF_AC_CHARGE_LIMIT = "ac_charge_limit_w"
 CONF_TOTAL_CHARGE_LIMIT = "total_charge_limit_w"
 CONF_DISCHARGE_LIMIT = "discharge_limit_w"
+CONF_FEED_IN_LIMIT = "feed_in_limit"  # none / ch_600 / de_800 / custom
+CONF_FEED_IN_CUSTOM = "feed_in_limit_custom_w"
 CONF_TICK_SECONDS = "tick_seconds"
 
 DEFAULT_FORECAST_FACTOR = 0.8
 DEFAULT_AC_CHARGE_LIMIT = 1200
 DEFAULT_TOTAL_CHARGE_LIMIT = 1400
 DEFAULT_DISCHARGE_LIMIT = 1000
+DEFAULT_FEED_IN_CUSTOM = 800
+
+# Feed-in limit at the plug: what a plug-in device may deliver into the house
+# wiring. The presets are the common limits for plug-in solar systems; the
+# user picks one, enters their own or none.
+FEED_IN_NONE = "none"
+FEED_IN_CUSTOM = "custom"
+FEED_IN_PRESETS: dict[str, int] = {"ch_600": 600, "de_800": 800}
+FEED_IN_OPTIONS = [FEED_IN_NONE, *FEED_IN_PRESETS, FEED_IN_CUSTOM]
+
+
+def feed_in_limit_w(choice: str | None, custom: float | int | None) -> int:
+    """The feed-in limit in W for a choice, 0 = none."""
+    if choice in FEED_IN_PRESETS:
+        return FEED_IN_PRESETS[choice]
+    if choice == FEED_IN_CUSTOM and custom:
+        return max(0, int(custom))
+    return 0
 DEFAULT_TICK_SECONDS = 30
 
 # defaults of the adjustable number entities

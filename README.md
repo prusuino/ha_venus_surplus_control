@@ -42,7 +42,7 @@ Through the **Marketplace** (Settings → Marketplace → Add from link → `pru
 Settings → Devices & services → Add integration → **Venus Surplus Control**.
 
 1. **Required**: a name, your surplus sensor, and the seven Venus entities (Force Mode, two power numbers, RS485 switch, SoC, AC power, inverter state). Check the sign of the AC power sensor: positive must mean the Venus is *delivering* into the house; tick the invert box otherwise.
-2. **Optional**: the Venus' MPPT sensors and capacity, your first battery's power (positive = discharging; tick invert if yours is the other way round) and SoC, its reserve if you change it now and then (a sensor, a number or a helper – see below), the forecasts, the Modbus connection sensor and the Modbus config entry (for the self-heal reload), and the device limits (AC charge 1200 W, total 1400 W, discharge 1000 W for a Venus A – raise them for a D or E).
+2. **Optional**: the Venus' MPPT sensors and capacity, your first battery's power (positive = discharging; tick invert if yours is the other way round) and SoC, its reserve if you change it now and then (a sensor, a number or a helper – see below), the forecasts, the Modbus connection sensor and the Modbus config entry (for the self-heal reload), and the device limits (AC charge 1200 W, total 1400 W, discharge 1000 W for a Venus A – raise them for a D or E) and the feed-in limit at the plug (see below).
 
 Everything can be changed later under **Configure**.
 
@@ -87,6 +87,20 @@ Missing input values for two consecutive ticks put the Venus into standby.
 ### When the first battery counts as empty
 
 An inverter stops discharging its battery at a reserve (minimum SoC). From there on the first battery delivers nothing, and the Venus must not wait for it. By default the Venus takes over once the first battery is at 12 % or below. If you raise that reserve now and then – in winter, or to keep backup power – pick the entity that holds it as **First battery: reserve** under Configure: a sensor or number of your inverter's integration, or a number helper you set yourself. The first battery then counts as empty at the reserve plus 3 points, never below 12 %. While the reading is unavailable the last value is kept. Without a first battery none of this applies.
+
+## Feed-in limit at the plug
+
+Many countries limit what a plug-in device may deliver into the house wiring: 600 W is common in Switzerland, 800 W in Germany and Austria. Under **Configure** you pick *None*, *600 W*, *800 W* or your own value. Check the rules that apply to your installation; the integration does not decide that for you.
+
+The limit applies to discharging only; charging from the grid is not limited.
+
+- The discharge command, the discharge cap (`number.<name>_discharge_cap`, its maximum follows) and the manual discharge buttons never go above it.
+- The discharge command is what the Venus delivers at the plug. On a Venus with its own PV (A, D) the PV goes into the battery and does not come on top: my Venus A delivered 983 W at a 1000 W command while its MPPTs produced about 500 W.
+- As a safeguard, the controller compares the measured AC power with the command while discharging. Should the Venus deliver more, it steps the command down by the difference. Differences under 40 W are taken as measurement noise.
+- The command never goes below the minimum of 200 W because of the limit. Standing by instead would only send the PV into the Venus' own battery while the house draws from the grid. If the measured AC power is still above the limit, the diagnostic value `feed_in_exceeded` is true.
+- The manual buttons and *Discharge to target SoC* cap the command, but do not subtract the PV.
+
+The diagnostics show `feed_in_limit_w`, `discharge_feed_in_cap_w`, `feed_in_extra_w` and `feed_in_exceeded`.
 
 ## Discharge to a target SoC
 

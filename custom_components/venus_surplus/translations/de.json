@@ -36,10 +36,15 @@
           "ac_charge_limit_w": "Maximales AC-Ladekommando (W)",
           "total_charge_limit_w": "Maximum AC-Ladung + eigene PV (W)",
           "discharge_limit_w": "Maximales Entladekommando (W)",
+          "feed_in_limit": "Einspeisegrenze am Stecker",
+          "feed_in_limit_custom_w": "Eigene Einspeisegrenze (W)",
           "tick_seconds": "Entscheidungsintervall (s)"
         },
         "data_description": {
-          "primary_reserve_entity": "Optional. Der Ladestand, bei dem dein Wechselrichter die erste Batterie nicht weiter entlädt. Der Venus behandelt sie dann 3 Punkte darüber als leer (mindestens 12 %). Ohne Angabe gelten fest 12 %."
+          "primary_reserve_entity": "Optional. Der Ladestand, bei dem dein Wechselrichter die erste Batterie nicht weiter entlädt. Der Venus behandelt sie dann 3 Punkte darüber als leer (mindestens 12 %). Ohne Angabe gelten fest 12 %.",
+          "discharge_limit_w": "Was der Venus höchstens abgeben kann (Venus A 1000 W; für D oder E erhöhen). Eine tiefere Einspeisegrenze senkt den Wert weiter.",
+          "feed_in_limit": "Was ein steckbares Gerät ins Hausnetz abgeben darf. Gilt nur fürs Entladen, das Laden ist nicht begrenzt. Die Integration begrenzt das Entladekommando und bei einem Venus mit eigener PV die gemessene AC-Abgabe, damit PV und Batterie zusammen unter der Grenze bleiben. Prüfe die Regeln, die für deine Installation gelten.",
+          "feed_in_limit_custom_w": "Wird nur bei «Eigener Wert» verwendet."
         }
       }
     },
@@ -84,10 +89,15 @@
           "ac_charge_limit_w": "Maximales AC-Ladekommando (W)",
           "total_charge_limit_w": "Maximum AC-Ladung + eigene PV (W)",
           "discharge_limit_w": "Maximales Entladekommando (W)",
+          "feed_in_limit": "Einspeisegrenze am Stecker",
+          "feed_in_limit_custom_w": "Eigene Einspeisegrenze (W)",
           "tick_seconds": "Entscheidungsintervall (s)"
         },
         "data_description": {
-          "primary_reserve_entity": "Optional. Der Ladestand, bei dem dein Wechselrichter die erste Batterie nicht weiter entlädt. Der Venus behandelt sie dann 3 Punkte darüber als leer (mindestens 12 %). Ohne Angabe gelten fest 12 %."
+          "primary_reserve_entity": "Optional. Der Ladestand, bei dem dein Wechselrichter die erste Batterie nicht weiter entlädt. Der Venus behandelt sie dann 3 Punkte darüber als leer (mindestens 12 %). Ohne Angabe gelten fest 12 %.",
+          "discharge_limit_w": "Was der Venus höchstens abgeben kann (Venus A 1000 W; für D oder E erhöhen). Eine tiefere Einspeisegrenze senkt den Wert weiter.",
+          "feed_in_limit": "Was ein steckbares Gerät ins Hausnetz abgeben darf. Gilt nur fürs Entladen, das Laden ist nicht begrenzt. Die Integration begrenzt das Entladekommando und bei einem Venus mit eigener PV die gemessene AC-Abgabe, damit PV und Batterie zusammen unter der Grenze bleiben. Prüfe die Regeln, die für deine Installation gelten.",
+          "feed_in_limit_custom_w": "Wird nur bei «Eigener Wert» verwendet."
         }
       }
     }
@@ -234,6 +244,16 @@
     },
     "soc_unknown": {
       "message": "Der Ladestand des Venus ist gerade nicht verfügbar."
+    }
+  },
+  "selector": {
+    "feed_in_limit": {
+      "options": {
+        "none": "Keine (nur die Gerätegrenze)",
+        "ch_600": "600 W (übliche Grenze in der Schweiz)",
+        "de_800": "800 W (übliche Grenze in Deutschland und Österreich)",
+        "custom": "Eigener Wert"
+      }
     }
   }
 }

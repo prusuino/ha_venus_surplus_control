@@ -36,10 +36,15 @@
           "ac_charge_limit_w": "Maximum AC charge command (W)",
           "total_charge_limit_w": "Maximum AC charge + own PV (W)",
           "discharge_limit_w": "Maximum discharge command (W)",
+          "feed_in_limit": "Feed-in limit at the plug",
+          "feed_in_limit_custom_w": "Own feed-in limit (W)",
           "tick_seconds": "Decision interval (s)"
         },
         "data_description": {
-          "primary_reserve_entity": "Optional. The charge level at which your inverter stops discharging the first battery. The Venus then treats it as empty 3 points above that (at least 12 %). Without it, a fixed 12 % applies."
+          "primary_reserve_entity": "Optional. The charge level at which your inverter stops discharging the first battery. The Venus then treats it as empty 3 points above that (at least 12 %). Without it, a fixed 12 % applies.",
+          "discharge_limit_w": "What the Venus can deliver at most (Venus A 1000 W; raise it for a D or E). A feed-in limit below lowers it further.",
+          "feed_in_limit": "What a plug-in device may deliver into the house wiring. Applies to discharging only, charging is not limited. The integration caps the discharge command and, on a Venus with its own PV, the measured AC delivery, so that PV and battery together stay below the limit. Check the rules that apply to your installation.",
+          "feed_in_limit_custom_w": "Used only with \"Own value\"."
         }
       }
     },
@@ -84,10 +89,15 @@
           "ac_charge_limit_w": "Maximum AC charge command (W)",
           "total_charge_limit_w": "Maximum AC charge + own PV (W)",
           "discharge_limit_w": "Maximum discharge command (W)",
+          "feed_in_limit": "Feed-in limit at the plug",
+          "feed_in_limit_custom_w": "Own feed-in limit (W)",
           "tick_seconds": "Decision interval (s)"
         },
         "data_description": {
-          "primary_reserve_entity": "Optional. The charge level at which your inverter stops discharging the first battery. The Venus then treats it as empty 3 points above that (at least 12 %). Without it, a fixed 12 % applies."
+          "primary_reserve_entity": "Optional. The charge level at which your inverter stops discharging the first battery. The Venus then treats it as empty 3 points above that (at least 12 %). Without it, a fixed 12 % applies.",
+          "discharge_limit_w": "What the Venus can deliver at most (Venus A 1000 W; raise it for a D or E). A feed-in limit below lowers it further.",
+          "feed_in_limit": "What a plug-in device may deliver into the house wiring. Applies to discharging only, charging is not limited. The integration caps the discharge command and, on a Venus with its own PV, the measured AC delivery, so that PV and battery together stay below the limit. Check the rules that apply to your installation.",
+          "feed_in_limit_custom_w": "Used only with \"Own value\"."
         }
       }
     }
@@ -234,6 +244,16 @@
     },
     "soc_unknown": {
       "message": "The SoC of the Venus is not available right now."
+    }
+  },
+  "selector": {
+    "feed_in_limit": {
+      "options": {
+        "none": "None (only the device limit)",
+        "ch_600": "600 W (common limit in Switzerland)",
+        "de_800": "800 W (common limit in Germany and Austria)",
+        "custom": "Own value"
+      }
     }
   }
 }

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **Feed-in limit at the plug.** New setting under Configure: *None*, *600 W* (common limit in Switzerland), *800 W* (Germany, Austria) or your own value. The discharge command, the discharge cap and the manual buttons stay below it; a discharge cap set higher is lowered at the next start. The command is what the Venus delivers at the plug; its own PV goes into the battery, not on top. As a safeguard, AC measured above the command while discharging is taken off the command, but never below 200 W and never into standby; `feed_in_exceeded` in the diagnostics shows when the AC delivery is still above the limit. Charging is not limited. Without a choice nothing changes.
+
 ## 0.5.0 — 2026-11-12
 
 - **The first battery's "empty" can follow its reserve.** New optional input *First battery: reserve* under Configure (a sensor, a number or a number helper). With it, the Venus takes over from the first battery at the reserve plus 3 points instead of the fixed 12 % (never below 12 %), so it keeps working when you raise the reserve on your inverter, for example in winter. While the reading is unavailable the last value is kept. Without the input nothing changes.

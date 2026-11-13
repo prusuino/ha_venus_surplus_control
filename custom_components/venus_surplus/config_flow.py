@@ -14,6 +14,8 @@ from .const import (
     CONF_CONNECTION,
     CONF_DISCHARGE_LIMIT,
     CONF_DISCHARGE_POWER,
+    CONF_FEED_IN_CUSTOM,
+    CONF_FEED_IN_LIMIT,
     CONF_FORCE_MODE,
     CONF_FORECAST_FACTOR,
     CONF_FORECAST_REMAINING,
@@ -37,10 +39,13 @@ from .const import (
     CONF_VENUS_STATE,
     DEFAULT_AC_CHARGE_LIMIT,
     DEFAULT_DISCHARGE_LIMIT,
+    DEFAULT_FEED_IN_CUSTOM,
     DEFAULT_FORECAST_FACTOR,
     DEFAULT_TICK_SECONDS,
     DEFAULT_TOTAL_CHARGE_LIMIT,
     DOMAIN,
+    FEED_IN_NONE,
+    FEED_IN_OPTIONS,
 )
 
 _SENSOR = selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor"))
@@ -108,6 +113,12 @@ def _optional_schema(defaults: dict[str, Any]) -> vol.Schema:
     )
     schema[vol.Required(CONF_DISCHARGE_LIMIT, default=int(d(CONF_DISCHARGE_LIMIT, DEFAULT_DISCHARGE_LIMIT)))] = selector.NumberSelector(
         selector.NumberSelectorConfig(min=200, max=5000, step=100, unit_of_measurement="W", mode=selector.NumberSelectorMode.BOX)
+    )
+    schema[vol.Required(CONF_FEED_IN_LIMIT, default=d(CONF_FEED_IN_LIMIT, FEED_IN_NONE))] = selector.SelectSelector(
+        selector.SelectSelectorConfig(options=FEED_IN_OPTIONS, translation_key="feed_in_limit", mode=selector.SelectSelectorMode.DROPDOWN)
+    )
+    schema[vol.Required(CONF_FEED_IN_CUSTOM, default=int(d(CONF_FEED_IN_CUSTOM, DEFAULT_FEED_IN_CUSTOM)))] = selector.NumberSelector(
+        selector.NumberSelectorConfig(min=200, max=5000, step=50, unit_of_measurement="W", mode=selector.NumberSelectorMode.BOX)
     )
     schema[vol.Required(CONF_TICK_SECONDS, default=int(d(CONF_TICK_SECONDS, DEFAULT_TICK_SECONDS)))] = selector.NumberSelector(
         selector.NumberSelectorConfig(min=15, max=120, step=5, unit_of_measurement="s", mode=selector.NumberSelectorMode.BOX)
