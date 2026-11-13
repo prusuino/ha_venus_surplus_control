@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.7 — 2026-11-13
+
+- **Dutch and Spanish.** The setup forms, the entity names, the reasons, the repair notices and the card are now also available in Dutch and Spanish, next to English, German, French and Italian.
+
 ## 0.8.6 — 2026-11-13
 
 - **French and Italian.** The setup forms, the entity names, the reasons and the repair notices are now translated into French and Italian, next to English and German. The card already was.

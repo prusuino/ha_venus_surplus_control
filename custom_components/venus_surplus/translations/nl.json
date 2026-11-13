@@ -1,0 +1,306 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Venus Surplus Control",
+        "description": "De entiteiten van je Marstek Venus worden overgenomen uit de integratie Marstek Venus Modbus, voor zover ze gevonden worden; controleer ze en corrigeer wat niet klopt. Kies daarna de sensor die je PV-overschot geeft. Alles kan later onder Configureren worden gewijzigd.",
+        "data": {
+          "name": "Naam",
+          "surplus_entity": "Overschotsensor (PV-productie min huisverbruik, W)",
+          "surplus_invert": "De overschotsensor is een netmeter, positief bij afname",
+          "force_mode_entity": "Venus: geforceerde modus (selectie)",
+          "charge_power_entity": "Venus: laadvermogen instellen (getal)",
+          "discharge_power_entity": "Venus: ontlaadvermogen instellen (getal)",
+          "rs485_entity": "Venus: RS485-besturingsmodus (schakelaar)",
+          "venus_soc_entity": "Venus: laadtoestand van de batterij",
+          "venus_ac_entity": "Venus: AC-vermogen",
+          "venus_ac_invert": "Het AC-vermogen is negatief wanneer de Venus aan het huis levert",
+          "venus_state_entity": "Venus: status van de omvormer"
+        },
+        "data_description": {
+          "surplus_entity": "PV-productie min huisverbruik in W, positief bij overschot. Een netmeter kan ook: vink het vakje hieronder aan als die positief is bij afname."
+        }
+      },
+      "optional": {
+        "title": "Optionele ingangen en limieten",
+        "description": "Laat leeg wat je niet hebt. Zonder eerste batterij is de Venus de enige opslag; zonder prognose gaat de eerste batterij altijd voor.",
+        "data": {
+          "venus_pv_entities": "Venus: MPPT-vermogenssensoren (Venus A/D)",
+          "venus_capacity_entity": "Venus: totale batterijcapaciteit (kWh)",
+          "primary_power_entity": "Eerste batterij: vermogen (positief = ontladen)",
+          "primary_power_invert": "Het vermogen van de eerste batterij is positief bij laden",
+          "primary_soc_entity": "Eerste batterij: laadtoestand",
+          "primary_reserve_entity": "Eerste batterij: reserve (minimale laadtoestand, %)",
+          "forecast_today_entity": "PV-prognose voor vandaag (kWh)",
+          "forecast_remaining_entity": "Resterende PV-prognose voor vandaag (kWh)",
+          "forecast_factor": "Demping van de resterende prognose",
+          "connection_entity": "Venus: Modbus-verbinding (binaire sensor)",
+          "modbus_entry_id": "Configuratie-item van Marstek Venus Modbus (voor het automatisch herladen)",
+          "ac_charge_limit_w": "Maximaal AC-laadcommando (W)",
+          "total_charge_limit_w": "Maximaal AC-laden + eigen PV (W)",
+          "discharge_limit_w": "Maximaal ontlaadcommando (W)",
+          "feed_in_limit": "Teruglevergrens aan de stekker",
+          "feed_in_limit_custom_w": "Eigen teruglevergrens (W)",
+          "tick_seconds": "Beslisinterval (s)",
+          "primary_missing_alone": "Doorgaan zonder de eerste batterij als haar waarden ontbreken"
+        },
+        "data_description": {
+          "primary_reserve_entity": "Optioneel. Het laadniveau waarbij je omvormer stopt met het ontladen van de eerste batterij. De Venus beschouwt haar dan 3 punten daarboven als leeg (minstens 12 %). Zonder deze waarde geldt een vaste 12 %.",
+          "discharge_limit_w": "Wat de Venus maximaal kan leveren (Venus A 1000 W; verhoog voor een D of E). Een teruglevergrens hieronder verlaagt dit verder.",
+          "feed_in_limit": "Wat een stekkerapparaat aan de huisinstallatie mag leveren. Geldt alleen voor ontladen, laden wordt niet begrensd. De integratie begrenst het ontlaadcommando en, bij een Venus met eigen PV, de gemeten AC-levering, zodat PV en batterij samen onder de grens blijven. Controleer de regels die voor jouw installatie gelden.",
+          "feed_in_limit_custom_w": "Alleen gebruikt bij \"Eigen waarde\".",
+          "venus_pv_entities": "Alleen voor een Venus met eigen PV-ingangen (A, D). Laat leeg bij een C of E.",
+          "forecast_factor": "De resterende prognose wordt hiermee vermenigvuldigd voordat ze wordt vergeleken met wat beide batterijen nog nodig hebben. Onder 1 is voorzichtig.",
+          "ac_charge_limit_w": "Het hoogste laadcommando dat de integratie stuurt.",
+          "total_charge_limit_w": "Laadcommando plus de eigen PV van de Venus samen. Zonder eigen PV dezelfde waarde instellen als de AC-laadlimiet.",
+          "tick_seconds": "Hoe vaak de regelaar beslist. Korter reageert sneller, langer is rustiger. De waarden die je afstelt (laden vanaf overschot van, laadbuffer, reactie) staan op de apparaatpagina onder Configuratie, niet hier.",
+          "primary_missing_alone": "Uit: zolang het vermogen of de laadtoestand van de eerste batterij niet beschikbaar is, stuurt de regelaar geen commando's en zet hij de Venus in stand-by. Aan: na 5 minuten zonder waarden laat hij de Venus alleen werken, alsof er geen eerste batterij is ingesteld, en schakelt terug zodra de waarden er weer zijn. Voor een eerste batterij die je af en toe uitschakelt. Laat uit als je overschotsensor een netmeter is en de batterij kan doorwerken terwijl haar sensoren weg zijn: de Venus zou er dan in kunnen ontladen."
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Deze Venus wordt al door een ander item aangestuurd."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Venus Surplus Control",
+        "description": "De entiteiten van je Venus en je overschotsensor.",
+        "data": {
+          "name": "Naam",
+          "surplus_entity": "Overschotsensor (PV-productie min huisverbruik, W)",
+          "surplus_invert": "De overschotsensor is een netmeter, positief bij afname",
+          "force_mode_entity": "Venus: geforceerde modus (selectie)",
+          "charge_power_entity": "Venus: laadvermogen instellen (getal)",
+          "discharge_power_entity": "Venus: ontlaadvermogen instellen (getal)",
+          "rs485_entity": "Venus: RS485-besturingsmodus (schakelaar)",
+          "venus_soc_entity": "Venus: laadtoestand van de batterij",
+          "venus_ac_entity": "Venus: AC-vermogen",
+          "venus_ac_invert": "Het AC-vermogen is negatief wanneer de Venus aan het huis levert",
+          "venus_state_entity": "Venus: status van de omvormer"
+        },
+        "data_description": {
+          "surplus_entity": "PV-productie min huisverbruik in W, positief bij overschot. Een netmeter kan ook: vink het vakje hieronder aan als die positief is bij afname."
+        }
+      },
+      "optional": {
+        "title": "Optionele ingangen en limieten",
+        "description": "Laat leeg wat je niet hebt.",
+        "data": {
+          "venus_pv_entities": "Venus: MPPT-vermogenssensoren (Venus A/D)",
+          "venus_capacity_entity": "Venus: totale batterijcapaciteit (kWh)",
+          "primary_power_entity": "Eerste batterij: vermogen (positief = ontladen)",
+          "primary_power_invert": "Het vermogen van de eerste batterij is positief bij laden",
+          "primary_soc_entity": "Eerste batterij: laadtoestand",
+          "primary_reserve_entity": "Eerste batterij: reserve (minimale laadtoestand, %)",
+          "forecast_today_entity": "PV-prognose voor vandaag (kWh)",
+          "forecast_remaining_entity": "Resterende PV-prognose voor vandaag (kWh)",
+          "forecast_factor": "Demping van de resterende prognose",
+          "connection_entity": "Venus: Modbus-verbinding (binaire sensor)",
+          "modbus_entry_id": "Configuratie-item van Marstek Venus Modbus (voor het automatisch herladen)",
+          "ac_charge_limit_w": "Maximaal AC-laadcommando (W)",
+          "total_charge_limit_w": "Maximaal AC-laden + eigen PV (W)",
+          "discharge_limit_w": "Maximaal ontlaadcommando (W)",
+          "feed_in_limit": "Teruglevergrens aan de stekker",
+          "feed_in_limit_custom_w": "Eigen teruglevergrens (W)",
+          "tick_seconds": "Beslisinterval (s)",
+          "primary_missing_alone": "Doorgaan zonder de eerste batterij als haar waarden ontbreken"
+        },
+        "data_description": {
+          "primary_reserve_entity": "Optioneel. Het laadniveau waarbij je omvormer stopt met het ontladen van de eerste batterij. De Venus beschouwt haar dan 3 punten daarboven als leeg (minstens 12 %). Zonder deze waarde geldt een vaste 12 %.",
+          "discharge_limit_w": "Wat de Venus maximaal kan leveren (Venus A 1000 W; verhoog voor een D of E). Een teruglevergrens hieronder verlaagt dit verder.",
+          "feed_in_limit": "Wat een stekkerapparaat aan de huisinstallatie mag leveren. Geldt alleen voor ontladen, laden wordt niet begrensd. De integratie begrenst het ontlaadcommando en, bij een Venus met eigen PV, de gemeten AC-levering, zodat PV en batterij samen onder de grens blijven. Controleer de regels die voor jouw installatie gelden.",
+          "feed_in_limit_custom_w": "Alleen gebruikt bij \"Eigen waarde\".",
+          "venus_pv_entities": "Alleen voor een Venus met eigen PV-ingangen (A, D). Laat leeg bij een C of E.",
+          "forecast_factor": "De resterende prognose wordt hiermee vermenigvuldigd voordat ze wordt vergeleken met wat beide batterijen nog nodig hebben. Onder 1 is voorzichtig.",
+          "ac_charge_limit_w": "Het hoogste laadcommando dat de integratie stuurt.",
+          "total_charge_limit_w": "Laadcommando plus de eigen PV van de Venus samen. Zonder eigen PV dezelfde waarde instellen als de AC-laadlimiet.",
+          "tick_seconds": "Hoe vaak de regelaar beslist. Korter reageert sneller, langer is rustiger. De waarden die je afstelt (laden vanaf overschot van, laadbuffer, reactie) staan op de apparaatpagina onder Configuratie, niet hier.",
+          "primary_missing_alone": "Uit: zolang het vermogen of de laadtoestand van de eerste batterij niet beschikbaar is, stuurt de regelaar geen commando's en zet hij de Venus in stand-by. Aan: na 5 minuten zonder waarden laat hij de Venus alleen werken, alsof er geen eerste batterij is ingesteld, en schakelt terug zodra de waarden er weer zijn. Voor een eerste batterij die je af en toe uitschakelt. Laat uit als je overschotsensor een netmeter is en de batterij kan doorwerken terwijl haar sensoren weg zijn: de Venus zou er dan in kunnen ontladen."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "target_mode": {
+        "name": "Doelmodus",
+        "state": {
+          "charge": "Laden",
+          "discharge": "Ontladen",
+          "stop": "Stand-by",
+          "no_data": "Geen gegevens",
+          "paused": "Gepauzeerd",
+          "unknown": "Onbekend"
+        }
+      },
+      "reason": {
+        "name": "Reden",
+        "state": {
+          "charge_ok": "Overschot, eerste batterij vol",
+          "charge_parallel": "Overschot, parallel laden",
+          "charge_primary_idle": "Overschot, eerste batterij neemt niets op",
+          "discharge_ok": "Huisbehoefte",
+          "direct_pv_use": "Eigen PV direct gebruikt",
+          "venus_soc_protect": "Laadtoestand van de Venus te laag",
+          "cross_trip": "Uitschakeling wegens kruisladen",
+          "no_condition": "Geen voorwaarde vervuld",
+          "data_not_ready": "Invoerwaarden onvolledig",
+          "manual_override": "Handmatige bediening",
+          "manual_charge": "Handmatig laden",
+          "manual_discharge": "Handmatig ontladen",
+          "manual_discharge_target": "Handmatig ontladen tot doel-laadtoestand",
+          "manual_standby": "Handmatig stand-by",
+          "target_soc_reached": "Doel-laadtoestand bereikt",
+          "unknown": "Onbekend"
+        }
+      },
+      "last_decision": {
+        "name": "Laatste beslissing"
+      },
+      "surplus_mean": {
+        "name": "Overschot (gemiddelde)"
+      },
+      "surplus_without_venus_mean": {
+        "name": "Overschot zonder Venus (gemiddelde)"
+      },
+      "charge_headroom": {
+        "name": "Beschikbare ruimte voor laden"
+      },
+      "house_demand": {
+        "name": "Huisbehoefte"
+      },
+      "charge_command": {
+        "name": "Laadcommando"
+      },
+      "discharge_command": {
+        "name": "Ontlaadcommando"
+      },
+      "watchdog_restores": {
+        "name": "Herstelacties van de watchdog"
+      },
+      "dry_run_commands": {
+        "name": "Commando's in proefdraaien"
+      },
+      "night_load": {
+        "name": "Geleerde nachtlast"
+      }
+    },
+    "binary_sensor": {
+      "venus_first": {
+        "name": "Venus eerst"
+      },
+      "parallel_charging_allowed": {
+        "name": "Parallel laden toegestaan"
+      },
+      "cross_charging_blocked": {
+        "name": "Blokkering kruisladen"
+      },
+      "charging": {
+        "name": "Bezig met laden"
+      },
+      "discharging": {
+        "name": "Bezig met ontladen"
+      },
+      "discharging_to_target": {
+        "name": "Ontladen tot doel-laadtoestand"
+      }
+    },
+    "switch": {
+      "manual_override": {
+        "name": "Handmatige bediening"
+      },
+      "dry_run": {
+        "name": "Proefdraaien"
+      }
+    },
+    "number": {
+      "discharge_cap_w": {
+        "name": "Maximaal ontlaadvermogen"
+      },
+      "discharge_min_w": {
+        "name": "Minimaal ontlaadvermogen"
+      },
+      "charge_reserve_w": {
+        "name": "Laadbuffer"
+      },
+      "charge_start_w": {
+        "name": "Laden vanaf overschot van"
+      },
+      "primary_first_soc": {
+        "name": "Venus laadt vanaf laadtoestand eerste batterij"
+      },
+      "target_soc": {
+        "name": "Doel-laadtoestand voor handmatig ontladen"
+      },
+      "first_forecast_kwh": {
+        "name": "Parallel laden vanaf dagprognose van"
+      },
+      "primary_capacity_kwh": {
+        "name": "Capaciteit eerste batterij"
+      },
+      "venus_capacity_kwh": {
+        "name": "Capaciteit van de Venus (terugvalwaarde)"
+      },
+      "house_base_load_kw": {
+        "name": "Basislast van het huis"
+      }
+    },
+    "select": {
+      "reaction": {
+        "name": "Reactie",
+        "state": {
+          "calm": "Rustig (gemiddelde over 5 min)",
+          "normal": "Normaal (gemiddelde over 3 min)",
+          "fast": "Snel (gemiddelde over 1 min)"
+        }
+      }
+    },
+    "button": {
+      "manual_charge": {
+        "name": "Handmatig laden"
+      },
+      "manual_discharge": {
+        "name": "Handmatig ontladen"
+      },
+      "discharge_to_target": {
+        "name": "Handmatig ontladen tot doel-laadtoestand"
+      },
+      "manual_stop": {
+        "name": "Handmatig stoppen"
+      },
+      "back_to_auto": {
+        "name": "Terug naar automatisch"
+      }
+    }
+  },
+  "issues": {
+    "inputs_missing": {
+      "title": "Venus Surplus Control: waarden onvolledig",
+      "description": "De regelaar heeft al enkele minuten geen volledige waarden en stuurt geen commando's (na twee van zulke cycli zet hij de Venus in stand-by). Ontbrekend of niet beschikbaar: {entities}. Controleer de integratie Marstek Venus Modbus en de overschotsensor, of kies andere entiteiten onder Configureren. Deze melding verdwijnt zodra de waarden weer volledig zijn."
+    },
+    "primary_missing": {
+      "title": "Venus Surplus Control: eerste batterij zonder waarden",
+      "description": "De eerste batterij levert al 5 minuten geen waarden ({entities}). Zoals gekozen onder Configureren laat de regelaar de Venus alleen werken tot ze terug zijn: hij laadt uit elk overschot en ontlaadt volgens de huisbehoefte, en de regels die de twee batterijen op elkaar afstemmen staan uit. Deze melding verdwijnt zodra de waarden terug zijn."
+    }
+  },
+  "exceptions": {
+    "target_reached": {
+      "message": "De Venus staat op {soc} %, dat is al gelijk aan of lager dan het doel van {target} %."
+    },
+    "soc_unknown": {
+      "message": "De laadtoestand van de Venus is op dit moment niet beschikbaar."
+    }
+  },
+  "selector": {
+    "feed_in_limit": {
+      "options": {
+        "none": "Geen (alleen de limiet van het apparaat)",
+        "ch_600": "600 W (gebruikelijke grens in Zwitserland)",
+        "de_800": "800 W (gebruikelijke grens in Duitsland en Oostenrijk)",
+        "custom": "Eigen waarde"
+      }
+    }
+  }
+}

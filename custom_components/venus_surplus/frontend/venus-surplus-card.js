@@ -12,42 +12,44 @@
  * Served by the integration at /venus_surplus_files/venus-surplus-card.js.
  */
 
-const VSC_CARD_VERSION = "0.2.0";
+const VSC_CARD_VERSION = "0.3.0";
 
 const VSC_LABELS = {
-  soc: { de: "Ladezustand", en: "State of charge", fr: "État de charge", it: "Stato di carica" },
-  charge: { de: "Ladeleistung", en: "Charge power", fr: "Puissance de charge", it: "Potenza di carica" },
-  discharge: { de: "Entladeleistung", en: "Discharge power", fr: "Puissance de décharge", it: "Potenza di scarica" },
-  energy: { de: "Energie im Speicher", en: "Energy in the battery", fr: "Énergie dans la batterie", it: "Energia nella batteria" },
-  mode_charge: { de: "Laden", en: "Charging", fr: "Charge", it: "Carica" },
-  mode_discharge: { de: "Entladen", en: "Discharging", fr: "Décharge", it: "Scarica" },
-  mode_idle: { de: "Standby", en: "Standby", fr: "Veille", it: "Standby" },
-  subtitle: { de: "Marstek Venus – Steuerung", en: "Marstek Venus – control", fr: "Marstek Venus – pilotage", it: "Marstek Venus – controllo" },
-  first: { de: "Erste Batterie", en: "First battery", fr: "Première batterie", it: "Prima batteria" },
-  first_short: { de: "Batterie", en: "Battery", fr: "Batterie", it: "Batteria" },
-  setpoint: { de: "Soll", en: "Setpoint", fr: "Consigne", it: "Setpoint" },
-  pv: { de: "Eigene PV", en: "Own PV", fr: "PV propre", it: "FV proprio" },
-  history: { de: "Verlauf", en: "History", fr: "Historique", it: "Cronologia" },
-  dry_run: { de: "Probelauf", en: "Dry run", fr: "Essai à blanc", it: "Prova a vuoto" },
-  live: { de: "Live", en: "Live", fr: "En direct", it: "Live" },
-  stale: { de: "Keine aktuelle Entscheidung", en: "No recent decision", fr: "Pas de décision récente", it: "Nessuna decisione recente" },
+  soc: { de: "Ladezustand", en: "State of charge", fr: "État de charge", it: "Stato di carica", nl: "Laadtoestand", es: "Estado de carga" },
+  charge: { de: "Ladeleistung", en: "Charge power", fr: "Puissance de charge", it: "Potenza di carica", nl: "Laadvermogen", es: "Potencia de carga" },
+  discharge: { de: "Entladeleistung", en: "Discharge power", fr: "Puissance de décharge", it: "Potenza di scarica", nl: "Ontlaadvermogen", es: "Potencia de descarga" },
+  energy: { de: "Energie im Speicher", en: "Energy in the battery", fr: "Énergie dans la batterie", it: "Energia nella batteria", nl: "Energie in de batterij", es: "Energía en la batería" },
+  mode_charge: { de: "Laden", en: "Charging", fr: "Charge", it: "Carica", nl: "Laden", es: "Cargando" },
+  mode_discharge: { de: "Entladen", en: "Discharging", fr: "Décharge", it: "Scarica", nl: "Ontladen", es: "Descargando" },
+  mode_idle: { de: "Standby", en: "Standby", fr: "Veille", it: "Standby", nl: "Stand-by", es: "En espera" },
+  subtitle: { de: "Marstek Venus – Steuerung", en: "Marstek Venus – control", fr: "Marstek Venus – pilotage", it: "Marstek Venus – controllo", nl: "Marstek Venus – besturing", es: "Marstek Venus – control" },
+  first: { de: "Erste Batterie", en: "First battery", fr: "Première batterie", it: "Prima batteria", nl: "Eerste batterij", es: "Primera batería" },
+  first_short: { de: "Batterie", en: "Battery", fr: "Batterie", it: "Batteria", nl: "Batterij", es: "Batería" },
+  setpoint: { de: "Soll", en: "Setpoint", fr: "Consigne", it: "Setpoint", nl: "Setpoint", es: "Consigna" },
+  pv: { de: "Eigene PV", en: "Own PV", fr: "PV propre", it: "FV proprio", nl: "Eigen PV", es: "FV propia" },
+  history: { de: "Verlauf", en: "History", fr: "Historique", it: "Cronologia", nl: "Verloop", es: "Historial" },
+  dry_run: { de: "Probelauf", en: "Dry run", fr: "Essai à blanc", it: "Prova a vuoto", nl: "Proefdraaien", es: "Modo de prueba" },
+  live: { de: "Live", en: "Live", fr: "En direct", it: "Live", nl: "Live", es: "En directo" },
+  stale: { de: "Keine aktuelle Entscheidung", en: "No recent decision", fr: "Pas de décision récente", it: "Nessuna decisione recente", nl: "Geen recente beslissing", es: "Sin decisión reciente" },
   no_entity: {
     de: "Wähle den Sensor «Zielmodus» von Venus Surplus Control.",
     en: "Pick the “Target mode” sensor of Venus Surplus Control.",
     fr: "Choisissez le capteur « Mode cible » de Venus Surplus Control.",
     it: "Scegli il sensore «Modalità obiettivo» di Venus Surplus Control.",
+    nl: "Kies de sensor “Doelmodus” van Venus Surplus Control.",
+    es: "Elige el sensor «Modo objetivo» de Venus Surplus Control.",
   },
-  not_found: { de: "Entität nicht gefunden", en: "Entity not found", fr: "Entité introuvable", it: "Entità non trovata" },
-  no_history: { de: "Noch kein Verlauf", en: "No history yet", fr: "Pas encore d'historique", it: "Ancora nessuna cronologia" },
+  not_found: { de: "Entität nicht gefunden", en: "Entity not found", fr: "Entité introuvable", it: "Entità non trovata", nl: "Entiteit niet gevonden", es: "Entidad no encontrada" },
+  no_history: { de: "Noch kein Verlauf", en: "No history yet", fr: "Pas encore d'historique", it: "Ancora nessuna cronologia", nl: "Nog geen verloop", es: "Aún sin historial" },
 };
 
 const VSC_EDITOR_LABELS = {
-  entity: { de: "Zielmodus-Sensor", en: "Target mode sensor", fr: "Capteur du mode cible", it: "Sensore della modalità obiettivo" },
-  title: { de: "Titel (optional)", en: "Title (optional)", fr: "Titre (facultatif)", it: "Titolo (facoltativo)" },
-  first_battery_name: { de: "Name der ersten Batterie (optional)", en: "Name of the first battery (optional)", fr: "Nom de la première batterie (facultatif)", it: "Nome della prima batteria (facoltativo)" },
-  hours: { de: "Verlauf: Stunden", en: "History: hours", fr: "Historique : heures", it: "Cronologia: ore" },
-  show_illustration: { de: "Haus-Grafik anzeigen", en: "Show the house graphic", fr: "Afficher le dessin de la maison", it: "Mostra il disegno della casa" },
-  show_chart: { de: "Verlauf anzeigen", en: "Show the history", fr: "Afficher l'historique", it: "Mostra la cronologia" },
+  entity: { de: "Zielmodus-Sensor", en: "Target mode sensor", fr: "Capteur du mode cible", it: "Sensore della modalità obiettivo", nl: "Doelmodus-sensor", es: "Sensor del modo objetivo" },
+  title: { de: "Titel (optional)", en: "Title (optional)", fr: "Titre (facultatif)", it: "Titolo (facoltativo)", nl: "Titel (optioneel)", es: "Título (opcional)" },
+  first_battery_name: { de: "Name der ersten Batterie (optional)", en: "Name of the first battery (optional)", fr: "Nom de la première batterie (facultatif)", it: "Nome della prima batteria (facoltativo)", nl: "Naam van de eerste batterij (optioneel)", es: "Nombre de la primera batería (opcional)" },
+  hours: { de: "Verlauf: Stunden", en: "History: hours", fr: "Historique : heures", it: "Cronologia: ore", nl: "Verloop: uren", es: "Historial: horas" },
+  show_illustration: { de: "Haus-Grafik anzeigen", en: "Show the house graphic", fr: "Afficher le dessin de la maison", it: "Mostra il disegno della casa", nl: "Tekening van het huis tonen", es: "Mostrar el dibujo de la casa" },
+  show_chart: { de: "Verlauf anzeigen", en: "Show the history", fr: "Afficher l'historique", it: "Mostra la cronologia", nl: "Verloop tonen", es: "Mostrar el historial" },
 };
 
 const VSC_HISTORY_REFRESH_MS = 120000;

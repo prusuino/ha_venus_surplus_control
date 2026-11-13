@@ -1,0 +1,306 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Venus Surplus Control",
+        "description": "Las entidades de tu Marstek Venus se toman de la integración Marstek Venus Modbus cuando se encuentran; revísalas y corrige las que no encajen. Después elige el sensor que da tu excedente fotovoltaico. Todo se puede cambiar más tarde en Configurar.",
+        "data": {
+          "name": "Nombre",
+          "surplus_entity": "Sensor de excedente (producción FV menos consumo de la casa, W)",
+          "surplus_invert": "El sensor de excedente es un contador de red, positivo al importar",
+          "force_mode_entity": "Venus: modo forzado (selección)",
+          "charge_power_entity": "Venus: ajustar potencia de carga (número)",
+          "discharge_power_entity": "Venus: ajustar potencia de descarga (número)",
+          "rs485_entity": "Venus: modo de control RS485 (interruptor)",
+          "venus_soc_entity": "Venus: estado de carga de la batería",
+          "venus_ac_entity": "Venus: potencia AC",
+          "venus_ac_invert": "La potencia AC es negativa cuando el Venus alimenta la casa",
+          "venus_state_entity": "Venus: estado del inversor"
+        },
+        "data_description": {
+          "surplus_entity": "Producción FV menos consumo de la casa en W, positiva cuando hay excedente. También sirve un contador de red: marca la casilla de abajo si es positivo al importar."
+        }
+      },
+      "optional": {
+        "title": "Entradas opcionales y límites",
+        "description": "Deja vacío lo que no tengas. Sin una primera batería, el Venus es el único almacenamiento; sin previsión, la primera batería siempre va primero.",
+        "data": {
+          "venus_pv_entities": "Venus: sensores de potencia MPPT (Venus A/D)",
+          "venus_capacity_entity": "Venus: capacidad total de la batería (kWh)",
+          "primary_power_entity": "Primera batería: potencia (positiva = descarga)",
+          "primary_power_invert": "La potencia de la primera batería es positiva al cargar",
+          "primary_soc_entity": "Primera batería: estado de carga",
+          "primary_reserve_entity": "Primera batería: reserva (estado de carga mínimo, %)",
+          "forecast_today_entity": "Previsión FV para hoy (kWh)",
+          "forecast_remaining_entity": "Previsión FV restante para hoy (kWh)",
+          "forecast_factor": "Atenuación de la previsión restante",
+          "connection_entity": "Venus: conexión Modbus (sensor binario)",
+          "modbus_entry_id": "Entrada de configuración de Marstek Venus Modbus (para la recarga automática)",
+          "ac_charge_limit_w": "Orden de carga AC máxima (W)",
+          "total_charge_limit_w": "Carga AC + FV propia máxima (W)",
+          "discharge_limit_w": "Orden de descarga máxima (W)",
+          "feed_in_limit": "Límite de inyección en el enchufe",
+          "feed_in_limit_custom_w": "Límite de inyección propio (W)",
+          "tick_seconds": "Intervalo de decisión (s)",
+          "primary_missing_alone": "Seguir sin la primera batería cuando falten sus valores"
+        },
+        "data_description": {
+          "primary_reserve_entity": "Opcional. El nivel de carga en el que tu inversor deja de descargar la primera batería. El Venus la considera vacía 3 puntos por encima (al menos 12 %). Sin este valor se aplica un 12 % fijo.",
+          "discharge_limit_w": "Lo máximo que puede entregar el Venus (Venus A 1000 W; súbelo para un D o un E). Un límite de inyección más abajo lo reduce aún más.",
+          "feed_in_limit": "Lo que un aparato enchufable puede inyectar en la instalación de la casa. Solo afecta a la descarga, la carga no se limita. La integración limita la orden de descarga y, en un Venus con FV propia, la entrega AC medida, de modo que FV y batería juntas queden por debajo del límite. Comprueba las normas aplicables a tu instalación.",
+          "feed_in_limit_custom_w": "Solo se usa con «Valor propio».",
+          "venus_pv_entities": "Solo para un Venus con entradas FV propias (A, D). Déjalo vacío para un C o un E.",
+          "forecast_factor": "La previsión restante se multiplica por este valor antes de compararla con lo que aún necesitan las dos baterías. Por debajo de 1 es prudente.",
+          "ac_charge_limit_w": "La orden de carga más alta que envía la integración.",
+          "total_charge_limit_w": "Orden de carga más la FV propia del Venus. Sin FV propia, pon el mismo valor que el límite de carga AC.",
+          "tick_seconds": "Cada cuánto decide el regulador. Más corto reacciona antes, más largo es más tranquilo. Los valores que se ajustan (cargar a partir de un excedente de, margen de carga, reacción) están en la página del dispositivo, en Configuración, no aquí.",
+          "primary_missing_alone": "Desactivado: mientras la potencia o el estado de carga de la primera batería no estén disponibles, el regulador no envía órdenes y pone el Venus en espera. Activado: tras 5 minutos sin valores hace funcionar el Venus solo, como si no hubiera una primera batería, y vuelve atrás en cuanto regresan los valores. Para una primera batería que apagas de vez en cuando. Déjalo desactivado si tu sensor de excedente es un contador de red y la batería puede seguir funcionando sin sus sensores: el Venus podría entonces descargarse en ella."
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Este Venus ya está controlado por otra entrada."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Venus Surplus Control",
+        "description": "Las entidades de tu Venus y tu sensor de excedente.",
+        "data": {
+          "name": "Nombre",
+          "surplus_entity": "Sensor de excedente (producción FV menos consumo de la casa, W)",
+          "surplus_invert": "El sensor de excedente es un contador de red, positivo al importar",
+          "force_mode_entity": "Venus: modo forzado (selección)",
+          "charge_power_entity": "Venus: ajustar potencia de carga (número)",
+          "discharge_power_entity": "Venus: ajustar potencia de descarga (número)",
+          "rs485_entity": "Venus: modo de control RS485 (interruptor)",
+          "venus_soc_entity": "Venus: estado de carga de la batería",
+          "venus_ac_entity": "Venus: potencia AC",
+          "venus_ac_invert": "La potencia AC es negativa cuando el Venus alimenta la casa",
+          "venus_state_entity": "Venus: estado del inversor"
+        },
+        "data_description": {
+          "surplus_entity": "Producción FV menos consumo de la casa en W, positiva cuando hay excedente. También sirve un contador de red: marca la casilla de abajo si es positivo al importar."
+        }
+      },
+      "optional": {
+        "title": "Entradas opcionales y límites",
+        "description": "Deja vacío lo que no tengas.",
+        "data": {
+          "venus_pv_entities": "Venus: sensores de potencia MPPT (Venus A/D)",
+          "venus_capacity_entity": "Venus: capacidad total de la batería (kWh)",
+          "primary_power_entity": "Primera batería: potencia (positiva = descarga)",
+          "primary_power_invert": "La potencia de la primera batería es positiva al cargar",
+          "primary_soc_entity": "Primera batería: estado de carga",
+          "primary_reserve_entity": "Primera batería: reserva (estado de carga mínimo, %)",
+          "forecast_today_entity": "Previsión FV para hoy (kWh)",
+          "forecast_remaining_entity": "Previsión FV restante para hoy (kWh)",
+          "forecast_factor": "Atenuación de la previsión restante",
+          "connection_entity": "Venus: conexión Modbus (sensor binario)",
+          "modbus_entry_id": "Entrada de configuración de Marstek Venus Modbus (para la recarga automática)",
+          "ac_charge_limit_w": "Orden de carga AC máxima (W)",
+          "total_charge_limit_w": "Carga AC + FV propia máxima (W)",
+          "discharge_limit_w": "Orden de descarga máxima (W)",
+          "feed_in_limit": "Límite de inyección en el enchufe",
+          "feed_in_limit_custom_w": "Límite de inyección propio (W)",
+          "tick_seconds": "Intervalo de decisión (s)",
+          "primary_missing_alone": "Seguir sin la primera batería cuando falten sus valores"
+        },
+        "data_description": {
+          "primary_reserve_entity": "Opcional. El nivel de carga en el que tu inversor deja de descargar la primera batería. El Venus la considera vacía 3 puntos por encima (al menos 12 %). Sin este valor se aplica un 12 % fijo.",
+          "discharge_limit_w": "Lo máximo que puede entregar el Venus (Venus A 1000 W; súbelo para un D o un E). Un límite de inyección más abajo lo reduce aún más.",
+          "feed_in_limit": "Lo que un aparato enchufable puede inyectar en la instalación de la casa. Solo afecta a la descarga, la carga no se limita. La integración limita la orden de descarga y, en un Venus con FV propia, la entrega AC medida, de modo que FV y batería juntas queden por debajo del límite. Comprueba las normas aplicables a tu instalación.",
+          "feed_in_limit_custom_w": "Solo se usa con «Valor propio».",
+          "venus_pv_entities": "Solo para un Venus con entradas FV propias (A, D). Déjalo vacío para un C o un E.",
+          "forecast_factor": "La previsión restante se multiplica por este valor antes de compararla con lo que aún necesitan las dos baterías. Por debajo de 1 es prudente.",
+          "ac_charge_limit_w": "La orden de carga más alta que envía la integración.",
+          "total_charge_limit_w": "Orden de carga más la FV propia del Venus. Sin FV propia, pon el mismo valor que el límite de carga AC.",
+          "tick_seconds": "Cada cuánto decide el regulador. Más corto reacciona antes, más largo es más tranquilo. Los valores que se ajustan (cargar a partir de un excedente de, margen de carga, reacción) están en la página del dispositivo, en Configuración, no aquí.",
+          "primary_missing_alone": "Desactivado: mientras la potencia o el estado de carga de la primera batería no estén disponibles, el regulador no envía órdenes y pone el Venus en espera. Activado: tras 5 minutos sin valores hace funcionar el Venus solo, como si no hubiera una primera batería, y vuelve atrás en cuanto regresan los valores. Para una primera batería que apagas de vez en cuando. Déjalo desactivado si tu sensor de excedente es un contador de red y la batería puede seguir funcionando sin sus sensores: el Venus podría entonces descargarse en ella."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "target_mode": {
+        "name": "Modo objetivo",
+        "state": {
+          "charge": "Carga",
+          "discharge": "Descarga",
+          "stop": "En espera",
+          "no_data": "Sin datos",
+          "paused": "En pausa",
+          "unknown": "Desconocido"
+        }
+      },
+      "reason": {
+        "name": "Motivo",
+        "state": {
+          "charge_ok": "Excedente, primera batería llena",
+          "charge_parallel": "Excedente, carga en paralelo",
+          "charge_primary_idle": "Excedente, la primera batería no absorbe nada",
+          "discharge_ok": "Demanda de la casa",
+          "direct_pv_use": "FV propia usada directamente",
+          "venus_soc_protect": "Estado de carga del Venus demasiado bajo",
+          "cross_trip": "Parada por carga cruzada",
+          "no_condition": "Ninguna condición cumplida",
+          "data_not_ready": "Valores de entrada incompletos",
+          "manual_override": "Control manual",
+          "manual_charge": "Carga manual",
+          "manual_discharge": "Descarga manual",
+          "manual_discharge_target": "Descarga manual hasta el estado de carga objetivo",
+          "manual_standby": "Espera manual",
+          "target_soc_reached": "Estado de carga objetivo alcanzado",
+          "unknown": "Desconocido"
+        }
+      },
+      "last_decision": {
+        "name": "Última decisión"
+      },
+      "surplus_mean": {
+        "name": "Excedente (media)"
+      },
+      "surplus_without_venus_mean": {
+        "name": "Excedente sin el Venus (media)"
+      },
+      "charge_headroom": {
+        "name": "Margen disponible para cargar"
+      },
+      "house_demand": {
+        "name": "Demanda de la casa"
+      },
+      "charge_command": {
+        "name": "Orden de carga"
+      },
+      "discharge_command": {
+        "name": "Orden de descarga"
+      },
+      "watchdog_restores": {
+        "name": "Restauraciones del watchdog"
+      },
+      "dry_run_commands": {
+        "name": "Órdenes en modo de prueba"
+      },
+      "night_load": {
+        "name": "Carga nocturna aprendida"
+      }
+    },
+    "binary_sensor": {
+      "venus_first": {
+        "name": "Venus primero"
+      },
+      "parallel_charging_allowed": {
+        "name": "Carga en paralelo permitida"
+      },
+      "cross_charging_blocked": {
+        "name": "Bloqueo de carga cruzada"
+      },
+      "charging": {
+        "name": "Cargando"
+      },
+      "discharging": {
+        "name": "Descargando"
+      },
+      "discharging_to_target": {
+        "name": "Descargando hasta el estado de carga objetivo"
+      }
+    },
+    "switch": {
+      "manual_override": {
+        "name": "Control manual"
+      },
+      "dry_run": {
+        "name": "Modo de prueba"
+      }
+    },
+    "number": {
+      "discharge_cap_w": {
+        "name": "Potencia de descarga máxima"
+      },
+      "discharge_min_w": {
+        "name": "Potencia de descarga mínima"
+      },
+      "charge_reserve_w": {
+        "name": "Margen de carga"
+      },
+      "charge_start_w": {
+        "name": "Cargar a partir de un excedente de"
+      },
+      "primary_first_soc": {
+        "name": "El Venus carga a partir del estado de carga de la primera batería"
+      },
+      "target_soc": {
+        "name": "Estado de carga objetivo de la descarga manual"
+      },
+      "first_forecast_kwh": {
+        "name": "Carga en paralelo a partir de una previsión diaria de"
+      },
+      "primary_capacity_kwh": {
+        "name": "Capacidad de la primera batería"
+      },
+      "venus_capacity_kwh": {
+        "name": "Capacidad del Venus (valor de reserva)"
+      },
+      "house_base_load_kw": {
+        "name": "Carga base de la casa"
+      }
+    },
+    "select": {
+      "reaction": {
+        "name": "Reacción",
+        "state": {
+          "calm": "Tranquila (media de 5 min)",
+          "normal": "Normal (media de 3 min)",
+          "fast": "Rápida (media de 1 min)"
+        }
+      }
+    },
+    "button": {
+      "manual_charge": {
+        "name": "Carga manual"
+      },
+      "manual_discharge": {
+        "name": "Descarga manual"
+      },
+      "discharge_to_target": {
+        "name": "Descarga manual hasta el estado de carga objetivo"
+      },
+      "manual_stop": {
+        "name": "Parada manual"
+      },
+      "back_to_auto": {
+        "name": "Volver a automático"
+      }
+    }
+  },
+  "issues": {
+    "inputs_missing": {
+      "title": "Venus Surplus Control: valores incompletos",
+      "description": "El regulador lleva varios minutos sin valores completos y no envía órdenes (tras dos ciclos así pone el Venus en espera). Falta o no está disponible: {entities}. Comprueba la integración Marstek Venus Modbus y el sensor de excedente, o elige otras entidades en Configurar. Este aviso desaparece en cuanto los valores vuelven a estar completos."
+    },
+    "primary_missing": {
+      "title": "Venus Surplus Control: primera batería sin valores",
+      "description": "La primera batería lleva 5 minutos sin entregar valores ({entities}). Como se eligió en Configurar, el regulador hace funcionar el Venus solo hasta que regresen: carga con cualquier excedente y descarga según la demanda de la casa, y las reglas que coordinan las dos baterías están desactivadas. Este aviso desaparece en cuanto vuelven los valores."
+    }
+  },
+  "exceptions": {
+    "target_reached": {
+      "message": "El Venus está al {soc} %, que ya es igual o inferior al objetivo del {target} %."
+    },
+    "soc_unknown": {
+      "message": "El estado de carga del Venus no está disponible en este momento."
+    }
+  },
+  "selector": {
+    "feed_in_limit": {
+      "options": {
+        "none": "Ninguno (solo el límite del aparato)",
+        "ch_600": "600 W (límite habitual en Suiza)",
+        "de_800": "800 W (límite habitual en Alemania y Austria)",
+        "custom": "Valor propio"
+      }
+    }
+  }
+}
