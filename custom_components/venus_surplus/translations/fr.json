@@ -146,6 +146,7 @@
           "direct_pv_use": "PV propre utilisé directement",
           "venus_soc_protect": "État de charge du Venus trop bas",
           "cross_trip": "Arrêt pour charge croisée",
+          "venus_full": "La Venus est pleine",
           "no_condition": "Aucune condition remplie",
           "data_not_ready": "Valeurs d'entrée incomplètes",
           "manual_override": "Commande manuelle",

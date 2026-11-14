@@ -146,6 +146,7 @@
           "direct_pv_use": "Eigene PV direkt genutzt",
           "venus_soc_protect": "Venus-SoC zu tief",
           "cross_trip": "Querlade-Stopp",
+          "venus_full": "Venus ist voll",
           "no_condition": "Keine Bedingung erfüllt",
           "data_not_ready": "Messwerte unvollständig",
           "manual_override": "Manueller Override",

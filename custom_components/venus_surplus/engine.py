@@ -68,6 +68,12 @@ class Params:
     soc_min_charge_start: float = 85
     soc_min_charge_hold: float = 80
     venus_soc_max_charge: float = 100.1
+    # A Venus at 100 % that takes nothing is full: the charge command is
+    # dropped after a few ticks and comes back below the resume value. One
+    # that still takes power at a displayed 100 % keeps its command.
+    venus_full_soc: float = 100
+    venus_full_resume_soc: float = 98
+    venus_full_confirm_ticks: int = 4
     parallel_min_surplus_first_w: float = 600
     parallel_min_surplus_w: float = 1200
     parallel_min_headroom_first_w: float = 400
@@ -135,6 +141,8 @@ class State:
     pv_low_count: int = 0
     primary_idle_count: int = 0
     primary_rest_count: int = 0  # ticks the first battery has delivered nothing while the house imports
+    full_count: int = 0  # ticks the Venus has stood at 100 % without taking anything
+    full_latched: bool = False
     last_primary_reserve: float | None = None
     rest_latched: bool = False
     proj_latched: bool = False
@@ -381,7 +389,16 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     primary_rest_now = p.has_primary and primary_charge == 0 and primary_discharge == 0 and house_need >= mn and pv_corr < p.pv_block_discharge_w
     s.primary_rest_count = min(10, s.primary_rest_count + 1) if primary_rest_now else 0
     primary_rest = s.primary_rest_count >= p.primary_rest_confirm_ticks
-    charge_ok = (charge_soc_allowed or charge_allowed_parallel or primary_idle) and charge_cmd >= p.charge_min_w and ms_soc_ctrl < p.venus_soc_max_charge and not block_charge
+    # A full Venus: at 100 % and taking nothing for a few ticks. The latch
+    # holds until the SoC has dropped, so that the command does not come
+    # and go at the top.
+    s.full_count = min(10, s.full_count + 1) if (ms_soc_ctrl >= p.venus_full_soc and ms_import == 0) else 0
+    if s.full_count >= p.venus_full_confirm_ticks:
+        s.full_latched = True
+    elif ms_soc_ctrl < p.venus_full_resume_soc:
+        s.full_latched = False
+    charge_wanted = (charge_soc_allowed or charge_allowed_parallel or primary_idle) and charge_cmd >= p.charge_min_w and ms_soc_ctrl < p.venus_soc_max_charge and not block_charge
+    charge_ok = charge_wanted and not s.full_latched
     if mode == "discharge":
         discharge_ok = ms_soc_ctrl > p.venus_soc_stop and pv_corr < p.pv_block_discharge_w and target_discharge >= mn and not block_discharge
     else:
@@ -416,6 +433,8 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
             reason = "discharge_primary_idle"
         else:
             reason = "discharge_ok"
+    elif charge_wanted and s.full_latched:
+        target_mode, reason = "stop", "venus_full"
     else:
         target_mode, reason = "stop", "no_condition"
 
@@ -459,6 +478,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         "parallel_allowed": charge_allowed_parallel,
         "primary_idle": primary_idle,
         "primary_rest": primary_rest,
+        "venus_full": s.full_latched,
         "discharge_reserve_w": round(reserve),
         "primary_idle_count": s.primary_idle_count,
         "venus_first": venus_first,

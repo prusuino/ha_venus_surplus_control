@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.9 — 2026-11-14
+
+- **Fixed: a full Venus was still told to charge.** At 100 % the controller kept the charge command and showed *Surplus, first battery full* with a setpoint, although the Venus took nothing. A Venus that stands at 100 % and takes nothing for four ticks now goes to standby with the new reason *Venus is full*; charging comes back once it is below 98 %. A Venus that still takes power at a displayed 100 % keeps its command until it stops. Reported by @VIMVa (#3).
+
 ## 0.8.8 — 2026-11-13
 
 - **Fixed: a house with a small night load was served badly.** With a demand of 180–250 W the Venus either did not start discharging at all, or, since 0.8.5, delivered only 100 W and left more than half of the house to the grid: the fixed reserve of 120 W and the 100 W steps were made for larger loads. Discharging now moves in 50 W steps, the reserve is 20 % of the demand (40 to 120 W), the export guard 10 % (30 to 60 W), and the minimum is 100 W for every house. A house drawing 220 W now gets 150 W from the Venus. Above 600 W of demand the reserve and the guard are as before; only the steps are finer. Reported by @VIMVa (#2).

@@ -146,6 +146,7 @@
           "direct_pv_use": "Own PV used directly",
           "venus_soc_protect": "Venus SoC too low",
           "cross_trip": "Cross-charging trip",
+          "venus_full": "Venus is full",
           "no_condition": "No condition met",
           "data_not_ready": "Input values incomplete",
           "manual_override": "Manual override",

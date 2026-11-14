@@ -146,6 +146,7 @@
           "direct_pv_use": "FV proprio usato direttamente",
           "venus_soc_protect": "Stato di carica del Venus troppo basso",
           "cross_trip": "Arresto per carica incrociata",
+          "venus_full": "La Venus è piena",
           "no_condition": "Nessuna condizione soddisfatta",
           "data_not_ready": "Valori d'ingresso incompleti",
           "manual_override": "Comando manuale",
