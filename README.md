@@ -255,7 +255,7 @@ The four manual buttons switch the manual override on; only *Back to auto* (or t
 
 ### Configure: limits
 
-**Maximum AC charge command** – default 1200 W. The highest charge power the controller sends: what your Venus and the circuit it is plugged into allow.
+**Maximum AC charge command** – 100–2500 W, default 1200 W. The highest charge power the controller sends: what your Venus and the circuit it is plugged into allow.
 
 **Maximum AC charge + own PV** – default 1400 W. With own PV the Venus charges from two sides and has an upper limit for both together; the controller lowers the AC command so that the sum stays below this. Without own PV set it to the same value as the AC charge command.
 

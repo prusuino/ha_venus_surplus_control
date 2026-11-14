@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **The charge limit stops at 2500 W.** *Maximum AC charge command* accepted up to 5000 W in the setup form, more than a Venus takes over AC. It now ends at 2500 W; an entry that holds a higher value is treated as 2500 W.
+
 ## 0.8.9 — 2026-11-14
 
 - **Fixed: a full Venus was still told to charge.** At 100 % the controller kept the charge command and showed *Surplus, first battery full* with a setpoint, although the Venus took nothing. A Venus that stands at 100 % and takes nothing for four ticks now goes to standby with the new reason *Venus is full*; charging comes back once it is below 98 %. A Venus that still takes power at a displayed 100 % keeps its command until it stops. Reported by @VIMVa (#3).

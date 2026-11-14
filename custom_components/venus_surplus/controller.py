@@ -72,6 +72,7 @@ from .const import (
     DEFAULT_TARGET_SOC,
     DEFAULT_TICK_SECONDS,
     DEFAULT_TOTAL_CHARGE_LIMIT,
+    MAX_AC_CHARGE,
     DEFAULT_VENUS_KWH,
     DISCHARGING_STATES,
     DOMAIN,
@@ -236,7 +237,7 @@ class VenusController:
 
     def params(self) -> engine.Params:
         return engine.Params(
-            ac_charge_limit_w=int(self._cfg(CONF_AC_CHARGE_LIMIT, DEFAULT_AC_CHARGE_LIMIT)),
+            ac_charge_limit_w=min(MAX_AC_CHARGE, int(self._cfg(CONF_AC_CHARGE_LIMIT, DEFAULT_AC_CHARGE_LIMIT))),
             total_charge_limit_w=int(self._cfg(CONF_TOTAL_CHARGE_LIMIT, DEFAULT_TOTAL_CHARGE_LIMIT)),
             discharge_limit_w=self.discharge_limit_w,
             discharge_cap_w=int(self.settings.discharge_cap_w),

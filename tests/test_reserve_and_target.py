@@ -270,3 +270,11 @@ async def test_reaction_select_sets_the_averaging(hass: HomeAssistant, enable_cu
     assert hass.states.get("select.venus_reaction").state == "normal"
     await hass.services.async_call("select", "select_option", {"entity_id": "select.venus_reaction", "option": "fast"}, blocking=True)
     assert entry.runtime_data.settings.reaction == "fast"
+
+
+@sun_timer
+async def test_a_charge_limit_above_what_a_venus_takes_is_treated_as_2500_w(hass: HomeAssistant, enable_custom_integrations, expected_lingering_timers: bool) -> None:
+    from custom_components.venus_surplus.const import CONF_AC_CHARGE_LIMIT
+
+    entry = await _setup(hass, data={**DATA, CONF_AC_CHARGE_LIMIT: 5000})
+    assert entry.runtime_data.params().ac_charge_limit_w == 2500
