@@ -44,7 +44,7 @@ DEFAULT_FORECAST_FACTOR = 0.8
 DEFAULT_AC_CHARGE_LIMIT = 1200
 DEFAULT_TOTAL_CHARGE_LIMIT = 1400
 DEFAULT_DISCHARGE_LIMIT = 1000
-MAX_AC_CHARGE = 2500  # what a Venus takes over AC at most
+MAX_AC_POWER = 3600  # the largest Venus (E Max) takes or delivers this much over AC; most models 2500 W or less
 DEFAULT_FEED_IN_CUSTOM = 800
 
 # Feed-in limit at the plug: what a plug-in device may deliver into the house

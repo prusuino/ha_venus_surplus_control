@@ -255,11 +255,11 @@ The four manual buttons switch the manual override on; only *Back to auto* (or t
 
 ### Configure: limits
 
-**Maximum AC charge command** – 100–2500 W, default 1200 W. The highest charge power the controller sends: what your Venus and the circuit it is plugged into allow.
+**Maximum AC charge command** – 100–3600 W, default 1200 W. The highest charge power the controller sends: what your Venus and the circuit it is plugged into allow. Most models take 2500 W or less; check the data sheet of yours before you raise it.
 
 **Maximum AC charge + own PV** – default 1400 W. With own PV the Venus charges from two sides and has an upper limit for both together; the controller lowers the AC command so that the sum stays below this. Without own PV set it to the same value as the AC charge command.
 
-**Maximum discharge command** – default 1000 W. What your Venus can deliver. It is the upper end of *Maximum discharge power* on the device page.
+**Maximum discharge command** – 200–3600 W, default 1000 W. What your Venus can deliver and what you are allowed to feed in at the plug; most models deliver 2500 W or less. It is the upper end of *Maximum discharge power* on the device page.
 
 **Feed-in limit at the plug** – None, 600 W, 800 W or your own value. See [Feed-in limit at the plug](#feed-in-limit-at-the-plug).
 

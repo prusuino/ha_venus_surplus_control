@@ -44,7 +44,7 @@ from .const import (
     DEFAULT_FORECAST_FACTOR,
     DEFAULT_TICK_SECONDS,
     DEFAULT_TOTAL_CHARGE_LIMIT,
-    MAX_AC_CHARGE,
+    MAX_AC_POWER,
     DOMAIN,
     FEED_IN_NONE,
     FEED_IN_OPTIONS,
@@ -111,14 +111,14 @@ def _optional_schema(defaults: dict[str, Any]) -> vol.Schema:
         opt(CONF_MODBUS_ENTRY, selector.ConfigEntrySelector(selector.ConfigEntrySelectorConfig(integration="marstek_modbus"))),
     ):
         schema[key] = sel
-    schema[vol.Required(CONF_AC_CHARGE_LIMIT, default=min(MAX_AC_CHARGE, int(d(CONF_AC_CHARGE_LIMIT, DEFAULT_AC_CHARGE_LIMIT))))] = selector.NumberSelector(
-        selector.NumberSelectorConfig(min=100, max=MAX_AC_CHARGE, step=100, unit_of_measurement="W", mode=selector.NumberSelectorMode.BOX)
+    schema[vol.Required(CONF_AC_CHARGE_LIMIT, default=min(MAX_AC_POWER, int(d(CONF_AC_CHARGE_LIMIT, DEFAULT_AC_CHARGE_LIMIT))))] = selector.NumberSelector(
+        selector.NumberSelectorConfig(min=100, max=MAX_AC_POWER, step=100, unit_of_measurement="W", mode=selector.NumberSelectorMode.BOX)
     )
     schema[vol.Required(CONF_TOTAL_CHARGE_LIMIT, default=int(d(CONF_TOTAL_CHARGE_LIMIT, DEFAULT_TOTAL_CHARGE_LIMIT)))] = selector.NumberSelector(
         selector.NumberSelectorConfig(min=100, max=5000, step=100, unit_of_measurement="W", mode=selector.NumberSelectorMode.BOX)
     )
-    schema[vol.Required(CONF_DISCHARGE_LIMIT, default=int(d(CONF_DISCHARGE_LIMIT, DEFAULT_DISCHARGE_LIMIT)))] = selector.NumberSelector(
-        selector.NumberSelectorConfig(min=200, max=5000, step=100, unit_of_measurement="W", mode=selector.NumberSelectorMode.BOX)
+    schema[vol.Required(CONF_DISCHARGE_LIMIT, default=min(MAX_AC_POWER, int(d(CONF_DISCHARGE_LIMIT, DEFAULT_DISCHARGE_LIMIT))))] = selector.NumberSelector(
+        selector.NumberSelectorConfig(min=200, max=MAX_AC_POWER, step=100, unit_of_measurement="W", mode=selector.NumberSelectorMode.BOX)
     )
     schema[vol.Required(CONF_FEED_IN_LIMIT, default=d(CONF_FEED_IN_LIMIT, FEED_IN_NONE))] = selector.SelectSelector(
         selector.SelectSelectorConfig(options=FEED_IN_OPTIONS, translation_key="feed_in_limit", mode=selector.SelectSelectorMode.DROPDOWN)

@@ -273,8 +273,11 @@ async def test_reaction_select_sets_the_averaging(hass: HomeAssistant, enable_cu
 
 
 @sun_timer
-async def test_a_charge_limit_above_what_a_venus_takes_is_treated_as_2500_w(hass: HomeAssistant, enable_custom_integrations, expected_lingering_timers: bool) -> None:
-    from custom_components.venus_surplus.const import CONF_AC_CHARGE_LIMIT
+async def test_ac_limits_above_what_a_venus_can_do_are_capped(hass: HomeAssistant, enable_custom_integrations, expected_lingering_timers: bool) -> None:
+    from custom_components.venus_surplus.const import CONF_AC_CHARGE_LIMIT, CONF_DISCHARGE_LIMIT, MAX_AC_POWER
 
-    entry = await _setup(hass, data={**DATA, CONF_AC_CHARGE_LIMIT: 5000})
-    assert entry.runtime_data.params().ac_charge_limit_w == 2500
+    entry = await _setup(hass, data={**DATA, CONF_AC_CHARGE_LIMIT: 5000, CONF_DISCHARGE_LIMIT: 4000})
+    controller = entry.runtime_data
+    assert MAX_AC_POWER == 3600
+    assert controller.params().ac_charge_limit_w == MAX_AC_POWER
+    assert controller.discharge_limit_w == MAX_AC_POWER and controller.params().discharge_limit_w == MAX_AC_POWER
