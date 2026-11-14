@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.8.10 — 2026-11-14
 
 - **The AC limits stop at 3600 W.** *Maximum AC charge command* and *Maximum discharge command* accepted up to 5000 W in the setup form, more than any Venus takes or delivers over AC. Both now end at 3600 W, the rating of the largest model; an entry that holds a higher value is treated as 3600 W. The defaults stay at 1200 W and 1000 W.
 
