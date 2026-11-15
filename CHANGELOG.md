@@ -1,8 +1,8 @@
 # Changelog
 
-## 0.9.4 — unreleased
+## 0.9.4 — 2026-11-15
 
-- **The Venus helps with a small load too.** It started discharging only once the first battery delivered 500 W or more. A house with a base load of 200–300 W never got there: the first battery carried the night alone and ran empty, while the Venus stood by fully charged and took over only afterwards, alone and without the first battery to cover what it leaves. Now the Venus also starts when the first battery has been delivering 150 W or more for six ticks. It takes most of the load, the first battery lasts longer and keeps regulating the meter. At 500 W and more it starts at once, as before.
+- **The Venus helps with a small load too.** It started discharging only once the first battery delivered 500 W or more. A house with a base load of 200–300 W never got there: the first battery carried the night alone and ran empty, while the Venus stood by fully charged and took over only afterwards, alone and without the first battery to cover what it leaves. Now the Venus also starts when the first battery has been delivering 150 W or more for six ticks. It takes most of the load, the first battery lasts longer and keeps regulating the meter. At 500 W and more it starts at once, as before. Suggested by the report of @VIMVa (#4).
 
 ## 0.9.3 — 2026-11-15
 

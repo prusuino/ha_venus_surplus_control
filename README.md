@@ -153,7 +153,7 @@ The values to tune are on the device page under **Configuration**; **Configure**
 | the Venus to charge although the first battery is not full | lower **Venus charges from first battery SoC** (default 85 %); 0 means the Venus never waits |
 | the Venus to charge in parallel on good days | lower **Charge in parallel from daily forecast** to a value your forecast reaches on such days |
 | less discharge power | lower **Maximum discharge power**, or set a feed-in limit under Configure |
-| the Venus to cover a small base load at night | nothing: it discharges from about 130 W of house demand. **Minimum discharge power** raises that |
+| the Venus to cover a small base load at night | nothing: it discharges from about 130 W of house demand, and next to a first battery it joins in once that one has been delivering 150 W or more for six ticks (at once from 500 W). **Minimum discharge power** raises the first value |
 | to empty the Venus to a level by hand | **Manual discharge target SoC** and the button **Manual discharge to target SoC** – this pair does nothing else |
 
 The sensor **Reason** says why the controller does what it does, **Last decision** shows the numbers behind it. Every setting is described in the next section: what it does, why it is there and when to change it.
