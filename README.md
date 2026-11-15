@@ -324,6 +324,8 @@ Three notices can appear under **Settings → Repairs**; each disappears by itse
 
 If the Venus drops off Modbus at regular intervals, look at its firmware first: EMS firmware 150 has been reported to stop answering about every half hour, and a later version to end that.
 
+**Short pauses are the Venus, not the controller.** A Venus A goes to standby by itself every now and then while a command stands, and carries on a moment later: for about a minute while discharging, for about 20 seconds while charging, a quarter to half an hour apart (measured on firmware V151, over several days and with two different controllers; the length of the pause did not depend on who was controlling). Near a full battery the pauses come more often. The control mode stays on and nothing is lost: the controller sends the command again at its next tick, and the first battery or the grid covers the gap. In a chart this shows as the Venus dropping to 0 W for a moment; *Control quality* stays *Stable*, because one pause is not six ticks without an answer.
+
 ## Removal
 
 1. Switch **dry run** on or put the Venus into standby yourself first if a command is running: the integration sends no final command when it is removed.
