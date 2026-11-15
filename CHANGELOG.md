@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.9.3 — unreleased
+## 0.9.3 — 2026-11-15
 
 - **A Venus that is the only source follows the house demand closely.** The discharge power stayed a step below the demand: 50 W steps, a reserve and an export guard. Next to a first battery that is right, because the first battery follows the meter and covers the rest. With the first battery empty or at rest, or without one, nobody covers the rest: a house drawing 210 W got 150 W and imported 60 W, all night. In that case the Venus now moves in 10 W steps with an export guard of 5 % (10–30 W) and no reserve: 190 W for a house drawing 210 W, 870 W for one drawing 900 W. Next to a first battery that delivers, nothing changes. Tested on a real Venus A, which takes commands between the 50 W steps. Reported by @VIMVa (#4).
 
