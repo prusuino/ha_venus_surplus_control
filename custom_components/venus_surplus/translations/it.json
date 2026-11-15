@@ -46,7 +46,7 @@
         },
         "data_description": {
           "primary_reserve_entity": "Facoltativo. Il livello di carica al quale il tuo inverter smette di scaricare la prima batteria. Il Venus la considera vuota 3 punti sopra (almeno 12 %). Senza questo valore vale un 12 % fisso.",
-          "discharge_limit_w": "Quanto il Venus può fornire al massimo (Venus A 1000 W; aumenta per un D o un E). Un limite di immissione qui sotto lo riduce ulteriormente.",
+          "discharge_limit_w": "Quanto il Venus può fornire al massimo (Venus A 1200 W; aumenta per un D o un E). Un limite di immissione qui sotto lo riduce ulteriormente.",
           "feed_in_limit": "Quanto un apparecchio a spina può immettere nell'impianto di casa. Vale solo per la scarica, la carica non è limitata. L'integrazione limita il comando di scarica e, su un Venus con FV proprio, la potenza AC misurata, in modo che FV e batteria restino insieme sotto il limite. Verifica le regole valide per il tuo impianto.",
           "feed_in_limit_custom_w": "Usato solo con «Valore personalizzato».",
           "venus_pv_entities": "Solo per un Venus con ingressi FV propri (A, D). Lascia vuoto per un C o un E.",
@@ -109,7 +109,7 @@
         },
         "data_description": {
           "primary_reserve_entity": "Facoltativo. Il livello di carica al quale il tuo inverter smette di scaricare la prima batteria. Il Venus la considera vuota 3 punti sopra (almeno 12 %). Senza questo valore vale un 12 % fisso.",
-          "discharge_limit_w": "Quanto il Venus può fornire al massimo (Venus A 1000 W; aumenta per un D o un E). Un limite di immissione qui sotto lo riduce ulteriormente.",
+          "discharge_limit_w": "Quanto il Venus può fornire al massimo (Venus A 1200 W; aumenta per un D o un E). Un limite di immissione qui sotto lo riduce ulteriormente.",
           "feed_in_limit": "Quanto un apparecchio a spina può immettere nell'impianto di casa. Vale solo per la scarica, la carica non è limitata. L'integrazione limita il comando di scarica e, su un Venus con FV proprio, la potenza AC misurata, in modo che FV e batteria restino insieme sotto il limite. Verifica le regole valide per il tuo impianto.",
           "feed_in_limit_custom_w": "Usato solo con «Valore personalizzato».",
           "venus_pv_entities": "Solo per un Venus con ingressi FV propri (A, D). Lascia vuoto per un C o un E.",

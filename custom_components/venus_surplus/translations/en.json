@@ -46,7 +46,7 @@
         },
         "data_description": {
           "primary_reserve_entity": "Optional. The charge level at which your inverter stops discharging the first battery. The Venus then treats it as empty 3 points above that (at least 12 %). Without it, a fixed 12 % applies.",
-          "discharge_limit_w": "What the Venus can deliver at most (Venus A 1000 W; raise it for a D or E). A feed-in limit below lowers it further.",
+          "discharge_limit_w": "What the Venus can deliver at most (Venus A 1200 W; raise it for a D or E). A feed-in limit below lowers it further.",
           "feed_in_limit": "What a plug-in device may deliver into the house wiring. Applies to discharging only, charging is not limited. The integration caps the discharge command and, on a Venus with its own PV, the measured AC delivery, so that PV and battery together stay below the limit. Check the rules that apply to your installation.",
           "feed_in_limit_custom_w": "Used only with \"Own value\".",
           "venus_pv_entities": "Only for a Venus with its own PV inputs (A, D). Leave empty for a C or E.",
@@ -109,7 +109,7 @@
         },
         "data_description": {
           "primary_reserve_entity": "Optional. The charge level at which your inverter stops discharging the first battery. The Venus then treats it as empty 3 points above that (at least 12 %). Without it, a fixed 12 % applies.",
-          "discharge_limit_w": "What the Venus can deliver at most (Venus A 1000 W; raise it for a D or E). A feed-in limit below lowers it further.",
+          "discharge_limit_w": "What the Venus can deliver at most (Venus A 1200 W; raise it for a D or E). A feed-in limit below lowers it further.",
           "feed_in_limit": "What a plug-in device may deliver into the house wiring. Applies to discharging only, charging is not limited. The integration caps the discharge command and, on a Venus with its own PV, the measured AC delivery, so that PV and battery together stay below the limit. Check the rules that apply to your installation.",
           "feed_in_limit_custom_w": "Used only with \"Own value\".",
           "venus_pv_entities": "Only for a Venus with its own PV inputs (A, D). Leave empty for a C or E.",

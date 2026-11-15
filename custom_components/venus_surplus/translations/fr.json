@@ -46,7 +46,7 @@
         },
         "data_description": {
           "primary_reserve_entity": "Facultatif. Le niveau de charge auquel votre onduleur cesse de décharger la première batterie. Le Venus la considère alors comme vide 3 points au-dessus (au moins 12 %). Sans cette valeur, 12 % s'appliquent.",
-          "discharge_limit_w": "Ce que le Venus peut fournir au maximum (Venus A 1000 W ; augmentez pour un D ou un E). Une limite d'injection ci-dessous l'abaisse encore.",
+          "discharge_limit_w": "Ce que le Venus peut fournir au maximum (Venus A 1200 W ; augmentez pour un D ou un E). Une limite d'injection ci-dessous l'abaisse encore.",
           "feed_in_limit": "Ce qu'un appareil enfichable peut injecter dans l'installation de la maison. Ne concerne que la décharge, la charge n'est pas limitée. L'intégration plafonne la commande de décharge et, sur un Venus avec PV propre, la puissance AC mesurée, afin que PV et batterie restent ensemble sous la limite. Vérifiez les règles applicables à votre installation.",
           "feed_in_limit_custom_w": "Utilisé uniquement avec « Valeur personnalisée ».",
           "venus_pv_entities": "Uniquement pour un Venus avec ses propres entrées PV (A, D). Laissez vide pour un C ou un E.",
@@ -109,7 +109,7 @@
         },
         "data_description": {
           "primary_reserve_entity": "Facultatif. Le niveau de charge auquel votre onduleur cesse de décharger la première batterie. Le Venus la considère alors comme vide 3 points au-dessus (au moins 12 %). Sans cette valeur, 12 % s'appliquent.",
-          "discharge_limit_w": "Ce que le Venus peut fournir au maximum (Venus A 1000 W ; augmentez pour un D ou un E). Une limite d'injection ci-dessous l'abaisse encore.",
+          "discharge_limit_w": "Ce que le Venus peut fournir au maximum (Venus A 1200 W ; augmentez pour un D ou un E). Une limite d'injection ci-dessous l'abaisse encore.",
           "feed_in_limit": "Ce qu'un appareil enfichable peut injecter dans l'installation de la maison. Ne concerne que la décharge, la charge n'est pas limitée. L'intégration plafonne la commande de décharge et, sur un Venus avec PV propre, la puissance AC mesurée, afin que PV et batterie restent ensemble sous la limite. Vérifiez les règles applicables à votre installation.",
           "feed_in_limit_custom_w": "Utilisé uniquement avec « Valeur personnalisée ».",
           "venus_pv_entities": "Uniquement pour un Venus avec ses propres entrées PV (A, D). Laissez vide pour un C ou un E.",

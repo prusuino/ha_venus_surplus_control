@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.7 — 2026-11-15
+
+- **The discharge power climbs much faster.** A running discharge followed a rising demand by 50, 100 or 200 W per tick; from 300 to 1200 W took four and a half minutes on *Normal*, and for that long the first battery carried the load the Venus was meant to take off it. The steps are now 100 W on *Calm*, 300 W on *Normal*, and *Fast* goes straight to the demand. Coming down is immediate as before, so the Venus delivers too much for one tick at most.
+- **Handing back from manual starts at the demand.** After *Back to auto* while the Venus was still discharging, the controller began at the minimum and climbed from there. It now starts at the power the house needs, as it does from standby.
+- **A Venus A delivers 1200 W, not 1000 W.** The setup text named 1000 W as what a Venus A can deliver. The manufacturer gives 1200 W, and a real Venus A delivered 1185 W at a 1200 W command (and 1382 W at 1500 W). The text and the README are corrected; the default of 1000 W stays, raise *Maximum discharge command* if you want the full power.
+
 ## 0.9.6 — 2026-11-15
 
 - **New setting *Parallel charging on forecast from surplus of*.** The rule that lets the Venus charge in parallel when the remaining forecast covers both batteries and the house asked for a fixed 2500 W of surplus. That is now a number on the device page (500–5000 W, default 2500 W as before), so that a smaller PV system can use the rule as well.

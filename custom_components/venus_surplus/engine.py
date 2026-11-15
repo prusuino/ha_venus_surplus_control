@@ -386,7 +386,11 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         elif last_d >= mn:
             requested = last_d
         else:
-            requested = mn if need >= mn - 20 else 0
+            # The Venus still reports discharging, but no discharge command is
+            # standing (handed back from manual, or a command of someone else):
+            # that is a fresh start, straight to the demand, not a climb from
+            # the minimum.
+            requested = min(lim, max(mn, _floor_step(need + 40, st))) if need >= mn - 20 else 0
     safe_raw = max(0.0, house_need - export_guard)
     if safe_raw >= mn:
         safe_cap = min(lim, _floor_step(safe_raw, st))

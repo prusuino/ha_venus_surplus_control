@@ -46,7 +46,7 @@
         },
         "data_description": {
           "primary_reserve_entity": "Optioneel. Het laadniveau waarbij je omvormer stopt met het ontladen van de eerste batterij. De Venus beschouwt haar dan 3 punten daarboven als leeg (minstens 12 %). Zonder deze waarde geldt een vaste 12 %.",
-          "discharge_limit_w": "Wat de Venus maximaal kan leveren (Venus A 1000 W; verhoog voor een D of E). Een teruglevergrens hieronder verlaagt dit verder.",
+          "discharge_limit_w": "Wat de Venus maximaal kan leveren (Venus A 1200 W; verhoog voor een D of E). Een teruglevergrens hieronder verlaagt dit verder.",
           "feed_in_limit": "Wat een stekkerapparaat aan de huisinstallatie mag leveren. Geldt alleen voor ontladen, laden wordt niet begrensd. De integratie begrenst het ontlaadcommando en, bij een Venus met eigen PV, de gemeten AC-levering, zodat PV en batterij samen onder de grens blijven. Controleer de regels die voor jouw installatie gelden.",
           "feed_in_limit_custom_w": "Alleen gebruikt bij \"Eigen waarde\".",
           "venus_pv_entities": "Alleen voor een Venus met eigen PV-ingangen (A, D). Laat leeg bij een C of E.",
@@ -109,7 +109,7 @@
         },
         "data_description": {
           "primary_reserve_entity": "Optioneel. Het laadniveau waarbij je omvormer stopt met het ontladen van de eerste batterij. De Venus beschouwt haar dan 3 punten daarboven als leeg (minstens 12 %). Zonder deze waarde geldt een vaste 12 %.",
-          "discharge_limit_w": "Wat de Venus maximaal kan leveren (Venus A 1000 W; verhoog voor een D of E). Een teruglevergrens hieronder verlaagt dit verder.",
+          "discharge_limit_w": "Wat de Venus maximaal kan leveren (Venus A 1200 W; verhoog voor een D of E). Een teruglevergrens hieronder verlaagt dit verder.",
           "feed_in_limit": "Wat een stekkerapparaat aan de huisinstallatie mag leveren. Geldt alleen voor ontladen, laden wordt niet begrensd. De integratie begrenst het ontlaadcommando en, bij een Venus met eigen PV, de gemeten AC-levering, zodat PV en batterij samen onder de grens blijven. Controleer de regels die voor jouw installatie gelden.",
           "feed_in_limit_custom_w": "Alleen gebruikt bij \"Eigen waarde\".",
           "venus_pv_entities": "Alleen voor een Venus met eigen PV-ingangen (A, D). Laat leeg bij een C of E.",

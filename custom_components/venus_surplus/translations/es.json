@@ -46,7 +46,7 @@
         },
         "data_description": {
           "primary_reserve_entity": "Opcional. El nivel de carga en el que tu inversor deja de descargar la primera batería. El Venus la considera vacía 3 puntos por encima (al menos 12 %). Sin este valor se aplica un 12 % fijo.",
-          "discharge_limit_w": "Lo máximo que puede entregar el Venus (Venus A 1000 W; súbelo para un D o un E). Un límite de inyección más abajo lo reduce aún más.",
+          "discharge_limit_w": "Lo máximo que puede entregar el Venus (Venus A 1200 W; súbelo para un D o un E). Un límite de inyección más abajo lo reduce aún más.",
           "feed_in_limit": "Lo que un aparato enchufable puede inyectar en la instalación de la casa. Solo afecta a la descarga, la carga no se limita. La integración limita la orden de descarga y, en un Venus con FV propia, la entrega AC medida, de modo que FV y batería juntas queden por debajo del límite. Comprueba las normas aplicables a tu instalación.",
           "feed_in_limit_custom_w": "Solo se usa con «Valor propio».",
           "venus_pv_entities": "Solo para un Venus con entradas FV propias (A, D). Déjalo vacío para un C o un E.",
@@ -109,7 +109,7 @@
         },
         "data_description": {
           "primary_reserve_entity": "Opcional. El nivel de carga en el que tu inversor deja de descargar la primera batería. El Venus la considera vacía 3 puntos por encima (al menos 12 %). Sin este valor se aplica un 12 % fijo.",
-          "discharge_limit_w": "Lo máximo que puede entregar el Venus (Venus A 1000 W; súbelo para un D o un E). Un límite de inyección más abajo lo reduce aún más.",
+          "discharge_limit_w": "Lo máximo que puede entregar el Venus (Venus A 1200 W; súbelo para un D o un E). Un límite de inyección más abajo lo reduce aún más.",
           "feed_in_limit": "Lo que un aparato enchufable puede inyectar en la instalación de la casa. Solo afecta a la descarga, la carga no se limita. La integración limita la orden de descarga y, en un Venus con FV propia, la entrega AC medida, de modo que FV y batería juntas queden por debajo del límite. Comprueba las normas aplicables a tu instalación.",
           "feed_in_limit_custom_w": "Solo se usa con «Valor propio».",
           "venus_pv_entities": "Solo para un Venus con entradas FV propias (A, D). Déjalo vacío para un C o un E.",

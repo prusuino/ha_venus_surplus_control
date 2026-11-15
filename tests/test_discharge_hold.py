@@ -188,3 +188,11 @@ def test_a_fast_climb_does_not_overshoot_the_demand():
     assert fast[-1] == slow[-1]
     assert max(fast) == fast[-1]  # never above where it ends
     assert fast.index(fast[-1]) < slow.index(slow[-1])  # but there sooner
+
+
+def test_a_venus_that_still_discharges_without_a_command_starts_at_the_demand():
+    # handed back from manual: the inverter reports discharging, nothing is standing
+    d = decide(_helping(1500, venus_ac=1380.0, state="discharging"), HELPER, State())
+    assert d.command == "discharge" and d.power == 1000  # the limit, at once, not the minimum
+    d = decide(_night(260, venus_ac=1380.0, state="discharging"), P, State())
+    assert d.command == "discharge" and d.power == 240
