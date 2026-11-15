@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.2 — unreleased
+
+- **A control mode that is already off at the start is restored at once.** The watchdog acted the moment the RS485 control mode went off, but not when it was off before the integration started (switched off in the app, or the Venus restarted in the meantime): the commands then went nowhere until the next five-minute run. The start now looks at the control mode and restores it within seconds.
+- README: a Venus A takes about 1000 W from the grid whatever the charge command says; measured values added.
+
 ## 0.9.1 — 2026-11-15
 
 - **The discharge power climbs faster.** When the house suddenly needed more, the power went up by 50 W per tick: from 400 to 1000 W took six minutes, longer than a kettle runs. How far it may rise per tick now follows *Reaction*: 50 W on *Calm* (as before), 100 W on *Normal*, 200 W on *Fast*. The power still sits on 50 W steps, and coming down is immediate as before. Measured on a real Venus A.

@@ -323,6 +323,12 @@ class VenusController:
         if self._cfg(CONF_CONNECTION):
             self._unsub.append(async_track_state_change_event(self.hass, [self._cfg(CONF_CONNECTION)], self._connection_changed))
         self._unsub.append(async_track_state_change_event(self.hass, [self._cfg(CONF_DISCHARGE_POWER)], self._discharge_register_changed))
+        # The control mode is already off (switched off in the app, or the Venus
+        # restarted while this integration was not running): no change will be
+        # reported, so the watchdog is asked to look now.
+        rs = self.hass.states.get(self._cfg(CONF_RS485))
+        if rs is not None and rs.state == "off":
+            self._watchdog_soon()
         self.hass.async_create_task(self._tick(dt_util.utcnow()))
 
     async def async_stop(self) -> None:

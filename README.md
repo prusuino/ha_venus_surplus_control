@@ -280,6 +280,7 @@ The limit applies to discharging only; charging from the grid is not limited.
 
 - The discharge command, the number *Maximum discharge power* (its maximum follows) and the manual discharge buttons never go above it.
 - The discharge command is what the Venus delivers at the plug. On a Venus with its own PV (A, D) the PV goes into the battery and does not come on top: my Venus A delivered 983 W at a 1000 W command while its MPPTs produced about 500 W.
+- The same holds for charging from the grid: my Venus A takes about 1010 W at the plug at any charge command from 1000 to 1400 W, and in the manual mode of the app set to 1500 W as well. Its own PV comes on top of that inside the battery. A command above what the model takes from the grid does no harm, but *Control quality* then compares the Venus with a number it cannot reach.
 - As a safeguard, the controller compares the measured AC power with the command while discharging. Should the Venus deliver more, it steps the command down by the difference. Differences under 40 W are taken as measurement noise.
 - The command never goes below the minimum discharge power because of the limit. Standing by instead would only send the PV into the Venus' own battery while the house draws from the grid. If the measured AC power is still above the limit, the diagnostic value `feed_in_exceeded` is true.
 - The manual buttons and *Manual discharge to target SoC* cap the command, but do not subtract the PV.

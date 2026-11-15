@@ -91,6 +91,22 @@ async def test_watchdog_runs_at_once_when_the_venus_is_back(hass: HomeAssistant,
     await controller.async_stop()
 
 
+async def test_control_mode_found_off_at_start_is_restored_at_once(hass: HomeAssistant, enable_custom_integrations) -> None:
+    # switched off in the app while the integration was not running: no change event will come
+    for found, runs in (("off", 1), ("on", 0), ("unavailable", 0)):
+        controller = _controller(hass)
+        controller._watchdog = AsyncMock()
+        controller._tick = AsyncMock()
+        hass.states.async_set("switch.venus_rs485", found)
+        await controller.async_start()
+        await hass.async_block_till_done()
+        assert controller._watchdog.call_count == runs, found
+        if runs:
+            controller._watchdog.assert_called_once_with(force=True, delay=15)
+        await controller.async_stop()
+        await hass.config_entries.async_remove(controller.entry.entry_id)
+
+
 async def test_cell_temperatures_are_found_through_the_modbus_entry(hass: HomeAssistant, enable_custom_integrations) -> None:
     from homeassistant.helpers import entity_registry as er
 
