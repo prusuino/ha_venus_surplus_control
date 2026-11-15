@@ -126,6 +126,15 @@ class Params:
     # served before it is done. Coming down needs no limit: the export guard
     # cuts the power in one step.
     discharge_up_step_w: int = 50
+    # The Venus as the only source: no first battery, or one that is empty or
+    # at rest. Nobody else covers what the Venus leaves, so every watt it holds
+    # back is imported. The command then moves in fine steps with a small
+    # export guard; a rise smaller than the dead band is not worth a write.
+    sole_discharge_step_w: int = 10
+    sole_export_guard_w: float = 30
+    sole_export_guard_share: float = 0.05
+    sole_export_guard_min_w: float = 10
+    sole_deadband_w: int = 20
     venus_pv_direct_use_min_w: float = 80
     pv_unknown_hold_ticks: int = 4
     primary_idle_confirm_ticks: int = 6
@@ -316,16 +325,47 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     charge_cmd = 0 if rounded < p.charge_min_w else min(p.ac_charge_limit_w, rounded)
 
     # ---- discharge target with hysteresis -----------------------------------
-    reserve = min(p.discharge_reserve_w, max(p.discharge_reserve_min_w, p.discharge_reserve_share * house_need))
-    export_guard = min(p.discharge_export_guard_w, max(p.discharge_export_guard_min_w, p.discharge_export_guard_share * house_need))
+    lim, mn = p.discharge_limit_w, p.discharge_min_w
+    # The first battery counts as empty at its reserve: the inverter stops
+    # discharging it there, so waiting for it to deliver would wait all
+    # night. With a reserve input the threshold follows it (plus a margin,
+    # never below the fixed value); a reading that drops out keeps the last one.
+    if p.has_primary_reserve:
+        if i.primary_reserve_soc is not None and 0 <= i.primary_reserve_soc <= 100:
+            s.last_primary_reserve = float(i.primary_reserve_soc)
+    else:
+        s.last_primary_reserve = None
+    primary_empty_soc = p.primary_soc_empty_bypass
+    if s.last_primary_reserve is not None:
+        primary_empty_soc = max(primary_empty_soc, s.last_primary_reserve + p.primary_reserve_margin)
+
+    # The same at night: a first battery that neither charges nor discharges
+    # while the house imports (paused, in standby, at a limit) is not going
+    # to deliver. Waiting for it would leave a charged Venus standing by.
+    primary_rest_now = p.has_primary and primary_charge == 0 and primary_discharge == 0 and house_need >= mn and pv_corr < p.pv_block_discharge_w
+    s.primary_rest_count = min(10, s.primary_rest_count + 1) if primary_rest_now else 0
+    primary_rest = s.primary_rest_count >= p.primary_rest_confirm_ticks
+    # Two batteries cover the house together: the Venus stays a step below
+    # the demand and the first battery, which follows the meter, takes the
+    # rest. A Venus that is the only source follows the demand closely instead.
+    sole_source = (not p.has_primary) or primary_soc <= primary_empty_soc or primary_rest
+    if sole_source:
+        export_guard = min(p.sole_export_guard_w, max(p.sole_export_guard_min_w, p.sole_export_guard_share * house_need))
+        reserve = export_guard
+        st = p.sole_discharge_step_w
+    else:
+        reserve = min(p.discharge_reserve_w, max(p.discharge_reserve_min_w, p.discharge_reserve_share * house_need))
+        export_guard = min(p.discharge_export_guard_w, max(p.discharge_export_guard_min_w, p.discharge_export_guard_share * house_need))
+        st = p.discharge_step_w
     need = max(0.0, house_need - reserve)
-    lim, mn, st = p.discharge_limit_w, p.discharge_min_w, p.discharge_step_w
     last_d = s.last_discharge_power
     hold_need = max(0.0, mn - p.discharge_hold_below_min_w)
     if mode != "discharge":
         requested = min(lim, max(mn, _floor_step(need + 40, st))) if need >= mn - 20 else 0
     else:
         up = min(lim, last_d + max(st, p.discharge_up_step_w), _floor_step(need + 40, st))
+        if sole_source and up < last_d + p.sole_deadband_w and up < lim:
+            up = last_d
         down = last_d - st
         if last_d >= mn and up > last_d:
             requested = up
@@ -361,21 +401,15 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         feed_in_cap = min(lim, max(mn, _floor_step(p.feed_in_limit_w - feed_in_extra, st)))
     feed_in_exceeded = p.feed_in_limit_w > 0 and mode == "discharge" and ms_grid > p.feed_in_limit_w + p.noise_venus_ac_w
     target_discharge = min(requested, safe_cap, user_cap, feed_in_cap)
+    if sole_source and mode == "discharge" and last_d >= mn:
+        # No write for a few watts: a small rise is left out, and the command
+        # stays where it is as long as it does not export.
+        if last_d < target_discharge < last_d + p.sole_deadband_w:
+            target_discharge = last_d
+        elif target_discharge < last_d <= min(user_cap, feed_in_cap) and last_d <= house_need and target_discharge >= mn:
+            target_discharge = last_d
 
     direct_pv_use = ms_pv >= p.venus_pv_direct_use_min_w and safe_cap >= mn and pv_corr < p.pv_block_discharge_w and not block_discharge
-
-    # The first battery counts as empty at its reserve: the inverter stops
-    # discharging it there, so waiting for it to deliver would wait all
-    # night. With a reserve input the threshold follows it (plus a margin,
-    # never below the fixed value); a reading that drops out keeps the last one.
-    if p.has_primary_reserve:
-        if i.primary_reserve_soc is not None and 0 <= i.primary_reserve_soc <= 100:
-            s.last_primary_reserve = float(i.primary_reserve_soc)
-    else:
-        s.last_primary_reserve = None
-    primary_empty_soc = p.primary_soc_empty_bypass
-    if s.last_primary_reserve is not None:
-        primary_empty_soc = max(primary_empty_soc, s.last_primary_reserve + p.primary_reserve_margin)
 
     soc_thr = p.soc_min_charge_hold if mode == "charge" else p.soc_min_charge_start
     charge_soc_allowed = primary_soc >= soc_thr
@@ -388,12 +422,6 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     primary_idle_now = p.has_primary and primary_charge == 0 and primary_discharge == 0 and headroom >= idle_headroom
     s.primary_idle_count = min(10, s.primary_idle_count + 1) if primary_idle_now else 0
     primary_idle = s.primary_idle_count >= p.primary_idle_confirm_ticks
-    # The same at night: a first battery that neither charges nor discharges
-    # while the house imports (paused, in standby, at a limit) is not going
-    # to deliver. Waiting for it would leave a charged Venus standing by.
-    primary_rest_now = p.has_primary and primary_charge == 0 and primary_discharge == 0 and house_need >= mn and pv_corr < p.pv_block_discharge_w
-    s.primary_rest_count = min(10, s.primary_rest_count + 1) if primary_rest_now else 0
-    primary_rest = s.primary_rest_count >= p.primary_rest_confirm_ticks
     # A full Venus: at 100 % and taking nothing for a few ticks. The latch
     # holds until the SoC has dropped, so that the command does not come
     # and go at the top.
@@ -485,6 +513,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         "primary_rest": primary_rest,
         "venus_full": s.full_latched,
         "discharge_reserve_w": round(reserve),
+        "sole_source": sole_source,
         "primary_idle_count": s.primary_idle_count,
         "venus_first": venus_first,
         "forecast_today_kwh": round(i.forecast_today_kwh, 1),

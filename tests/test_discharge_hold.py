@@ -1,6 +1,7 @@
 """Discharging into a small house load: the Venus starts at a demand it can
-serve, follows it in 50 W steps, leaves a reserve that fits the demand, and
-does not switch off and on with every dip."""
+serve, follows it, and does not switch off and on with every dip. As the only
+source it follows closely (10 W steps, a small export guard); next to a first
+battery that delivers it stays a step below and leaves a reserve."""
 from __future__ import annotations
 
 from custom_components.venus_surplus.engine import Inputs, Params, State, decide
@@ -20,11 +21,42 @@ def _night(house_w: float, venus_ac: float = 0.0, state: str = "standby", **over
 P = Params(has_primary=False, discharge_min_w=100)
 
 
+def _helping(house_w: float, **over) -> Inputs:
+    """The first battery delivers 600 W and the house still imports `house_w`."""
+    return _night(house_w, primary_power=600.0, primary_soc=50.0, **over)
+
+
+HELPER = Params(has_primary=True, discharge_min_w=100)
+
+
 def test_a_house_drawing_220_w_is_served():
-    # the reserve follows the demand (20 %, at least 40 W) instead of a flat 120 W
+    # the only source: nobody else covers the rest, so the Venus goes close
     d = decide(_night(220), P, State())
+    assert d.command == "discharge" and d.power == 200
+    assert d.values["sole_source"] is True and d.values["discharge_reserve_w"] == 11
+    # next to a first battery that delivers: the reserve follows the demand (20 %, at least 40 W)
+    d = decide(_helping(220), HELPER, State())
     assert d.command == "discharge" and d.power == 150
-    assert d.values["discharge_reserve_w"] == 44
+    assert d.values["sole_source"] is False and d.values["discharge_reserve_w"] == 44
+
+
+def test_the_only_source_leaves_10_to_30_w_to_the_grid():
+    for house, power in ((130, 120), (160, 150), (210, 190), (330, 310), (560, 530), (900, 870)):
+        assert decide(_night(house), P, State()).power == power, house
+    # an empty first battery is the same case
+    empty = decide(_night(330, primary_power=0.0, primary_soc=8.0), HELPER, State())
+    assert empty.power == 310 and empty.values["sole_source"] is True
+
+
+def test_the_only_source_does_not_write_for_a_few_watts():
+    running = State(last_discharge_power=190)
+    for house in (195, 205, 215):  # up to 19 W more, and less without exporting: no new command
+        d = decide(_night(house, venus_ac=190.0, state="discharging"), P, running)
+        assert d.target_mode == "discharge" and d.command is None, house
+    d = decide(_night(260, venus_ac=190.0, state="discharging"), P, running)
+    assert d.command == "discharge" and d.power == 240
+    d = decide(_night(180, venus_ac=190.0, state="discharging"), P, running)  # would export: down at once
+    assert d.command == "discharge" and d.power == 170
 
 
 def test_does_not_start_for_a_trickle():
@@ -42,12 +74,15 @@ def test_follows_the_demand_in_50_w_steps():
 def test_never_commands_more_than_the_house_needs():
     for house in (130, 180, 220, 260, 350, 480, 700, 950):
         d = decide(_night(house), P, State())
+        assert d.command == "discharge" and house - 40 <= d.power <= house - 10, house
+        d = decide(_helping(house), HELPER, State())
         assert d.command == "discharge" and d.power <= house - 30, house
 
 
 def test_a_large_demand_keeps_the_full_reserve():
-    d = decide(_night(900), P, State())
+    d = decide(_helping(900), HELPER, State())
     assert d.values["discharge_reserve_w"] == 120
+    assert decide(_night(900), P, State()).values["discharge_reserve_w"] == 30  # the only source: the guard alone
 
 
 def test_running_discharge_holds_through_a_dip():
@@ -60,7 +95,7 @@ def test_running_discharge_holds_through_a_dip():
 
 def test_a_minimum_set_by_hand_still_applies():
     p200 = Params(has_primary=False, discharge_min_w=200)
-    assert decide(_night(220), p200, State()).target_mode == "stop"
+    assert decide(_night(205), p200, State()).target_mode == "stop"
     d = decide(_night(300), p200, State())
     assert d.command == "discharge" and d.power >= 200
 
