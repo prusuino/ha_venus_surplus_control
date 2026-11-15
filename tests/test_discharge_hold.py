@@ -119,12 +119,32 @@ def test_a_paused_first_battery_lets_the_venus_take_over_after_three_minutes():
     assert d.command == "discharge" and d.reason == "discharge_primary_idle"
 
 
-def test_a_first_battery_that_delivers_keeps_its_turn():
+def test_the_venus_helps_with_a_small_load_once_the_first_battery_has_delivered_for_a_while():
+    # a house with a small base load never reaches the 500 W that start the Venus at once
+    state = State()
+    for n in range(5):
+        d = decide(_night(240, primary_power=230.0, primary_soc=35.0), WITH_FIRST, state)
+        assert d.target_mode == "stop", n  # a passing cloud does not start it
+        state = d.state
+    d = decide(_night(240, primary_power=230.0, primary_soc=35.0), WITH_FIRST, state)
+    assert d.command == "discharge" and d.reason == "discharge_ok" and d.values["primary_help"] is True
+    assert 150 <= d.power <= 200 and d.values["sole_source"] is False  # a step below the demand; the first battery keeps the rest
+
+
+def test_a_first_battery_that_delivers_next_to_nothing_keeps_its_turn():
     state = State()
     for _ in range(10):
-        d = decide(_night(240, primary_power=230.0, primary_soc=35.0), WITH_FIRST, state)
+        d = decide(_night(240, primary_power=120.0, primary_soc=35.0), WITH_FIRST, state)
         state = d.state
-    assert d.target_mode == "stop"  # it covers the house itself
+    assert d.target_mode == "stop" and d.values["primary_help"] is False
+
+
+def test_the_wait_starts_again_when_the_first_battery_pauses():
+    state = State()
+    for power in (230.0, 230.0, 230.0, 230.0, 230.0, 100.0, 230.0):
+        d = decide(_night(240, primary_power=power, primary_soc=35.0), WITH_FIRST, state)
+        state = d.state
+    assert d.target_mode == "stop" and state.primary_help_count == 1
 
 
 def test_no_takeover_while_the_sun_still_covers_the_house():

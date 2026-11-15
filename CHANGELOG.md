@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.4 — unreleased
+
+- **The Venus helps with a small load too.** It started discharging only once the first battery delivered 500 W or more. A house with a base load of 200–300 W never got there: the first battery carried the night alone and ran empty, while the Venus stood by fully charged and took over only afterwards, alone and without the first battery to cover what it leaves. Now the Venus also starts when the first battery has been delivering 150 W or more for six ticks. It takes most of the load, the first battery lasts longer and keeps regulating the meter. At 500 W and more it starts at once, as before.
+
 ## 0.9.3 — 2026-11-15
 
 - **A Venus that is the only source follows the house demand closely.** The discharge power stayed a step below the demand: 50 W steps, a reserve and an export guard. Next to a first battery that is right, because the first battery follows the meter and covers the rest. With the first battery empty or at rest, or without one, nobody covers the rest: a house drawing 210 W got 150 W and imported 60 W, all night. In that case the Venus now moves in 10 W steps with an export guard of 5 % (10–30 W) and no reserve: 190 W for a house drawing 210 W, 870 W for one drawing 900 W. Next to a first battery that delivers, nothing changes. Tested on a real Venus A, which takes commands between the 50 W steps. Reported by @VIMVa (#4).

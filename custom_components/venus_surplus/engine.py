@@ -85,6 +85,12 @@ class Params:
     proj_start_surplus_w: float = 3000
     proj_venus_rate_kw: float = 1.0
     primary_discharge_start_w: float = 500
+    # Below that the Venus helps as well, once the first battery has been
+    # delivering for a while: a house with a small base load never reaches
+    # the value above, and the Venus would stand by fully charged until the
+    # first battery is empty. The wait keeps a passing cloud from starting it.
+    primary_help_start_w: float = 150
+    primary_help_confirm_ticks: int = 6
     primary_soc_empty_bypass: float = 12
     primary_reserve_margin: float = 3
     venus_soc_resume_discharge: float = 15
@@ -155,6 +161,7 @@ class State:
     pv_low_count: int = 0
     primary_idle_count: int = 0
     primary_rest_count: int = 0  # ticks the first battery has delivered nothing while the house imports
+    primary_help_count: int = 0  # ticks the first battery has been delivering a small load
     full_count: int = 0  # ticks the Venus has stood at 100 % without taking anything
     full_latched: bool = False
     last_primary_reserve: float | None = None
@@ -345,6 +352,9 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     primary_rest_now = p.has_primary and primary_charge == 0 and primary_discharge == 0 and house_need >= mn and pv_corr < p.pv_block_discharge_w
     s.primary_rest_count = min(10, s.primary_rest_count + 1) if primary_rest_now else 0
     primary_rest = s.primary_rest_count >= p.primary_rest_confirm_ticks
+    primary_help_now = p.has_primary and primary_discharge >= p.primary_help_start_w and pv_corr < p.pv_block_discharge_w
+    s.primary_help_count = min(10, s.primary_help_count + 1) if primary_help_now else 0
+    primary_help = s.primary_help_count >= p.primary_help_confirm_ticks
     # Two batteries cover the house together: the Venus stays a step below
     # the demand and the first battery, which follows the meter, takes the
     # rest. A Venus that is the only source follows the demand closely instead.
@@ -439,7 +449,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
             ms_soc_ctrl >= p.venus_soc_resume_discharge
             and pv_corr < p.pv_block_discharge_w
             and target_discharge >= mn
-            and (primary_discharge >= p.primary_discharge_start_w or primary_soc <= primary_empty_soc or direct_pv_use or primary_rest or not p.has_primary)
+            and (primary_discharge >= p.primary_discharge_start_w or primary_help or primary_soc <= primary_empty_soc or direct_pv_use or primary_rest or not p.has_primary)
             and not block_discharge
         )
     cross_trip = (mode == "charge" and primary_discharge > p.cross_trip_w) or (mode == "discharge" and primary_charge > p.cross_trip_w)
@@ -511,6 +521,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         "parallel_allowed": charge_allowed_parallel,
         "primary_idle": primary_idle,
         "primary_rest": primary_rest,
+        "primary_help": primary_help,
         "venus_full": s.full_latched,
         "discharge_reserve_w": round(reserve),
         "sole_source": sole_source,
