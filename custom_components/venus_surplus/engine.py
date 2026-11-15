@@ -497,7 +497,10 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     elif target_mode == "discharge" and target_discharge >= mn and (mode != "discharge" or s.last_discharge_power != target_discharge):
         command, power = "discharge", target_discharge
         s.last_discharge_power, s.last_charge_power, s.last_charge_target = target_discharge, 0, 0
-    elif target_mode == "stop" and mode != "stop":
+    elif target_mode == "stop" and (mode != "stop" or s.last_charge_power > 0 or s.last_discharge_power > 0):
+        # also when the Venus already stands by on its own (a full battery
+        # does): the forced mode and the power would otherwise stay in its
+        # registers, and it would start again by itself
         command = "standby"
         s.last_charge_power = s.last_charge_target = s.last_discharge_power = 0
 

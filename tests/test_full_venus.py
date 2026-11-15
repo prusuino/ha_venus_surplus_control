@@ -32,6 +32,16 @@ def test_full_venus_goes_to_standby_after_confirmation():
     assert d.values["venus_full"] is True
 
 
+def test_a_full_venus_that_stands_by_on_its_own_still_gets_the_standby_command():
+    # what a real Venus A does at 100 %: it reports standby while the forced mode and the power stay in its registers
+    state = State(last_charge_power=1200, last_charge_target=1200)
+    d = _run(state, 4, venus_state="standby")
+    assert d.target_mode == "stop" and d.reason == "venus_full" and d.command == "standby"
+    assert d.state.last_charge_power == 0 and d.state.expected_mode() == "standby"  # nothing left to answer
+    d = decide(_inputs(venus_state="standby"), Params(), d.state)
+    assert d.target_mode == "stop" and d.command is None  # once is enough
+
+
 def test_venus_still_taking_power_at_100_keeps_charging():
     state = State(last_charge_power=1000, last_charge_target=1000)
     d = _run(state, 8, venus_ac=-300.0)

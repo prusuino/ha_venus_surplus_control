@@ -237,8 +237,8 @@ class VenusController:
     def _learn_night_load(self, inputs: engine.Inputs) -> None:
         """One sample per tick while the sun is down; the night is closed
         when it rises. At night the surplus sensor shows nothing but the
-        house: minus the surplus, with the Venus' own flow taken out (and,
-        behind a grid meter, with what the first battery delivers put back)."""
+        house: minus the surplus, with the Venus' own flow taken out (behind
+        a grid meter the first battery's flow is already out of the value)."""
         sun = self.hass.states.get("sun.sun")
         if sun is None:
             return
@@ -246,8 +246,6 @@ class VenusController:
             if inputs.surplus_instant is None or inputs.venus_ac is None:
                 return
             house = -(inputs.surplus_instant - inputs.venus_ac)
-            if self._cfg(CONF_SURPLUS_INVERT) and inputs.primary_power is not None:
-                house += inputs.primary_power
             if len(self._night_samples) < 5000:
                 self._night_samples.append(max(0.0, house))
             return
@@ -518,6 +516,15 @@ class VenusController:
     def _sample(self, now: datetime) -> tuple[float | None, float | None, float | None]:
         """Take the sample of this tick and return (mean, mean without Venus, instant)."""
         surplus = self._num(CONF_SURPLUS, CONF_SURPLUS_INVERT)
+        if surplus is not None and self._cfg(CONF_SURPLUS_INVERT):
+            # A grid meter shows what is left after the first battery: while
+            # that one covers the house the meter stands at zero, and while it
+            # absorbs the sun there is no export. Its own flow is taken out, as
+            # the Venus' is below, so that the value says what the house needs
+            # beyond the sun, whichever battery is working on it.
+            primary = self._num(CONF_PRIMARY_POWER, CONF_PRIMARY_POWER_INVERT)
+            if primary is not None:
+                surplus -= primary
         self._surplus_silent = self._watch_surplus(now)
         if self._surplus_silent:
             surplus = None  # a frozen value is no reading
