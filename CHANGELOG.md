@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.9.5 — unreleased
+## 0.9.5 — 2026-11-15
 
 - **A grid meter as surplus sensor now shows the controller the whole picture.** A meter shows what is left after the first battery: while that one covers the house the meter stands at zero, so the controller saw no demand and the Venus waited until the first battery was empty – the rule of 0.9.4 could not help there. With a first battery set up, the controller now takes its flow out of the meter value, as it already does for the Venus. The Venus joins in while the first battery delivers, and the charge rules see the full surplus and wait for the first battery by the settings made for that (*Venus charges from first battery SoC*, parallel charging) instead of by what happens to be left at the meter. Setups with a surplus sensor of PV minus consumption are not affected. Reported by @VIMVa (#4).
 - **A full Venus really gets the standby command.** At 100 % a Venus A stops by itself and reports standby. The controller then saw nothing to stop and sent nothing: the charge mode and the power stayed in the registers of the Venus, which could start again by itself, and *Control quality* went to *Venus does not respond* with a repair notice after ten minutes. The standby command is now sent whenever a command is still standing. Found on a real Venus A charged to 100 %.
