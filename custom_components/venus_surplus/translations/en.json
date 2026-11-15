@@ -187,6 +187,20 @@
       },
       "night_load": {
         "name": "Learned night load"
+      },
+      "control_quality": {
+        "name": "Control quality",
+        "state": {
+          "collecting": "Collecting data",
+          "stable": "Stable",
+          "oscillating": "Changing mode often",
+          "limited": "Venus does less than commanded",
+          "limited_cold": "Cells cold: battery limits the charge",
+          "limited_warm": "Cells warm: battery limits the charge",
+          "limited_near_full": "Nearly full: battery tapers the charge",
+          "not_responding": "Venus does not respond",
+          "paused": "Paused"
+        }
       }
     },
     "binary_sensor": {
@@ -285,6 +299,14 @@
     "primary_missing": {
       "title": "Venus Surplus Control: first battery without readings",
       "description": "The first battery has delivered no readings for 5 minutes ({entities}). As chosen under Configure, the controller runs the Venus alone until they return: it charges from any surplus and discharges against house demand, and the rules that coordinate the two batteries are off. This notice disappears as soon as the readings are back."
+    },
+    "surplus_silent": {
+      "title": "Venus Surplus Control: surplus sensor is silent",
+      "description": "The surplus sensor {entity} has not reported a value for {minutes} minutes, far longer than it has ever been silent. A value that old is not used: the controller sends no commands and puts the Venus into standby, so that a frozen reading cannot keep it charging from the grid or exporting. Check the meter or the integration behind the sensor. This notice disappears with the next reading."
+    },
+    "venus_not_responding": {
+      "title": "Venus Surplus Control: the Venus does not respond",
+      "description": "The Venus has had a charge or discharge command for {minutes} minutes and does nothing. The controller keeps the command. Check the Venus (fault, limits set in the Marstek app, RS485 control mode) and the Marstek Venus Modbus integration. This notice disappears as soon as the Venus follows again."
     }
   },
   "exceptions": {

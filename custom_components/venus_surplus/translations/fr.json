@@ -187,6 +187,20 @@
       },
       "night_load": {
         "name": "Charge nocturne apprise"
+      },
+      "control_quality": {
+        "name": "Qualité de la régulation",
+        "state": {
+          "collecting": "Collecte des données",
+          "stable": "Stable",
+          "oscillating": "Change souvent de mode",
+          "limited": "Le Venus fait moins que commandé",
+          "limited_cold": "Cellules froides : la batterie limite la charge",
+          "limited_warm": "Cellules chaudes : la batterie limite la charge",
+          "limited_near_full": "Presque pleine : la batterie réduit la charge",
+          "not_responding": "Le Venus ne réagit pas",
+          "paused": "En pause"
+        }
       }
     },
     "binary_sensor": {
@@ -285,6 +299,14 @@
     "primary_missing": {
       "title": "Venus Surplus Control : première batterie sans valeurs",
       "description": "La première batterie ne fournit plus de valeurs depuis 5 minutes ({entities}). Comme choisi sous Configurer, le régulateur fait fonctionner le Venus seul jusqu'à leur retour : il charge à partir de tout surplus et décharge selon le besoin de la maison, et les règles qui coordonnent les deux batteries sont désactivées. Cet avis disparaît dès que les valeurs sont de retour."
+    },
+    "surplus_silent": {
+      "title": "Venus Surplus Control : le capteur de surplus est muet",
+      "description": "Le capteur de surplus {entity} n'a transmis aucune valeur depuis {minutes} minutes, bien plus longtemps que jamais auparavant. Une valeur aussi ancienne n'est pas utilisée : le régulateur n'envoie aucune commande et met le Venus en veille, afin qu'une valeur figée ne le fasse pas charger depuis le réseau ni injecter. Vérifiez le compteur ou l'intégration derrière le capteur. Cet avis disparaît à la prochaine valeur."
+    },
+    "venus_not_responding": {
+      "title": "Venus Surplus Control : le Venus ne réagit pas",
+      "description": "Le Venus a une commande de charge ou de décharge depuis {minutes} minutes et ne fait rien. Le régulateur maintient la commande. Vérifiez le Venus (défaut, limites réglées dans l'application Marstek, mode de commande RS485) et l'intégration Marstek Venus Modbus. Cet avis disparaît dès que le Venus suit de nouveau."
     }
   },
   "exceptions": {

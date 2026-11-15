@@ -37,6 +37,11 @@ async def async_get_config_entry_diagnostics(hass: HomeAssistant, entry: ConfigE
             "cap_enforced": s.cap_enforced,
             "self_heals": s.self_heals,
             "dry_run_commands": s.dry_run_commands,
+            "control_quality": c.quality_state(),
+            "cell_temperatures": list(c.cell_temperatures()),
+            "mode_changes": c.quality.mode_changes,
+            "surplus_silence": {**c.silence.to_dict(), "limit_s": round(c.silence.limit_s), "ready": c.silence.ready},
+            "command_followed_percent": c.quality.follow_percent,
         },
         "readings": readings,
     }

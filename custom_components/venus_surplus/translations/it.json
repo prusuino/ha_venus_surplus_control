@@ -187,6 +187,20 @@
       },
       "night_load": {
         "name": "Carico notturno appreso"
+      },
+      "control_quality": {
+        "name": "Qualità della regolazione",
+        "state": {
+          "collecting": "Raccolta dati",
+          "stable": "Stabile",
+          "oscillating": "Cambia spesso modalità",
+          "limited": "Il Venus fa meno del comandato",
+          "limited_cold": "Celle fredde: la batteria limita la carica",
+          "limited_warm": "Celle calde: la batteria limita la carica",
+          "limited_near_full": "Quasi piena: la batteria riduce la carica",
+          "not_responding": "Il Venus non reagisce",
+          "paused": "In pausa"
+        }
       }
     },
     "binary_sensor": {
@@ -285,6 +299,14 @@
     "primary_missing": {
       "title": "Venus Surplus Control: prima batteria senza valori",
       "description": "La prima batteria non fornisce valori da 5 minuti ({entities}). Come scelto sotto Configura, il regolatore fa funzionare il Venus da solo finché non ritornano: carica da qualsiasi eccedenza e scarica secondo il fabbisogno della casa, e le regole che coordinano le due batterie sono disattivate. Questo avviso scompare appena i valori ritornano."
+    },
+    "surplus_silent": {
+      "title": "Venus Surplus Control: il sensore dell'eccedenza tace",
+      "description": "Il sensore dell'eccedenza {entity} non trasmette valori da {minutes} minuti, molto più a lungo di quanto sia mai successo. Un valore così vecchio non viene usato: il regolatore non invia comandi e mette il Venus in standby, perché un valore bloccato non lo faccia caricare dalla rete né immettere. Controlla il contatore o l'integrazione dietro il sensore. Questo avviso scompare con il prossimo valore."
+    },
+    "venus_not_responding": {
+      "title": "Venus Surplus Control: il Venus non reagisce",
+      "description": "Il Venus ha un comando di carica o scarica da {minutes} minuti e non fa nulla. Il regolatore mantiene il comando. Controlla il Venus (guasto, limiti impostati nell'app Marstek, modalità di controllo RS485) e l'integrazione Marstek Venus Modbus. Questo avviso scompare appena il Venus segue di nuovo."
     }
   },
   "exceptions": {

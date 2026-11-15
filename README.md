@@ -17,7 +17,7 @@ A Home Assistant integration that runs a **Marstek Venus** battery from your PV 
 - **Charge from real surplus only** – AC charging follows the surplus in 100 W steps, less a buffer you set, capped so that AC charge plus the Venus' own PV stay below the device limit. While your first battery (BYD, Pylontech, …) is still absorbing the surplus, the Venus waits; on a good solar day ("Venus first") it may start early in parallel because both will fill up anyway.
 - **Discharge against house demand only** – 100–1000 W in 50 W steps with hysteresis, a reserve and an export guard that follow the demand, so that a house drawing 200 W at night is served as well as one drawing 2 kW. With a first battery, only while it is already delivering, empty, or delivering nothing at all. "Empty" can follow the reserve you set on your inverter.
 - **Standby otherwise** – and an immediate stop when the first battery suddenly works against the Venus (cross-charging). The two batteries never charge each other.
-- **RS485 watchdog** – the Venus firmware drops the RS485 control mode and resets its power registers on restarts, app or cloud access. The watchdog restores the control mode and the last command.
+- **RS485 watchdog** – the Venus firmware drops the RS485 control mode and resets its power registers on restarts, app or cloud access. The watchdog restores the control mode and the last command: every five minutes, and at once when the control mode drops or the Venus comes back after a restart or a lost connection.
 - **Discharge cap** – a ceiling you set from the dashboard that every command respects and that is enforced again when the app or a firmware reset raises the register.
 - **Modbus self-heal** – reloads the Marstek Venus Modbus integration after a long connection loss.
 - **Dry run** – new entries start in dry run: the controller decides and writes every command it *would* send to the logbook, but touches nothing. Switch it off when the decisions look right.
@@ -79,6 +79,7 @@ If you have a first battery but switch it off now and then, keep its sensors and
 | number **Maximum discharge power** | ceiling for the discharge power; its maximum is the device limit or the feed-in limit |
 | number **Minimum discharge power** | smallest discharge command. 0 (default) = automatic, which is 100 W. 100–500 W to set it yourself |
 | `sensor.<name>_learned_night_load` | diagnostic: what the house typically draws at night, learned by the controller from the last seven nights |
+| `sensor.<name>_control_quality` | diagnostic: *Stable*, *Changing mode often* (six or more changes between charging, discharging and standby within 30 minutes), *Venus does less than commanded* (under 70 % of a standing command for six ticks), with the reason where it is known while charging: *Cells cold* (below 20 °C), *Cells warm* (from 40 °C) or *Nearly full* (from 90 %) – in each of them the battery management of the Venus cuts the charge current, see [Why the Venus charges less than commanded](#why-the-venus-charges-less-than-commanded), *Venus does not respond* (nothing at all for six ticks), *Collecting data*, *Paused*. Attributes: the mode changes in the window, the share of the command the Venus follows and what the controller has learned about the reporting of the surplus sensor. It changes no decision; in dry run only the mode changes are judged |
 | number **Manual discharge target SoC** | where the button **Manual discharge to target SoC** stops (12–100 %, default 50). Only for that button: the automatic control always discharges down to 12 %, and it has nothing to do with charging |
 | number **Charge from surplus of** | headroom (surplus minus the charging buffer) from which charging starts (default 400 W, 100–1500 W). Lower it to start on a small surplus |
 | number **Charging buffer** | surplus the Venus leaves alone while charging (default 200 W, 0–500 W) |
@@ -257,6 +258,8 @@ The four manual buttons switch the manual override on; only *Back to auto* (or t
 
 **Maximum AC charge command** – 100–3600 W, default 1200 W. The highest charge power the controller sends: what your Venus and the circuit it is plugged into allow. Most models take 2500 W or less; check the data sheet of yours before you raise it.
 
+Both this limit and *Maximum discharge command* also stop at the maximum of the number entity the command is written to: Home Assistant refuses a value above it, and the command would never reach the Venus. The Venus has an output limit of its own as well, set in the Marstek app (the app proposes the plug-in limit of your country, 600 W or 800 W for example); a command above it is accepted and cut by the device, and *Control quality* then shows *Venus does less than commanded*.
+
 **Maximum AC charge + own PV** – default 1400 W. With own PV the Venus charges from two sides and has an upper limit for both together; the controller lowers the AC command so that the sum stays below this. Without own PV set it to the same value as the AC charge command.
 
 **Maximum discharge command** – 200–3600 W, default 1000 W. What your Venus can deliver and what you are allowed to feed in at the plug; most models deliver 2500 W or less. It is the upper end of *Maximum discharge power* on the device page.
@@ -287,6 +290,12 @@ The diagnostics show `feed_in_limit_w`, `discharge_feed_in_cap_w`, `feed_in_extr
 
 Set the number **Manual discharge target SoC** and press **Manual discharge to target SoC**. The manual override switches on and the Venus discharges at the discharge cap until its SoC is at or below the target, then it goes to standby. The target starts at 12 % because the Venus does not discharge below that; if you have raised the discharge cut-off on the Venus itself, keep the target above it, or the run never reaches its end. This run ignores the house demand, so the Venus may export to the grid. The override stays on at the end – otherwise the controller would simply go on discharging against the house demand – so press **Back to auto** when you are done. Any other manual button, or switching the override off, cancels the run; `binary_sensor.<name>_discharging_to_target_soc` is on while it lasts. A Venus with its own PV (A/D) keeps charging from its MPPTs, which cannot be switched off from here: by day the net discharge is the command minus that production, and after the stop the SoC rises again.
 
+## Why the Venus charges less than commanded
+
+The charge command is an upper limit. How much the battery takes is decided by its own battery management, which cuts the charge current by cell temperature and state of charge. For the Venus A and D the firmware allows the full current only between 20 and 40 °C; between 15 and 20 °C it is about 80 %, between 10 and 15 °C half, between 5 and 10 °C 40 %, and less below. From 90 % state of charge the current is halved, from 95 % it is a fifth, and at 100 % it is zero. A Venus in an unheated room that takes 800–900 W at a 1200 W command on a winter morning is therefore working as designed, and takes more once the cells have warmed up. (The figures are from the [firmware analysis by sphings79](https://github.com/sphings79/Marstek-Venus-Firmware-Reverse-Engineering); they matched what a Venus A did at 10 °C.)
+
+The controller needs nothing for this: it decides on the power the Venus really takes, not on the command. *Control quality* names the reason. For *Cells cold* and *Cells warm* it reads the cell temperatures of the Marstek Venus Modbus integration by itself; those two sensors (*Min cell temperature*, *Max cell temperature*) are disabled there by default, so enable them if you want the reason shown. The temperature the same integration shows as *Internal temperature* is the heat sink of the inverter, which warms up within minutes while the cells stay cold.
+
 ## Dry run and first days
 
 Leave **dry run** on for a day or two. The logbook (filter "Venus Surplus") shows every command with its reasons; `sensor.<name>_last_decision` shows the values. When the decisions match what you expect, switch dry run off. The controller then writes its standing decision to the Venus right away.
@@ -302,7 +311,13 @@ For a bug report, the debug log of ten minutes around the problem says more than
 
 ## Repairs
 
-When the controller has had no complete readings for about five minutes (an entity of the Venus or the surplus sensor missing or unavailable), a notice under **Settings → Repairs** names the entities concerned; it disappears as soon as the readings are complete again.
+Three notices can appear under **Settings → Repairs**; each disappears by itself when its cause is gone.
+
+- **Readings incomplete** – no complete readings for about five minutes (an entity of the Venus or the surplus sensor missing or unavailable, or the Modbus connection to the Venus down: the Modbus integration keeps the last values of its sensors then, and the controller does not use them). The notice names the entities concerned.
+- **Surplus sensor is silent** – the surplus sensor has a value but has not reported for far longer than it ever has. A value that old is not used: the controller sends no commands and puts the Venus into standby, so that a reading frozen at a large surplus or a large demand cannot keep it charging from the grid or exporting. The next report of the sensor, even of the same value, ends it. How long is too long is learned per sensor, because sensors differ: one reports every few seconds, another only when its value changes and is then silent for as long as the house draws the same. The controller measures the gaps between the reports, for the first 24 hours without judging anything, and after that counts the sensor as silent at three times the longest gap of the last seven days, never before 10 minutes. The attributes `surplus_longest_gap_seconds` and `surplus_silence_limit_minutes` of *Control quality* show what it has learned.
+- **The Venus does not respond** – a charge or discharge command has stood for 10 minutes and the Venus does nothing. The controller keeps the command; check the device, the limits set in the Marstek app and the RS485 control mode. Not raised in dry run.
+
+If the Venus drops off Modbus at regular intervals, look at its firmware first: EMS firmware 150 has been reported to stop answering about every 35 minutes, and a later version to end that.
 
 ## Removal
 

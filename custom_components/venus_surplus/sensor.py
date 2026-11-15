@@ -9,6 +9,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .controller import VenusController
 from .entity import VenusEntity
+from .quality import STATES as QUALITY_STATES, WINDOW as QUALITY_WINDOW
 
 TARGET_MODES = ["charge", "discharge", "stop", "no_data", "paused", "unknown"]
 REASONS = ["charge_ok", "charge_parallel", "charge_primary_idle", "discharge_ok", "discharge_primary_idle", "direct_pv_use", "venus_soc_protect", "cross_trip", "venus_full", "no_condition", "data_not_ready", "manual_override", "manual_charge", "manual_discharge", "manual_discharge_target", "manual_standby", "target_soc_reached", "unknown"]
@@ -28,6 +29,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             PowerSensor(c, "charge_command", lambda c: c.state.last_charge_power),
             PowerSensor(c, "discharge_command", lambda c: c.state.last_discharge_power),
             NightLoadSensor(c),
+            QualitySensor(c),
             CounterSensor(c, "watchdog_restores", lambda c: c.status.watchdog_restores),
             CounterSensor(c, "dry_run_commands", lambda c: c.status.dry_run_commands),
         ]
@@ -123,6 +125,37 @@ class NightLoadSensor(PowerSensor):
             "per_night_w": [round(v) for v in c._night_medians],
             "minimum_discharge_power_w": c.discharge_min_w,
             "minimum_discharge_power_automatic": int(c.settings.discharge_min_w) <= 0,
+        }
+
+
+class QualitySensor(VenusEntity, SensorEntity):
+    """How well the control runs: steady, changing mode too often, or a
+    Venus that does less than it was told."""
+
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = QUALITY_STATES
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:chart-bell-curve"
+
+    def __init__(self, c: VenusController) -> None:
+        super().__init__(c, "control_quality")
+
+    @property
+    def native_value(self) -> str:
+        return self.controller.quality_state()
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        q = self.controller.quality
+        return {
+            "mode_changes": q.mode_changes,
+            "window_minutes": round(QUALITY_WINDOW.total_seconds() / 60),
+            "command_followed_percent": q.follow_percent,
+            "cell_temperature_min": self.controller.cell_temperatures()[0],
+            "cell_temperature_max": self.controller.cell_temperatures()[1],
+            "surplus_longest_gap_seconds": round(self.controller.silence.longest_gap_s),
+            "surplus_silence_limit_minutes": round(self.controller.silence.limit_s / 60) if self.controller.silence.ready else None,
+            "dry_run": self.controller.settings.dry_run,
         }
 
 

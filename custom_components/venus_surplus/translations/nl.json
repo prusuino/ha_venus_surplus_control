@@ -187,6 +187,20 @@
       },
       "night_load": {
         "name": "Geleerde nachtlast"
+      },
+      "control_quality": {
+        "name": "Regelkwaliteit",
+        "state": {
+          "collecting": "Verzamelt gegevens",
+          "stable": "Stabiel",
+          "oscillating": "Wisselt vaak van modus",
+          "limited": "Venus doet minder dan opgedragen",
+          "limited_cold": "Cellen koud: batterij beperkt het laden",
+          "limited_warm": "Cellen warm: batterij beperkt het laden",
+          "limited_near_full": "Bijna vol: batterij remt het laden af",
+          "not_responding": "Venus reageert niet",
+          "paused": "Gepauzeerd"
+        }
       }
     },
     "binary_sensor": {
@@ -285,6 +299,14 @@
     "primary_missing": {
       "title": "Venus Surplus Control: eerste batterij zonder waarden",
       "description": "De eerste batterij levert al 5 minuten geen waarden ({entities}). Zoals gekozen onder Configureren laat de regelaar de Venus alleen werken tot ze terug zijn: hij laadt uit elk overschot en ontlaadt volgens de huisbehoefte, en de regels die de twee batterijen op elkaar afstemmen staan uit. Deze melding verdwijnt zodra de waarden terug zijn."
+    },
+    "surplus_silent": {
+      "title": "Venus Surplus Control: overschotsensor meldt niets",
+      "description": "De overschotsensor {entity} heeft al {minutes} minuten geen waarde gemeld, veel langer dan ooit eerder. Zo'n oude waarde wordt niet gebruikt: de regelaar stuurt geen commando's en zet de Venus in stand-by, zodat een bevroren waarde hem niet uit het net laat laden of laat terugleveren. Controleer de meter of de integratie achter de sensor. Deze melding verdwijnt bij de volgende waarde."
+    },
+    "venus_not_responding": {
+      "title": "Venus Surplus Control: de Venus reageert niet",
+      "description": "De Venus heeft al {minutes} minuten een laad- of ontlaadcommando en doet niets. De regelaar laat het commando staan. Controleer de Venus (storing, limieten in de Marstek-app, RS485-besturingsmodus) en de integratie Marstek Venus Modbus. Deze melding verdwijnt zodra de Venus weer volgt."
     }
   },
   "exceptions": {

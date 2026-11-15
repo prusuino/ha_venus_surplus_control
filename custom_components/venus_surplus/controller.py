@@ -15,12 +15,15 @@ from typing import Any, Callable
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_track_state_change_event, async_track_time_change, async_track_time_interval
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
 from . import engine
+from .quality import FOLLOW_TICKS, QualityTracker
+from .silence import SilenceWatch
 from .issues import IssueReporter
 from .const import (
     CAP_GUARD_SECOND,
@@ -103,6 +106,11 @@ NO_DATA_ISSUE_TICKS = 10
 # the controller carries on with the Venus alone.
 PRIMARY_ABSENT_AFTER = timedelta(minutes=5)
 PV_SEEN_MIN_W = 5  # an MPPT input counts as connected once it delivers this much
+MODBUS_DOMAIN = "marstek_modbus"  # the integration whose entities this controller reads and writes
+# A standing command the Venus has not answered for this many ticks (10
+# minutes at the default tick) is named under Settings > Repairs.
+NOT_RESPONDING_ISSUE_TICKS = 20
+assert NOT_RESPONDING_ISSUE_TICKS >= FOLLOW_TICKS
 
 
 def signal_update(entry_id: str) -> str:
@@ -173,6 +181,10 @@ class VenusController:
         # of the last nights.
         self._night_samples: list[float] = []
         self._night_medians: list[float] = []
+        self.quality = QualityTracker()
+        self._watchdog_queued = False
+        self._surplus_silent = False
+        self.silence = SilenceWatch()  # when the surplus sensor has been silent for too long, see silence.py
 
     # ------------------------------------------------------------------ config
     def _cfg(self, key: str, default: Any = None) -> Any:
@@ -194,9 +206,20 @@ class VenusController:
     @property
     def discharge_limit_w(self) -> int:
         """The device's discharge limit, lowered to the feed-in limit if one is set."""
-        limit = min(MAX_AC_POWER, int(self._cfg(CONF_DISCHARGE_LIMIT, DEFAULT_DISCHARGE_LIMIT)))
+        limit = min(MAX_AC_POWER, int(self._cfg(CONF_DISCHARGE_LIMIT, DEFAULT_DISCHARGE_LIMIT)), self._entity_max(CONF_DISCHARGE_POWER))
         feed_in = self.feed_in_limit_w
         return min(limit, feed_in) if feed_in > 0 else limit
+
+    def _entity_max(self, key: str) -> int:
+        """The largest value the number entity behind a command takes. A
+        command above it is refused by Home Assistant and never reaches the
+        Venus, so the limits stop there. Without a usable maximum: no cap."""
+        st = self.hass.states.get(self._cfg(key) or "")
+        try:
+            value = float(st.attributes.get("max")) if st is not None else 0.0
+        except (TypeError, ValueError):
+            value = 0.0
+        return int(value) if value >= 200 else MAX_AC_POWER
 
     @property
     def learned_night_load_w(self) -> int | None:
@@ -237,7 +260,7 @@ class VenusController:
 
     def params(self) -> engine.Params:
         return engine.Params(
-            ac_charge_limit_w=min(MAX_AC_POWER, int(self._cfg(CONF_AC_CHARGE_LIMIT, DEFAULT_AC_CHARGE_LIMIT))),
+            ac_charge_limit_w=min(MAX_AC_POWER, int(self._cfg(CONF_AC_CHARGE_LIMIT, DEFAULT_AC_CHARGE_LIMIT)), self._entity_max(CONF_CHARGE_POWER)),
             total_charge_limit_w=int(self._cfg(CONF_TOTAL_CHARGE_LIMIT, DEFAULT_TOTAL_CHARGE_LIMIT)),
             discharge_limit_w=self.discharge_limit_w,
             discharge_cap_w=int(self.settings.discharge_cap_w),
@@ -285,6 +308,7 @@ class VenusController:
             self.status.watchdog_restores = int(data.get("watchdog_restores", 0))
             self._pv_seen = {e for e in data.get("pv_seen") or [] if isinstance(e, str)}
             self._night_medians = [float(v) for v in data.get("night_load") or [] if isinstance(v, (int, float))][-NIGHT_LOAD_NIGHTS:]
+            self.silence = SilenceWatch(data.get("surplus_gaps"))
         # a lowered limit (device or feed-in) also lowers a cap set above it
         if int(self.settings.discharge_cap_w) > self.discharge_limit_w:
             self.settings.discharge_cap_w = self.discharge_limit_w
@@ -294,6 +318,8 @@ class VenusController:
         if self._cfg(CONF_CONNECTION) and self._cfg(CONF_MODBUS_ENTRY):
             self._unsub.append(async_track_time_change(self.hass, self._self_heal_tick, minute=list(SELF_HEAL_MINUTES), second=SELF_HEAL_SECOND))
         self._unsub.append(async_track_state_change_event(self.hass, [self._cfg(CONF_RS485)], self._rs485_changed))
+        if self._cfg(CONF_CONNECTION):
+            self._unsub.append(async_track_state_change_event(self.hass, [self._cfg(CONF_CONNECTION)], self._connection_changed))
         self._unsub.append(async_track_state_change_event(self.hass, [self._cfg(CONF_DISCHARGE_POWER)], self._discharge_register_changed))
         self.hass.async_create_task(self._tick(dt_util.utcnow()))
 
@@ -326,6 +352,7 @@ class VenusController:
                 "watchdog_restores": self.status.watchdog_restores,
                 "pv_seen": sorted(self._pv_seen),
                 "night_load": [round(v) for v in self._night_medians],
+                "surplus_gaps": self.silence.to_dict(),
             }
         )
 
@@ -357,7 +384,68 @@ class VenusController:
             st = self.hass.states.get(ent)
             if st is None or st.state in ("unknown", "unavailable", "", "none"):
                 missing.append(ent)
+            elif key == CONF_SURPLUS and self._surplus_silent:
+                missing.append(ent)
+        if not self.venus_connected:
+            missing.append(self._cfg(CONF_CONNECTION))
         return missing
+
+    def cell_temperatures(self) -> tuple[float | None, float | None]:
+        """Lowest and highest cell temperature of the Venus, if the Modbus
+        integration has them. Its sensors are found by themselves through
+        the Modbus config entry; they are disabled by default there, and a
+        disabled one simply has no value."""
+        entry_id = self._cfg(CONF_MODBUS_ENTRY)
+        if not entry_id:
+            return None, None
+        registry = er.async_get(self.hass)
+        values: list[float | None] = []
+        for key in ("min_cell_temperature", "max_cell_temperature"):
+            entity_id = registry.async_get_entity_id("sensor", MODBUS_DOMAIN, f"{entry_id}_{key}")
+            state = self.hass.states.get(entity_id) if entity_id else None
+            try:
+                values.append(float(state.state) if state is not None else None)
+            except (TypeError, ValueError):
+                values.append(None)
+        return values[0], values[1]
+
+    def quality_state(self) -> str:
+        """The control quality, with the reason for a limited charge."""
+        cell_min, cell_max = self.cell_temperatures()
+        return self.quality.state(paused=self.settings.manual_override, soc=self._num(CONF_VENUS_SOC), cell_min=cell_min, cell_max=cell_max)
+
+    @property
+    def venus_connected(self) -> bool:
+        """False while the Modbus connection sensor says the Venus is gone.
+        The Modbus integration keeps the last values of its sensors while the
+        connection is down, so they look like readings and are none. Without
+        a connection sensor, or while it has no state itself, the sensors
+        are taken as they are."""
+        st = self.hass.states.get(self._cfg(CONF_CONNECTION) or "")
+        return st is None or st.state != "off"
+
+    def _watch_surplus(self, now: datetime) -> bool:
+        """Feed the silence watch with the last report of the surplus
+        sensor; True while the sensor counts as silent."""
+        ent = self._cfg(CONF_SURPLUS)
+        st = self.hass.states.get(ent or "")
+        reported = None
+        if st is not None and st.state not in ("unknown", "unavailable", "", "none"):
+            reported = getattr(st, "last_reported", None) or st.last_updated
+        before = (self.silence.entity, self.silence.day, self.silence.ready, round(self.silence.limit_s))
+        silent = self.silence.update(ent, reported, now, dt_util.as_local(now).date().isoformat(), self.tick_seconds)
+        if before != (self.silence.entity, self.silence.day, self.silence.ready, round(self.silence.limit_s)):
+            self.hass.async_create_task(self._save())
+        return silent
+
+    def surplus_silent_minutes(self, now: datetime) -> int:
+        """Minutes since the surplus sensor last reported, 0 if it has no
+        state at all (that is a missing input, not a silent one)."""
+        st = self.hass.states.get(self._cfg(CONF_SURPLUS) or "")
+        if st is None or st.state in ("unknown", "unavailable", "", "none"):
+            return 0
+        seen = getattr(st, "last_reported", None) or st.last_updated
+        return max(0, int((now - seen).total_seconds() // 60))
 
     def primary_absent(self, now: datetime) -> bool:
         """The first battery's readings have been missing for a while and
@@ -422,6 +510,10 @@ class VenusController:
     def _sample(self, now: datetime) -> tuple[float | None, float | None, float | None]:
         """Take the sample of this tick and return (mean, mean without Venus, instant)."""
         surplus = self._num(CONF_SURPLUS, CONF_SURPLUS_INVERT)
+        self._surplus_silent = self._watch_surplus(now)
+        if self._surplus_silent:
+            surplus = None  # a frozen value is no reading
+            self._samples.clear()
         ms = self._num(CONF_VENUS_AC, CONF_VENUS_AC_INVERT)
         if surplus is not None:
             ms_c = ms if ms is not None and abs(ms) > 40 else 0.0
@@ -440,14 +532,15 @@ class VenusController:
         self.status.surplus_mean = mean
         self.status.surplus_ex_venus_mean = mean_ex
         factor = float(self._cfg(CONF_FORECAST_FACTOR, DEFAULT_FORECAST_FACTOR))
+        connected = self.venus_connected  # values kept over a lost connection are no readings
         return engine.Inputs(
             surplus_mean=mean,
             surplus_instant=instant,
             surplus_ex_venus_mean=mean_ex,
-            venus_soc=self._num(CONF_VENUS_SOC),
-            venus_ac=self._num(CONF_VENUS_AC, CONF_VENUS_AC_INVERT),
-            venus_pv=self._venus_pv(),
-            venus_state=self._venus_state(),
+            venus_soc=self._num(CONF_VENUS_SOC) if connected else None,
+            venus_ac=self._num(CONF_VENUS_AC, CONF_VENUS_AC_INVERT) if connected else None,
+            venus_pv=self._venus_pv() if connected else 0.0,
+            venus_state=self._venus_state() if connected else None,
             venus_capacity_kwh=self._num(CONF_VENUS_CAPACITY),
             primary_power=self._num(CONF_PRIMARY_POWER, CONF_PRIMARY_POWER_INVERT),
             primary_soc=self._num(CONF_PRIMARY_SOC),
@@ -463,6 +556,15 @@ class VenusController:
         self._last_master_run = now
         inputs = self.inputs(now)
         self._learn_night_load(inputs)
+        self.quality.tick(now, self.state.expected_mode(), max(self.state.last_charge_power, self.state.last_discharge_power), inputs.venus_ac, check_follow=not self.settings.dry_run)
+        if self.quality.zero_ticks >= NOT_RESPONDING_ISSUE_TICKS:
+            self.issues.raise_now("venus_not_responding", {"minutes": str(round(self.quality.zero_ticks * self.tick_seconds / 60))})
+        else:
+            self.issues.clear("venus_not_responding")
+        if self._surplus_silent:
+            self.issues.raise_now("surplus_silent", {"entity": str(self._cfg(CONF_SURPLUS)), "minutes": str(self.surplus_silent_minutes(now))})
+        else:
+            self.issues.clear("surplus_silent")
         if self.settings.manual_override:
             if self.settings.discharge_target_active:
                 await self._target_tick(inputs.venus_soc, now)
@@ -487,6 +589,9 @@ class VenusController:
         decision = engine.decide(inputs, params, self.state)
         if absent:
             decision.values["first_battery_readings_missing"] = True
+        if self._surplus_silent:
+            decision.values["surplus_silent"] = True
+            decision.text = f"No decision: the surplus sensor has not reported for {self.surplus_silent_minutes(now)} minutes."
         if _LOGGER.isEnabledFor(logging.DEBUG):
             self._debug_tick(inputs, decision)
         if decision.target_mode == "no_data":
@@ -555,6 +660,7 @@ class VenusController:
         self.status.last_command = command
         self.status.last_command_power = power
         self.status.last_command_time = dt_util.utcnow()
+        self.quality.command(self.status.last_command_time, command)
         summary = " | ".join(f"{k}={v}" for k, v in values.items() if k in ("surplus_corr_w", "headroom_w", "house_need_w", "primary_discharge_w", "primary_charge_w", "parallel_allowed", "venus_first"))
         if self.settings.dry_run:
             self.status.dry_run_commands += 1
@@ -652,10 +758,40 @@ class VenusController:
     # ------------------------------------------------------------------ watchdog
     @callback
     def _rs485_changed(self, event: Event[EventStateChangedData]) -> None:
+        """The control mode went off: dropped by the firmware while it was
+        on, or found off when the Venus came back after a restart or a lost
+        connection (the switch was unavailable or unknown before). Either way
+        the watchdog looks at once instead of at its next five-minute run."""
         new = event.data.get("new_state")
         old = event.data.get("old_state")
-        if new is not None and old is not None and old.state == "on" and new.state == "off":
-            self.hass.async_create_task(self._watchdog(force=True, delay=15))
+        if new is not None and new.state == "off" and (old is None or old.state != "off"):
+            self._watchdog_soon()
+
+    @callback
+    def _connection_changed(self, event: Event[EventStateChangedData]) -> None:
+        """The Modbus connection is back: a Venus that restarted has lost
+        its command, so the watchdog compares registers and command now."""
+        new = event.data.get("new_state")
+        old = event.data.get("old_state")
+        if new is not None and new.state == "on" and old is not None and old.state != "on":
+            self._watchdog_soon()
+
+    @callback
+    def _watchdog_soon(self) -> None:
+        """Run the watchdog in 15 seconds, once: a Venus that comes back
+        reports its connection and its control mode within moments of each
+        other, and one restore is enough."""
+        if self._watchdog_queued:
+            return
+        self._watchdog_queued = True
+
+        async def _run() -> None:
+            try:
+                await self._watchdog(force=True, delay=15)
+            finally:
+                self._watchdog_queued = False
+
+        self.hass.async_create_task(_run())
 
     async def _watchdog_tick(self, now: datetime) -> None:
         await self._watchdog(force=False)
