@@ -244,6 +244,9 @@
       "charge_start_w": {
         "name": "Laden ab Überschuss"
       },
+      "rest_start_w": {
+        "name": "Parallel laden nach Prognose ab Überschuss"
+      },
       "primary_first_soc": {
         "name": "Venus lädt ab Ladestand erste Batterie"
       },

@@ -244,6 +244,9 @@
       "charge_start_w": {
         "name": "Charge from surplus of"
       },
+      "rest_start_w": {
+        "name": "Parallel charging on forecast from surplus of"
+      },
       "primary_first_soc": {
         "name": "Venus charges from first battery SoC"
       },

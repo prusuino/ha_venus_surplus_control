@@ -60,6 +60,7 @@ from .const import (
     DEFAULT_BASE_LOAD_KW,
     DEFAULT_CHARGE_RESERVE,
     DEFAULT_CHARGE_START_W,
+    DEFAULT_REST_START_W,
     DEFAULT_REACTION,
     DEFAULT_PRIMARY_FIRST_SOC,
     DEFAULT_DISCHARGE_CAP,
@@ -126,6 +127,7 @@ class Settings:
     discharge_min_w: int = DEFAULT_DISCHARGE_MIN  # smallest discharge command, 0 = automatic
     charge_reserve_w: int = DEFAULT_CHARGE_RESERVE
     charge_start_w: int = DEFAULT_CHARGE_START_W  # headroom from which charging starts
+    rest_start_w: int = DEFAULT_REST_START_W  # surplus the remaining-forecast rule asks for
     reaction: str = DEFAULT_REACTION  # calm / normal / fast: how long the surplus is averaged
     primary_first_soc: int = DEFAULT_PRIMARY_FIRST_SOC  # first battery SoC from which the Venus charges without the parallel rule
     first_forecast_kwh: float = DEFAULT_FIRST_FORECAST_KWH
@@ -272,6 +274,7 @@ class VenusController:
             house_base_load_kw=float(self.settings.house_base_load_kw),
             charge_reserve_w=float(self.settings.charge_reserve_w),
             charge_start_headroom_w=float(self.settings.charge_start_w),
+            rest_start_surplus_w=float(self.settings.rest_start_w),
             soc_min_charge_start=float(self.settings.primary_first_soc),
             soc_min_charge_hold=max(0.0, float(self.settings.primary_first_soc) - 5),
             has_primary=self.has_primary,
@@ -344,6 +347,7 @@ class VenusController:
                     "discharge_min_w": self.settings.discharge_min_w,
                     "charge_reserve_w": self.settings.charge_reserve_w,
                     "charge_start_w": self.settings.charge_start_w,
+                    "rest_start_w": self.settings.rest_start_w,
                     "reaction": self.settings.reaction,
                     "primary_first_soc": self.settings.primary_first_soc,
                     "first_forecast_kwh": self.settings.first_forecast_kwh,

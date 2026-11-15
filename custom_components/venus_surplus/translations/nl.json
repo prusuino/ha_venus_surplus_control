@@ -244,6 +244,9 @@
       "charge_start_w": {
         "name": "Laden vanaf overschot van"
       },
+      "rest_start_w": {
+        "name": "Parallel laden op prognose vanaf overschot van"
+      },
       "primary_first_soc": {
         "name": "Venus laadt vanaf laadtoestand eerste batterij"
       },

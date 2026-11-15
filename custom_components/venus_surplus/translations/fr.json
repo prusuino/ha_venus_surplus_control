@@ -244,6 +244,9 @@
       "charge_start_w": {
         "name": "Charge à partir d'un surplus de"
       },
+      "rest_start_w": {
+        "name": "Charge en parallèle selon prévision à partir d'un surplus de"
+      },
       "primary_first_soc": {
         "name": "Le Venus charge à partir de l'état de charge de la première batterie"
       },
