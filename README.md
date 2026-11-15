@@ -260,7 +260,7 @@ The four manual buttons switch the manual override on; only *Back to auto* (or t
 
 Both this limit and *Maximum discharge command* also stop at the maximum of the number entity the command is written to: Home Assistant refuses a value above it, and the command would never reach the Venus. The Venus has limits of its own as well: the maximum charge and discharge power set in the Marstek app (800 W or the full power of the model), and what its battery management allows at the moment (see [Why the Venus charges less than commanded](#why-the-venus-charges-less-than-commanded)). A command above them is accepted and cut by the device, and *Control quality* then shows *Venus does less than commanded*.
 
-**Maximum AC charge + own PV** – default 1400 W. With own PV the Venus charges from two sides and has an upper limit for both together (my Venus A never put more than about 1200 W into the battery: about 1000 W from the grid plus its own PV, the grid share shrinking when the PV delivers more); the controller lowers the AC command so that the sum stays below this. Without own PV set it to the same value as the AC charge command.
+**Maximum AC charge + own PV** – default 1400 W. With own PV the Venus charges from two sides and has an upper limit for both together (check the data sheet of your model); the controller lowers the AC command so that the sum stays below this. Without own PV set it to the same value as the AC charge command.
 
 **Maximum discharge command** – 200–3600 W, default 1000 W. What your Venus can deliver and what you are allowed to feed in at the plug; most models deliver 2500 W or less. It is the upper end of *Maximum discharge power* on the device page.
 
@@ -296,7 +296,7 @@ The charge command is an upper limit. How much the battery takes is decided by i
 
 The controller needs nothing for this: it decides on the power the Venus really takes, not on the command. *Control quality* names the reason. For *Cells cold* and *Cells warm* it reads the cell temperatures of the Marstek Venus Modbus integration by itself; those two sensors (*Min cell temperature*, *Max cell temperature*) are disabled there by default, so enable them if you want the reason shown. The temperature the same integration shows as *Internal temperature* is the heat sink of the inverter, which warms up within minutes while the cells stay cold.
 
-There is a limit of the model as well. My Venus A takes about 1010 W at the plug at any charge command from 1000 to 1400 W, and just the same in the manual mode of the Marstek app set to 1500 W; in six months it never took more, in summer or in winter. Its own PV comes on top of that inside the battery, up to about 1200 W for both together. A command above what the model takes does no harm, but below 70 % of the command *Control quality* shows *Venus does less than commanded* for good, so set *Maximum AC charge command* to what your model really takes.
+There is a limit of the model as well. My Venus A takes about 1010 W at the plug at any charge command from 1000 to 1400 W, and just the same in the manual mode of the Marstek app set to 1500 W; in six months it never took more, in summer or in winter. Its own PV comes on top of that inside the battery. A command above what the model takes does no harm, but below 70 % of the command *Control quality* shows *Venus does less than commanded* for good, so set *Maximum AC charge command* to what your model really takes.
 
 ## Dry run and first days
 
