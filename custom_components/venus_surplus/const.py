@@ -80,6 +80,8 @@ DEFAULT_TARGET_SOC = 50
 DEFAULT_REACTION = "normal"
 # how quickly the controller follows the surplus: minutes the surplus is averaged over
 REACTION_MINUTES: dict[str, float] = {"calm": 5.0, "normal": 3.0, "fast": 1.0}
+# and how far the discharge power may rise per tick [W]
+REACTION_DISCHARGE_UP_W: dict[str, int] = {"calm": 50, "normal": 100, "fast": 200}
 DEFAULT_CHARGE_START_W = 400
 DEFAULT_PRIMARY_FIRST_SOC = 85
 

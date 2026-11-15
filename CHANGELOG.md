@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.1 — 2026-11-15
+
+- **The discharge power climbs faster.** When the house suddenly needed more, the power went up by 50 W per tick: from 400 to 1000 W took six minutes, longer than a kettle runs. How far it may rise per tick now follows *Reaction*: 50 W on *Calm* (as before), 100 W on *Normal*, 200 W on *Fast*. The power still sits on 50 W steps, and coming down is immediate as before. Measured on a real Venus A.
+
 ## 0.9.0 — 2026-11-15
 
 - **A silent surplus sensor is no longer believed.** A sensor that kept its last value without reporting (a meter or an integration that hangs) was read as if the value were current: frozen at a large surplus the Venus would have charged on from the grid, frozen at a large demand it would have exported. A surplus sensor that is silent for far longer than it has ever been now counts as missing: no commands, standby after two ticks, and a repair notice that names the sensor and ends with its next report. The limit is learned per sensor from the gaps between its reports (three times the longest gap of the last seven days, at least 10 minutes), so that a sensor that only reports when its value changes is not taken for a dead one. Nothing is judged in the first 24 hours.

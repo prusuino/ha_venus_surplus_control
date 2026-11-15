@@ -121,6 +121,11 @@ class Params:
     charge_min_w: int = 100
     discharge_min_w: int = 200
     discharge_step_w: int = 50
+    # How far the discharge power may rise in one tick. The power itself stays
+    # on the fine steps above; only the climb is faster, so that a kettle is
+    # served before it is done. Coming down needs no limit: the export guard
+    # cuts the power in one step.
+    discharge_up_step_w: int = 50
     venus_pv_direct_use_min_w: float = 80
     pv_unknown_hold_ticks: int = 4
     primary_idle_confirm_ticks: int = 6
@@ -320,9 +325,9 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     if mode != "discharge":
         requested = min(lim, max(mn, _floor_step(need + 40, st))) if need >= mn - 20 else 0
     else:
-        up = min(lim, last_d + st)
+        up = min(lim, last_d + max(st, p.discharge_up_step_w), _floor_step(need + 40, st))
         down = last_d - st
-        if last_d >= mn and up > last_d and need >= up - 40:
+        if last_d >= mn and up > last_d:
             requested = up
         elif last_d > mn and need < down - 40:
             requested = max(mn, down)

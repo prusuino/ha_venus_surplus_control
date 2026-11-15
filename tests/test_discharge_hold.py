@@ -98,3 +98,38 @@ def test_no_takeover_while_the_sun_still_covers_the_house():
         d = decide(_night(0, primary_power=0.0, primary_soc=35.0, surplus_mean=300.0, surplus_instant=300.0, surplus_ex_venus_mean=300.0), WITH_FIRST, state)
         state = d.state
     assert d.target_mode != "discharge"
+
+
+def _demand(need: float) -> Inputs:
+    """The house imports `need` W, no first battery in the way."""
+    return Inputs(
+        surplus_mean=-need, surplus_instant=-need, surplus_ex_venus_mean=None, venus_soc=60.0, venus_ac=0.0, venus_pv=0.0,
+        venus_state="discharging", venus_capacity_kwh=5.12, primary_power=None, primary_soc=None,
+        forecast_today_kwh=0.0, forecast_remaining_kwh=0.0, sun_hours_left=0.0,
+    )
+
+
+def _climb(up_step: int, need: float, ticks: int) -> list[int]:
+    params = Params(has_primary=False, discharge_min_w=100, discharge_up_step_w=up_step)
+    state = State(last_discharge_power=400)
+    seen = []
+    for _ in range(ticks):
+        d = decide(_demand(need), params, state)
+        state = d.state
+        seen.append(state.last_discharge_power)
+    return seen
+
+
+def test_discharge_climbs_as_fast_as_the_reaction_allows():
+    assert _climb(50, 1800, 4) == [450, 500, 550, 600]  # calm: as before
+    assert _climb(100, 1800, 4) == [500, 600, 700, 800]
+    assert _climb(200, 1800, 4) == [600, 800, 1000, 1000]  # and stops at the limit
+
+
+def test_a_fast_climb_does_not_overshoot_the_demand():
+    # 520 W of demand: 480 W after the reserve of 104 W ... the power settles where the slow climb settles
+    slow = _climb(50, 620, 12)
+    fast = _climb(200, 620, 12)
+    assert fast[-1] == slow[-1]
+    assert max(fast) == fast[-1]  # never above where it ends
+    assert fast.index(fast[-1]) < slow.index(slow[-1])  # but there sooner
