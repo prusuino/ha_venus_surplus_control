@@ -14,15 +14,16 @@ A Home Assistant integration that runs a **Marstek Venus** battery from your PV 
 
 ## Highlights
 
-- **Charge from real surplus only** – AC charging follows the surplus in 100 W steps, less a buffer you set, capped so that AC charge plus the Venus' own PV stay below the device limit. While your first battery (BYD, Pylontech, …) is still absorbing the surplus, the Venus waits; on a good solar day ("Venus first") it may start early in parallel because both will fill up anyway.
+- **Charge from real surplus only** – AC charging follows the surplus in 100 W steps, less a buffer you set, capped so that AC charge plus the Venus' own PV stay below the device limit. While your first battery (BYD, Pylontech, …) is still absorbing the surplus, the Venus waits. When the first battery stands at its own charge limit, the Venus takes what it leaves; the limit is recognised by itself, without a setting. On a good solar day ("Venus first") it may start early in parallel, but only when the forecast shows that both will fill up.
 - **Discharge against house demand only** – from 100 W up to your discharge limit, with hysteresis, a reserve and an export guard that follow the demand: in 50 W steps a step below the demand while a first battery covers the rest, in 10 W steps close to the demand when the Venus is the only source, so that a house drawing 200 W at night is served as well as one drawing 2 kW. With a first battery, only while it is already delivering, empty, or delivering nothing at all. "Empty" can follow the reserve you set on your inverter.
-- **Standby otherwise** – and an immediate stop when the first battery suddenly works against the Venus (cross-charging). The two batteries never charge each other.
+- **Standby otherwise** – and the two batteries do not charge each other: while the Venus charges, a first battery that starts to discharge a little lowers the charge command and a larger discharge stops the charge; while the Venus discharges, it stops as soon as the first battery charges.
 - **RS485 watchdog** – the Venus firmware drops the RS485 control mode and resets its power registers on restarts, app or cloud access. The watchdog restores the control mode and the last command: every five minutes, and at once when the control mode drops, when the Venus comes back after a restart or a lost connection, or when the control mode is found off as the integration starts (switched off in the app in the meantime).
 - **Discharge cap** – a ceiling you set from the dashboard that every command respects and that is enforced again when the app or a firmware reset raises the register.
 - **Modbus self-heal** – reloads the Marstek Venus Modbus integration after a long connection loss.
+- **Safe on bad data** – missing readings, a lost Modbus link or a surplus sensor that has fallen silent put the Venus into standby instead of letting it act on old values; a repair notice says which.
 - **Dry run** – new entries start in dry run: the controller decides and writes every command it *would* send to the logbook, but touches nothing. Switch it off when the decisions look right.
 - **Manual buttons** – charge, discharge, discharge down to a target SoC, stop and back to auto.
-- **Diagnostics** – target mode, reason and the decision in words, every value behind it as attributes, a diagnostics download, and a logbook line for every command with its reasons.
+- **Diagnostics** – target mode, reason and the decision in words, every value behind it as attributes, a *Control quality* sensor that says when the Venus does less than commanded and why, a diagnostics download, and a logbook line for every command with its reasons.
 
 This is the control logic that has run on my Venus A next to an inverter-coupled battery since summer 2026 as a YAML package, rebuilt as an integration so that it needs no YAML and no helpers.
 
