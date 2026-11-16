@@ -1,6 +1,6 @@
-![Venus Surplus Control](readme_header.png)
+![Marstek Venus Surplus Control](readme_header.png)
 
-# Venus Surplus Control
+# Marstek Venus Surplus Control
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/prusuino/ha_venus_surplus_control)](https://github.com/prusuino/ha_venus_surplus_control/releases)
@@ -40,7 +40,7 @@ Through the **Marketplace** (Settings → Marketplace → Add from link → `pru
 
 ## Setup
 
-Settings → Devices & services → Add integration → **Venus Surplus Control**.
+Settings → Devices & services → Add integration → **Marstek Venus Surplus Control**.
 
 1. **Required**: a name, your surplus sensor, and the seven Venus entities (Force Mode, two power numbers, RS485 switch, SoC, AC power, inverter state). The Venus entities are filled in from the Marstek Venus Modbus integration where they are found, whatever language or names they have; check them and change any that does not fit. Check the sign of the AC power sensor: positive must mean the Venus is *delivering* into the house; tick the invert box otherwise.
 2. **Optional**: the Venus' MPPT sensors and capacity (suggested as well, together with the Modbus connection sensor and the Modbus config entry; MPPT inputs your model does not have are left out), your first battery's power (positive = discharging; tick invert if yours is the other way round) and SoC, its reserve if you change it now and then (a sensor, a number or a helper – see below), the forecasts, the Modbus connection sensor and the Modbus config entry (for the self-heal reload), and the device limits (AC charge 1200 W, total 1400 W, discharge 1000 W for a Venus A – raise them for a D or E) and the feed-in limit at the plug (see below).
@@ -162,7 +162,7 @@ The sensor **Reason** says why the controller does what it does, **Last decision
 
 ## Settings in detail
 
-There are two places. The **device page** (Settings → Devices & services → Venus Surplus Control → the device of your entry) holds everything you may want to change while it runs. **Configure** on the entry holds the entities and the limits of your hardware.
+There are two places. The **device page** (Settings → Devices & services → Marstek Venus Surplus Control → the device of your entry) holds everything you may want to change while it runs. **Configure** on the entry holds the entities and the limits of your hardware.
 
 All power values are in watts. "Surplus" always means PV production minus house consumption, averaged (see *Reaction*), with the Venus' own flow taken out, so that the Venus charging does not eat the surplus it is measured by.
 
@@ -330,7 +330,7 @@ If the Venus drops off Modbus at regular intervals, look at its firmware first: 
 ## Removal
 
 1. Switch **dry run** on or put the Venus into standby yourself first if a command is running: the integration sends no final command when it is removed.
-2. **Settings → Devices & services → Venus Surplus Control**, open the entry's menu (⋮) and choose **Delete**. The entities, their history, the device and the persisted controller state go with the entry.
+2. **Settings → Devices & services → Marstek Venus Surplus Control**, open the entry's menu (⋮) and choose **Delete**. The entities, their history, the device and the persisted controller state go with the entry.
 3. Remove the integration itself in the **Marketplace** (or HACS; it was added from a link), then restart Home Assistant. With a manual installation, delete `custom_components/venus_surplus` instead. The Marstek Venus Modbus integration is not affected.
 
 ## Quality scale

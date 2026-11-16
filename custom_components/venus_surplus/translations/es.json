@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Venus Surplus Control",
+        "title": "Marstek Venus Surplus Control",
         "description": "Las entidades de tu Marstek Venus se toman de la integración Marstek Venus Modbus cuando se encuentran; revísalas y corrige las que no encajen. Después elige el sensor que da tu excedente fotovoltaico. Todo se puede cambiar más tarde en Configurar.",
         "data": {
           "name": "Nombre",
@@ -68,7 +68,7 @@
     },
     "step": {
       "init": {
-        "title": "Venus Surplus Control",
+        "title": "Marstek Venus Surplus Control",
         "description": "Las entidades de tu Venus y tu sensor de excedente.",
         "data": {
           "name": "Nombre",
@@ -301,19 +301,19 @@
   },
   "issues": {
     "inputs_missing": {
-      "title": "Venus Surplus Control: valores incompletos",
+      "title": "Marstek Venus Surplus Control: valores incompletos",
       "description": "El regulador lleva varios minutos sin valores completos y no envía órdenes (tras dos ciclos así pone el Venus en espera). Falta o no está disponible: {entities}. Comprueba la integración Marstek Venus Modbus y el sensor de excedente, o elige otras entidades en Configurar. Este aviso desaparece en cuanto los valores vuelven a estar completos."
     },
     "primary_missing": {
-      "title": "Venus Surplus Control: primera batería sin valores",
+      "title": "Marstek Venus Surplus Control: primera batería sin valores",
       "description": "La primera batería lleva 5 minutos sin entregar valores ({entities}). Como se eligió en Configurar, el regulador hace funcionar el Venus solo hasta que regresen: carga con cualquier excedente y descarga según la demanda de la casa, y las reglas que coordinan las dos baterías están desactivadas. Este aviso desaparece en cuanto vuelven los valores."
     },
     "surplus_silent": {
-      "title": "Venus Surplus Control: el sensor de excedente no informa",
+      "title": "Marstek Venus Surplus Control: el sensor de excedente no informa",
       "description": "El sensor de excedente {entity} lleva {minutes} minutos sin entregar un valor, mucho más que nunca antes. Un valor tan antiguo no se usa: el regulador no envía órdenes y pone el Venus en espera, para que un valor congelado no lo haga cargar de la red ni verter. Comprueba el contador o la integración detrás del sensor. Este aviso desaparece con el próximo valor."
     },
     "venus_not_responding": {
-      "title": "Venus Surplus Control: el Venus no responde",
+      "title": "Marstek Venus Surplus Control: el Venus no responde",
       "description": "El Venus tiene una orden de carga o descarga desde hace {minutes} minutos y no hace nada. El regulador mantiene la orden. Comprueba el Venus (avería, límites ajustados en la app de Marstek, modo de control RS485) y la integración Marstek Venus Modbus. Este aviso desaparece en cuanto el Venus vuelve a seguir."
     }
   },

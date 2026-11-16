@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Venus Surplus Control",
+        "title": "Marstek Venus Surplus Control",
         "description": "Die Entities deines Marstek Venus werden aus der Integration Marstek Venus Modbus eingetragen, soweit sie gefunden werden; prüfe sie und korrigiere, was nicht passt. Wähle dann den Sensor für deinen PV-Überschuss. Alles lässt sich später unter Konfigurieren ändern.",
         "data": {
           "name": "Name",
@@ -68,7 +68,7 @@
     },
     "step": {
       "init": {
-        "title": "Venus Surplus Control",
+        "title": "Marstek Venus Surplus Control",
         "description": "Entities deines Venus und dein Überschuss-Sensor.",
         "data": {
           "name": "Name",
@@ -301,19 +301,19 @@
   },
   "issues": {
     "inputs_missing": {
-      "title": "Venus Surplus Control: Messwerte unvollständig",
+      "title": "Marstek Venus Surplus Control: Messwerte unvollständig",
       "description": "Die Steuerung hat seit mehreren Minuten keine vollständigen Messwerte und sendet keine Befehle (nach zwei solchen Ticks stellt sie den Venus auf Standby). Fehlend oder nicht verfügbar: {entities}. Prüfe die Marstek-Venus-Modbus-Integration und den Überschuss-Sensor oder wähle unter „Konfigurieren“ andere Entitäten. Dieser Hinweis verschwindet, sobald die Messwerte wieder vollständig sind."
     },
     "primary_missing": {
-      "title": "Venus Surplus Control: erste Batterie ohne Werte",
+      "title": "Marstek Venus Surplus Control: erste Batterie ohne Werte",
       "description": "Die erste Batterie liefert seit 5 Minuten keine Werte ({entities}). Wie unter Konfigurieren gewählt, betreibt die Steuerung den Venus allein, bis sie zurück sind: Er lädt aus jedem Überschuss und entlädt gegen den Hausbedarf, die Regeln zur Abstimmung der beiden Batterien sind aus. Dieser Hinweis verschwindet, sobald die Werte wieder da sind."
     },
     "surplus_silent": {
-      "title": "Venus Surplus Control: Überschuss-Sensor meldet nichts",
+      "title": "Marstek Venus Surplus Control: Überschuss-Sensor meldet nichts",
       "description": "Der Überschuss-Sensor {entity} hat seit {minutes} Minuten keinen Wert gemeldet, viel länger als je zuvor. Ein so alter Wert wird nicht verwendet: Die Steuerung sendet keine Befehle und stellt den Venus auf Standby, damit ein eingefrorener Wert ihn nicht aus dem Netz laden oder einspeisen lässt. Prüfe den Zähler oder die Integration hinter dem Sensor. Dieser Hinweis verschwindet mit dem nächsten Wert."
     },
     "venus_not_responding": {
-      "title": "Venus Surplus Control: der Venus reagiert nicht",
+      "title": "Marstek Venus Surplus Control: der Venus reagiert nicht",
       "description": "Der Venus hat seit {minutes} Minuten einen Lade- oder Entladebefehl und tut nichts. Die Steuerung lässt den Befehl stehen. Prüfe den Venus (Störung, Grenzen in der Marstek-App, RS485-Steuermodus) und die Marstek-Venus-Modbus-Integration. Dieser Hinweis verschwindet, sobald der Venus wieder folgt."
     }
   },

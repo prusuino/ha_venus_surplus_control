@@ -1,4 +1,4 @@
-"""Venus Surplus Control: runs a Marstek Venus from PV surplus over the
+"""Marstek Venus Surplus Control: runs a Marstek Venus from PV surplus over the
 entities of the Marstek Venus Modbus integration."""
 from __future__ import annotations
 

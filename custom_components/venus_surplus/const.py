@@ -1,4 +1,4 @@
-"""Constants of the Venus Surplus Control integration."""
+"""Constants of the Marstek Venus Surplus Control integration."""
 from __future__ import annotations
 import json
 from pathlib import Path

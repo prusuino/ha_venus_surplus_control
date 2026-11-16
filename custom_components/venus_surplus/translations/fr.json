@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Venus Surplus Control",
+        "title": "Marstek Venus Surplus Control",
         "description": "Les entités de votre Marstek Venus sont reprises de l'intégration Marstek Venus Modbus lorsqu'elles sont trouvées ; vérifiez-les et corrigez celles qui ne conviennent pas. Choisissez ensuite le capteur qui donne votre surplus photovoltaïque. Tout peut être modifié plus tard sous Configurer.",
         "data": {
           "name": "Nom",
@@ -68,7 +68,7 @@
     },
     "step": {
       "init": {
-        "title": "Venus Surplus Control",
+        "title": "Marstek Venus Surplus Control",
         "description": "Les entités de votre Venus et votre capteur de surplus.",
         "data": {
           "name": "Nom",
@@ -301,19 +301,19 @@
   },
   "issues": {
     "inputs_missing": {
-      "title": "Venus Surplus Control : valeurs incomplètes",
+      "title": "Marstek Venus Surplus Control : valeurs incomplètes",
       "description": "Le régulateur n'a plus de valeurs complètes depuis plusieurs minutes et n'envoie aucune commande (après deux cycles de ce type, il met le Venus en veille). Manquant ou indisponible : {entities}. Vérifiez l'intégration Marstek Venus Modbus et le capteur de surplus, ou choisissez d'autres entités sous Configurer. Cet avis disparaît dès que les valeurs sont de nouveau complètes."
     },
     "primary_missing": {
-      "title": "Venus Surplus Control : première batterie sans valeurs",
+      "title": "Marstek Venus Surplus Control : première batterie sans valeurs",
       "description": "La première batterie ne fournit plus de valeurs depuis 5 minutes ({entities}). Comme choisi sous Configurer, le régulateur fait fonctionner le Venus seul jusqu'à leur retour : il charge à partir de tout surplus et décharge selon le besoin de la maison, et les règles qui coordonnent les deux batteries sont désactivées. Cet avis disparaît dès que les valeurs sont de retour."
     },
     "surplus_silent": {
-      "title": "Venus Surplus Control : le capteur de surplus est muet",
+      "title": "Marstek Venus Surplus Control : le capteur de surplus est muet",
       "description": "Le capteur de surplus {entity} n'a transmis aucune valeur depuis {minutes} minutes, bien plus longtemps que jamais auparavant. Une valeur aussi ancienne n'est pas utilisée : le régulateur n'envoie aucune commande et met le Venus en veille, afin qu'une valeur figée ne le fasse pas charger depuis le réseau ni injecter. Vérifiez le compteur ou l'intégration derrière le capteur. Cet avis disparaît à la prochaine valeur."
     },
     "venus_not_responding": {
-      "title": "Venus Surplus Control : le Venus ne réagit pas",
+      "title": "Marstek Venus Surplus Control : le Venus ne réagit pas",
       "description": "Le Venus a une commande de charge ou de décharge depuis {minutes} minutes et ne fait rien. Le régulateur maintient la commande. Vérifiez le Venus (défaut, limites réglées dans l'application Marstek, mode de commande RS485) et l'intégration Marstek Venus Modbus. Cet avis disparaît dès que le Venus suit de nouveau."
     }
   },

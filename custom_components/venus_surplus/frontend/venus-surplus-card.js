@@ -32,12 +32,12 @@ const VSC_LABELS = {
   live: { de: "Live", en: "Live", fr: "En direct", it: "Live", nl: "Live", es: "En directo" },
   stale: { de: "Keine aktuelle Entscheidung", en: "No recent decision", fr: "Pas de décision récente", it: "Nessuna decisione recente", nl: "Geen recente beslissing", es: "Sin decisión reciente" },
   no_entity: {
-    de: "Wähle den Sensor «Zielmodus» von Venus Surplus Control.",
-    en: "Pick the “Target mode” sensor of Venus Surplus Control.",
-    fr: "Choisissez le capteur « Mode cible » de Venus Surplus Control.",
-    it: "Scegli il sensore «Modalità obiettivo» di Venus Surplus Control.",
-    nl: "Kies de sensor “Doelmodus” van Venus Surplus Control.",
-    es: "Elige el sensor «Modo objetivo» de Venus Surplus Control.",
+    de: "Wähle den Sensor «Zielmodus» von Marstek Venus Surplus Control.",
+    en: "Pick the “Target mode” sensor of Marstek Venus Surplus Control.",
+    fr: "Choisissez le capteur « Mode cible » de Marstek Venus Surplus Control.",
+    it: "Scegli il sensore «Modalità obiettivo» di Marstek Venus Surplus Control.",
+    nl: "Kies de sensor “Doelmodus” van Marstek Venus Surplus Control.",
+    es: "Elige el sensor «Modo objetivo» de Marstek Venus Surplus Control.",
   },
   not_found: { de: "Entität nicht gefunden", en: "Entity not found", fr: "Entité introuvable", it: "Entità non trovata", nl: "Entiteit niet gevonden", es: "Entidad no encontrada" },
   no_history: { de: "Noch kein Verlauf", en: "No history yet", fr: "Pas encore d'historique", it: "Ancora nessuna cronologia", nl: "Nog geen verloop", es: "Aún sin historial" },
@@ -751,7 +751,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "venus-surplus-card",
   name: "Venus Surplus",
-  description: "State of charge, charge and discharge power and the history of the battery run by Venus Surplus Control.",
+  description: "State of charge, charge and discharge power and the history of the battery run by Marstek Venus Surplus Control.",
   preview: true,
   documentationURL: "https://github.com/prusuino/ha_venus_surplus_control#dashboard-card",
 });

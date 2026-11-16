@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Venus Surplus Control",
+        "title": "Marstek Venus Surplus Control",
         "description": "The entities of your Marstek Venus are filled in from the Marstek Venus Modbus integration where they are found; check them and correct any that does not fit. Then pick the sensor that gives your PV surplus. Everything can be changed later under Configure.",
         "data": {
           "name": "Name",
@@ -68,7 +68,7 @@
     },
     "step": {
       "init": {
-        "title": "Venus Surplus Control",
+        "title": "Marstek Venus Surplus Control",
         "description": "Entities of your Venus and your surplus sensor.",
         "data": {
           "name": "Name",
@@ -301,19 +301,19 @@
   },
   "issues": {
     "inputs_missing": {
-      "title": "Venus Surplus Control: readings incomplete",
+      "title": "Marstek Venus Surplus Control: readings incomplete",
       "description": "The controller has had no complete readings for several minutes and sends no commands (after two such ticks it puts the Venus into standby). Missing or unavailable: {entities}. Check the Marstek Venus Modbus integration and the surplus sensor, or pick other entities under Configure. This notice disappears as soon as the readings are complete again."
     },
     "primary_missing": {
-      "title": "Venus Surplus Control: first battery without readings",
+      "title": "Marstek Venus Surplus Control: first battery without readings",
       "description": "The first battery has delivered no readings for 5 minutes ({entities}). As chosen under Configure, the controller runs the Venus alone until they return: it charges from any surplus and discharges against house demand, and the rules that coordinate the two batteries are off. This notice disappears as soon as the readings are back."
     },
     "surplus_silent": {
-      "title": "Venus Surplus Control: surplus sensor is silent",
+      "title": "Marstek Venus Surplus Control: surplus sensor is silent",
       "description": "The surplus sensor {entity} has not reported a value for {minutes} minutes, far longer than it has ever been silent. A value that old is not used: the controller sends no commands and puts the Venus into standby, so that a frozen reading cannot keep it charging from the grid or exporting. Check the meter or the integration behind the sensor. This notice disappears with the next reading."
     },
     "venus_not_responding": {
-      "title": "Venus Surplus Control: the Venus does not respond",
+      "title": "Marstek Venus Surplus Control: the Venus does not respond",
       "description": "The Venus has had a charge or discharge command for {minutes} minutes and does nothing. The controller keeps the command. Check the Venus (fault, limits set in the Marstek app, RS485 control mode) and the Marstek Venus Modbus integration. This notice disappears as soon as the Venus follows again."
     }
   },

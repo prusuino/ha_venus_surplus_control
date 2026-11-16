@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1 — 2026-11-16
+
+- **The integration is now called *Marstek Venus Surplus Control*.** "Venus" alone is also the name of other products in the Home Assistant world; the full name says which battery this is for. Only the displayed name changes: the domain `venus_surplus`, the entities, the card and the repository stay as they are, so nothing has to be set up again.
+
 ## 1.0.0 — 2026-11-16
 
 The first stable release. The controller runs on two systems of different build, one with a large inverter-coupled battery and a Venus A with its own panels, one with a grid meter and two plug-in batteries as the first battery; the 0.9 releases were shaped by what those two showed.

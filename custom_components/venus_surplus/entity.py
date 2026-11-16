@@ -16,7 +16,7 @@ def device_info(entry: ConfigEntry) -> DeviceInfo:
         identifiers={(DOMAIN, entry.entry_id)},
         sw_version=VERSION,
         name=entry.title,
-        manufacturer="Venus Surplus Control",
+        manufacturer="Marstek Venus Surplus Control",
         model="Surplus controller",
         entry_type=DeviceEntryType.SERVICE,
         configuration_url="https://github.com/prusuino/ha_venus_surplus_control",

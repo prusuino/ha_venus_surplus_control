@@ -1,1 +1,1 @@
-"""Tests for the Venus Surplus Control integration."""
+"""Tests for the Marstek Venus Surplus Control integration."""
