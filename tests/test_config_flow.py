@@ -113,3 +113,37 @@ async def test_reserve_input_is_stored_and_can_be_removed(hass: HomeAssistant, e
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert entry.options[CONF_PRIMARY_SOC] == "sensor.battery_soc"
     assert CONF_PRIMARY_RESERVE not in entry.options and CONF_PRIMARY_RESERVE not in entry.data
+
+
+async def test_options_flow_moves_the_key_with_the_force_mode_entity(hass: HomeAssistant, enable_custom_integrations) -> None:
+    entry = MockConfigEntry(domain=DOMAIN, unique_id=f"{DOMAIN}_select.venus_force_mode", title="Venus", data={**REQUIRED})
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {**REQUIRED, CONF_FORCE_MODE: "select.other_force_mode"})
+    result = await hass.config_entries.options.async_configure(result["flow_id"], OPTIONAL)
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.unique_id == f"{DOMAIN}_select.other_force_mode"
+    assert entry.options[CONF_FORCE_MODE] == "select.other_force_mode"
+
+
+async def test_options_flow_refuses_a_venus_another_entry_runs(hass: HomeAssistant, enable_custom_integrations) -> None:
+    MockConfigEntry(domain=DOMAIN, unique_id=f"{DOMAIN}_select.other_force_mode", title="Other", data={**REQUIRED, CONF_FORCE_MODE: "select.other_force_mode"}).add_to_hass(hass)
+    entry = MockConfigEntry(domain=DOMAIN, unique_id=f"{DOMAIN}_select.venus_force_mode", title="Venus", data={**REQUIRED})
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {**REQUIRED, CONF_FORCE_MODE: "select.other_force_mode"})
+    result = await hass.config_entries.options.async_configure(result["flow_id"], OPTIONAL)
+    assert result["type"] is FlowResultType.ABORT and result["reason"] == "already_configured"
+    assert entry.unique_id == f"{DOMAIN}_select.venus_force_mode"
+    assert CONF_FORCE_MODE not in entry.options
+
+
+async def test_removing_the_entry_removes_its_stored_state(hass: HomeAssistant, enable_custom_integrations) -> None:
+    from custom_components.venus_surplus import async_remove_entry
+    entry = MockConfigEntry(domain=DOMAIN, unique_id=f"{DOMAIN}_select.venus_force_mode", title="Venus", data={**REQUIRED})
+    entry.add_to_hass(hass)
+    with patch("custom_components.venus_surplus.Store.async_remove") as remove:
+        await async_remove_entry(hass, entry)
+    remove.assert_awaited_once()

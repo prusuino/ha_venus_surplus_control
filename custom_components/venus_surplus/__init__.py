@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.storage import Store
 
+from .const import DOMAIN, STORAGE_VERSION
 from .controller import VenusController
 from .frontend import async_serve_card
 from .issues import async_clear_entry_issues
@@ -36,3 +38,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: VenusSurplusConfigEntry
     if ok:
         async_clear_entry_issues(hass, entry.entry_id)
     return ok
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """The stored controller state and settings belong to the entry: remove
+    them with it, so that nothing is left in .storage."""
+    await Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}").async_remove()

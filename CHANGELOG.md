@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- **Removing an entry removes its stored state.** The file under `.storage` with the controller state and the values set on the device page stayed behind when an entry was deleted. It is now removed with the entry.
+- **Changing the Force Mode entity under Configure moves the entry's key with it.** One entry per Venus is checked by that entity; after a change the check still looked at the old one. Picking an entity that another entry already runs is refused.
+- **One reload instead of two** when Configure removes an optional entity that was set up in the first place: data and options are now written in one step.
+- **SECURITY.md** describes what the integration reads, changes and stores.
+
 ## 0.9.11 — 2026-11-16
 
 - **The projection for "Venus first" now checks the forecast.** The projection extends the surplus of this moment to sunset: if the first battery would be full long before then, the Venus may charge in parallel. In autumn and winter the surplus does not last that long. Seen on a real system at noon in November: 2.7 kW of surplus, 8.4 kWh missing in the first battery, 5.6 kWh of forecast left for the day. The projection said "full in three hours", the Venus charged in parallel until sunset and took 1 kW away from a first battery that could not be filled anyway. With a forecast set up, the projection now only starts when the remaining forecast, less what the house needs until sunset, covers what the first battery misses with 10 % margin, and it lets go again when the forecast falls below that. Without a forecast it works as before.

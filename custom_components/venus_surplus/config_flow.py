@@ -251,8 +251,20 @@ class VenusSurplusOptionsFlow(config_entries.OptionsFlow):
             for key in (CONF_VENUS_PV, CONF_VENUS_CAPACITY, CONF_PRIMARY_POWER, CONF_PRIMARY_SOC, CONF_PRIMARY_RESERVE, CONF_FORECAST_TODAY, CONF_FORECAST_REMAINING, CONF_CONNECTION, CONF_MODBUS_ENTRY):
                 merged.pop(key, None)
             merged.update(data)
+            # One entry per Venus, keyed by its force-mode entity: when that
+            # entity is changed here, the key follows, unless another entry
+            # already runs the Venus behind it.
+            unique_id = f"{DOMAIN}_{data[CONF_FORCE_MODE]}" if data.get(CONF_FORCE_MODE) else self.config_entry.unique_id
+            if unique_id != self.config_entry.unique_id and any(
+                e.unique_id == unique_id for e in self.hass.config_entries.async_entries(DOMAIN) if e.entry_id != self.config_entry.entry_id
+            ):
+                return self.async_abort(reason="already_configured")
+            new_data = dict(self.config_entry.data)
             if any(key in self.config_entry.data and key not in data for key in (CONF_PRIMARY_POWER, CONF_PRIMARY_SOC, CONF_PRIMARY_RESERVE, CONF_FORECAST_TODAY, CONF_FORECAST_REMAINING, CONF_VENUS_PV, CONF_VENUS_CAPACITY, CONF_CONNECTION, CONF_MODBUS_ENTRY)):
                 new_data = {k: v for k, v in self.config_entry.data.items() if k in data or k not in (CONF_PRIMARY_POWER, CONF_PRIMARY_SOC, CONF_PRIMARY_RESERVE, CONF_FORECAST_TODAY, CONF_FORECAST_REMAINING, CONF_VENUS_PV, CONF_VENUS_CAPACITY, CONF_CONNECTION, CONF_MODBUS_ENTRY)}
-                self.hass.config_entries.async_update_entry(self.config_entry, data=new_data)
+            if new_data != dict(self.config_entry.data) or unique_id != self.config_entry.unique_id:
+                # data, options and key in one update, so that the entry
+                # reloads once and not twice
+                self.hass.config_entries.async_update_entry(self.config_entry, data=new_data, options=merged, unique_id=unique_id)
             return self.async_create_entry(title="", data=merged)
         return self.async_show_form(step_id="optional", data_schema=_optional_schema(self._current()))

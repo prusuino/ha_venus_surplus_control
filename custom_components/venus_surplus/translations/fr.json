@@ -63,6 +63,9 @@
     }
   },
   "options": {
+    "abort": {
+      "already_configured": "Ce Venus est déjà piloté par une autre entrée."
+    },
     "step": {
       "init": {
         "title": "Venus Surplus Control",
