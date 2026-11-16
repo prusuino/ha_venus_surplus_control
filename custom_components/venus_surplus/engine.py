@@ -118,6 +118,8 @@ class Params:
     block_charge_confirm_ticks: int = 2
     block_discharge_w: float = 100
     cross_trip_w: float = 500
+    cross_trim_margin_w: float = 50  # taken off the charge command on top of what the first battery discharges
+    cross_trim_decay_w: float = 50  # given back per tick once the first battery no longer discharges
     charge_start_headroom_w: float = 400
     charge_hold_headroom_w: float = 80
     charge_low_headroom_ticks: int = 3
@@ -161,6 +163,7 @@ class State:
     bad_data_count: int = 0
     low_headroom_count: int = 0
     cross_count: int = 0
+    cross_trim_w: float = 0.0  # held back from the charge command because the first battery discharged
     pv_low_count: int = 0
     primary_idle_count: int = 0
     primary_limit_count: int = 0  # ticks the first battery has charged at a steady power with surplus left
@@ -296,7 +299,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     charge_allowed_parallel = (
         pv_corr >= min_surplus
         and headroom >= min_headroom
-        and primary_discharge <= p.parallel_primary_discharge_max_w
+        and primary_discharge <= (p.block_charge_hard_w if mode == "charge" else p.parallel_primary_discharge_max_w)
         and (venus_first or not primary_absorbing)
     )
 
@@ -334,6 +337,21 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     # Charging on this rule alone leaves the first battery its share.
     limited_only = primary_limited and not charge_soc_allowed and not charge_allowed_parallel
     charge_headroom = left_after_primary if limited_only else headroom
+    # The command follows the averaged surplus. When the surplus falls, the
+    # Venus still charges on the old average for a moment and the first
+    # battery starts to discharge into it. Stopping for that and starting
+    # again a tick later goes back and forth, so the command is lowered by
+    # what the first battery discharges plus a margin, and given back in
+    # small steps once it no longer does. The cross-charging guards still
+    # stop a discharge that is large or stays.
+    if mode == "charge" and s.last_charge_power > 0:
+        if primary_discharge > 0:
+            s.cross_trim_w = min(float(p.ac_charge_limit_w), s.cross_trim_w + primary_discharge + p.cross_trim_margin_w)
+        else:
+            s.cross_trim_w = max(0.0, s.cross_trim_w - p.cross_trim_decay_w)
+    else:
+        s.cross_trim_w = 0.0
+    charge_headroom = max(0.0, charge_headroom - s.cross_trim_w)
 
     # ---- charge target with hysteresis ------------------------------------
     raw = min(p.ac_charge_limit_w, _floor_step(charge_headroom, 100))
@@ -477,7 +495,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     # There is surplus the Venus could take, and only the first battery's
     # turn keeps it waiting. This changes no decision, only the reason shown.
     waits_for_primary = (
-        p.has_primary and not charge_wanted and not s.full_latched and charge_cmd >= p.charge_min_w
+        p.has_primary and not charge_wanted and not s.full_latched and charge_cmd >= p.charge_min_w and primary_discharge == 0
         and ms_soc_ctrl < p.venus_soc_max_charge and not block_charge
     )
     if mode == "discharge":
@@ -592,6 +610,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         "feed_in_exceeded": feed_in_exceeded,
         "low_headroom_count": s.low_headroom_count,
         "cross_count": s.cross_count,
+        "cross_trim_w": round(s.cross_trim_w),
         "block_charge": block_charge,
         "block_discharge": block_discharge,
         "cross_trip": cross_trip,

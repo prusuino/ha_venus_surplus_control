@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.10 — 2026-11-16
+
+- **Charging no longer stops for a tick when the surplus falls.** The charge command follows the averaged surplus. When clouds took the surplus down, the Venus kept charging on the old average for a moment, the first battery started to discharge into it, the guard against that stopped the Venus, and a tick later it started again at the old power: on, off, on. The command is now lowered by what the first battery discharges plus 50 W and comes back in steps once it no longer does. Seen on a real system: 1000 W commanded, the first battery discharged 221 W, the Venus now carries on at 600 W instead of stopping. The guards are unchanged for the rest: more than 350 W, or more than 200 W over two ticks, still stops the charge, and starting is as strict as before.
+- **Reason corrected.** *Surplus, first battery charges first* (new in 0.9.8) also showed while the first battery was discharging. It now only shows when the first battery is not discharging.
+
 ## 0.9.9 — 2026-11-16
 
 - **A first battery at its charge limit leaves the rest to the Venus.** A first battery can only take so much: its rated power, or less with cold or nearly full cells. Surplus above that was exported on an ordinary day, because the Venus waited for the first battery to reach its level. The controller now recognises the limit by itself, without a setting: the first battery charges at a steady power for six ticks while at least 400 W more surplus stands than it takes. The Venus then charges with that rest only (reason *Surplus, first battery at its charge limit*). As soon as the first battery takes clearly more or less than before, it is not at a limit any more and goes first again. Worked out and covered by tests, not yet seen on a real system with a small first battery.
