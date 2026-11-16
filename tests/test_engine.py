@@ -69,7 +69,7 @@ def test_charges_from_surplus_when_the_first_battery_is_full():
 def test_waits_while_the_first_battery_is_still_absorbing():
     p = Params()
     d = decide(_inputs(surplus_mean=900.0, surplus_instant=900.0, primary_soc=60.0, primary_power=-800.0), p, State())
-    assert d.target_mode == "stop" and d.reason == "no_condition"
+    assert d.target_mode == "stop" and d.reason == "primary_first"
     assert d.command is None  # already stopped: nothing to send
     assert d.values["primary_charge_w"] == 800 and d.values["parallel_allowed"] is False
 

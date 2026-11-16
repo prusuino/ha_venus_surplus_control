@@ -145,6 +145,7 @@
           "discharge_primary_idle": "Hausbedarf, erste Batterie liefert nichts",
           "direct_pv_use": "Eigene PV direkt genutzt",
           "venus_soc_protect": "Venus-SoC zu tief",
+          "primary_first": "Überschuss, erste Batterie lädt zuerst",
           "cross_trip": "Querlade-Stopp",
           "venus_full": "Venus ist voll",
           "no_condition": "Keine Bedingung erfüllt",

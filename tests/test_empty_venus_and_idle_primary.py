@@ -83,3 +83,21 @@ def test_first_battery_first_until_zero_never_waits():
     assert decide(i, Params(), State()).target_mode == "stop"
     d = decide(i, Params(soc_min_charge_start=0, soc_min_charge_hold=0), State())
     assert d.target_mode == "charge" and d.reason == "charge_ok"
+
+
+def test_empty_venus_waiting_for_the_first_battery_says_so():
+    # the case of issue #5: 1100 W surplus, the first battery at 2 % takes it,
+    # the Venus at 11.8 % waits for its turn
+    d = decide(_inputs(surplus_mean=1099.0, surplus_instant=1091.0, primary_soc=2.0, primary_power=-1099.0, venus_soc=11.8), Params(), State())
+    assert d.target_mode == "stop" and d.command is None
+    assert d.reason == "primary_first"
+
+
+def test_venus_above_the_stop_limit_waiting_for_the_first_battery_says_so():
+    d = decide(_inputs(surplus_mean=1099.0, surplus_instant=1091.0, primary_soc=2.0, primary_power=-1099.0, venus_soc=40.0), Params(), State())
+    assert d.target_mode == "stop" and d.reason == "primary_first"
+
+
+def test_no_first_battery_never_reports_waiting_for_it():
+    d = decide(_inputs(surplus_mean=50.0, surplus_instant=50.0, primary_soc=None, primary_power=None, venus_soc=11.0), Params(has_primary=False), State())
+    assert d.reason != "primary_first"

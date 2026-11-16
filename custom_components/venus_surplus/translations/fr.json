@@ -145,6 +145,7 @@
           "discharge_primary_idle": "Besoin de la maison, la première batterie ne fournit rien",
           "direct_pv_use": "PV propre utilisé directement",
           "venus_soc_protect": "État de charge du Venus trop bas",
+          "primary_first": "Surplus, la première batterie charge d'abord",
           "cross_trip": "Arrêt pour charge croisée",
           "venus_full": "La Venus est pleine",
           "no_condition": "Aucune condition remplie",

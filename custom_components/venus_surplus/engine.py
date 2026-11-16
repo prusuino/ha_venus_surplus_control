@@ -446,6 +446,12 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         s.full_latched = False
     charge_wanted = (charge_soc_allowed or charge_allowed_parallel or primary_idle) and charge_cmd >= p.charge_min_w and ms_soc_ctrl < p.venus_soc_max_charge and not block_charge
     charge_ok = charge_wanted and not s.full_latched
+    # There is surplus the Venus could take, and only the first battery's
+    # turn keeps it waiting. This changes no decision, only the reason shown.
+    waits_for_primary = (
+        p.has_primary and not charge_wanted and not s.full_latched and charge_cmd >= p.charge_min_w
+        and ms_soc_ctrl < p.venus_soc_max_charge and not block_charge
+    )
     if mode == "discharge":
         discharge_ok = ms_soc_ctrl > p.venus_soc_stop and pv_corr < p.pv_block_discharge_w and target_discharge >= mn and not block_discharge
     else:
@@ -471,7 +477,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         else:
             reason = "charge_primary_idle"
     elif ms_soc_ctrl <= p.venus_soc_stop:
-        target_mode, reason = "stop", "venus_soc_protect"
+        target_mode, reason = "stop", "primary_first" if waits_for_primary else "venus_soc_protect"
     elif discharge_ok:
         target_mode = "discharge"
         if direct_pv_use and mode != "discharge":
@@ -483,7 +489,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     elif charge_wanted and s.full_latched:
         target_mode, reason = "stop", "venus_full"
     else:
-        target_mode, reason = "stop", "no_condition"
+        target_mode, reason = "stop", "primary_first" if waits_for_primary else "no_condition"
 
     # ---- counters ---------------------------------------------------------
     s.low_headroom_count = min(10, s.low_headroom_count + 1) if (mode == "charge" and headroom < p.charge_hold_headroom_w) else 0

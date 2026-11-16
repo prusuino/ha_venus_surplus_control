@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.8 — 2026-11-16
+
+- **New reason *Surplus, first battery charges first*.** While there was surplus and the Venus waited for the first battery to fill, the reason read *No condition met*, or *Venus SoC too low* when the Venus was empty as well. The second one applies to discharging and pointed the wrong way. Both cases now say that the first battery has its turn. The decisions themselves are unchanged. Thanks to @VIMVa for the report (#5).
+
 ## 0.9.7 — 2026-11-15
 
 - **The discharge power climbs much faster.** A running discharge followed a rising demand by 50, 100 or 200 W per tick; from 300 to 1200 W took four and a half minutes on *Normal*, and for that long the first battery carried the load the Venus was meant to take off it. The steps are now 100 W on *Calm*, 300 W on *Normal*, and *Fast* goes straight to the demand. Coming down is immediate as before, so the Venus delivers too much for one tick at most.
