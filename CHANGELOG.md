@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.11 — 2026-11-16
+
+- **The projection for "Venus first" now checks the forecast.** The projection extends the surplus of this moment to sunset: if the first battery would be full long before then, the Venus may charge in parallel. In autumn and winter the surplus does not last that long. Seen on a real system at noon in November: 2.7 kW of surplus, 8.4 kWh missing in the first battery, 5.6 kWh of forecast left for the day. The projection said "full in three hours", the Venus charged in parallel until sunset and took 1 kW away from a first battery that could not be filled anyway. With a forecast set up, the projection now only starts when the remaining forecast, less what the house needs until sunset, covers what the first battery misses with 10 % margin, and it lets go again when the forecast falls below that. Without a forecast it works as before.
+
 ## 0.9.10 — 2026-11-16
 
 - **Charging no longer stops for a tick when the surplus falls.** The charge command follows the averaged surplus. When clouds took the surplus down, the Venus kept charging on the old average for a moment, the first battery started to discharge into it, the guard against that stopped the Venus, and a tick later it started again at the old power: on, off, on. The command is now lowered by what the first battery discharges plus 50 W and comes back in steps once it no longer does. Seen on a real system: 1000 W commanded, the first battery discharged 221 W, the Venus now carries on at 600 W instead of stopping. The guards are unchanged for the rest: more than 350 W, or more than 200 W over two ticks, still stops the charge, and starting is as strict as before.

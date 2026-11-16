@@ -84,6 +84,8 @@ class Params:
     rest_start_surplus_w: float = 2500
     proj_start_surplus_w: float = 3000
     proj_venus_rate_kw: float = 1.0
+    proj_forecast_start_factor: float = 1.1  # remaining forecast must cover what the first battery misses, with margin
+    proj_forecast_hold_factor: float = 0.9
     primary_discharge_start_w: float = 500
     # Below that the Venus helps as well, once the first battery has been
     # delivering for a while: a house with a small base load never reaches
@@ -275,8 +277,16 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     r = pv_corr / 1000
     proj_primary_full_h = (primary_missing / r) if r > 0.1 else 99.0
     proj_ms_fill_h = ms_missing / p.proj_venus_rate_kw
+    # The projection assumes the surplus of this moment until sunset. In
+    # autumn and winter it does not last: with a forecast, what is left of
+    # the day after the house must still fill the first battery, otherwise
+    # the Venus would only take away what the first battery needs.
+    fc_for_primary = rest_fc - house_rest
+    proj_fc_start = rest_fc <= 0 or fc_for_primary >= primary_missing * p.proj_forecast_start_factor
+    proj_fc_hold = rest_fc <= 0 or fc_for_primary >= primary_missing * p.proj_forecast_hold_factor
     proj_start = (
         p.has_primary
+        and proj_fc_start
         and pv_corr >= p.proj_start_surplus_w
         and primary_soc < 98
         and ms_missing >= 1.0
@@ -284,7 +294,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         and proj_primary_full_h <= 0.6 * i.sun_hours_left
         and (i.sun_hours_left - proj_primary_full_h) < proj_ms_fill_h
     )
-    proj_hold = i.sun_hours_left > 0 and primary_soc < 99
+    proj_hold = i.sun_hours_left > 0 and primary_soc < 99 and proj_fc_hold
     proj_ok = proj_start or (s.proj_latched and proj_hold)
     s.rest_latched = bool(rest_ok)
     s.proj_latched = bool(proj_ok)
