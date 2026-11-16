@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.12 — 2026-11-16
 
 - **Removing an entry removes its stored state.** The file under `.storage` with the controller state and the values set on the device page stayed behind when an entry was deleted. It is now removed with the entry.
 - **Changing the Force Mode entity under Configure moves the entry's key with it.** One entry per Venus is checked by that entity; after a change the check still looked at the old one. Picking an entity that another entry already runs is refused.
