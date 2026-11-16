@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 1.0.0 — 2026-11-16
+
+The first stable release. The controller runs on two systems of different build, one with a large inverter-coupled battery and a Venus A with its own panels, one with a grid meter and two plug-in batteries as the first battery; the 0.9 releases were shaped by what those two showed.
 
 - **The reason names a low Venus SoC at the bottom end as well.** A discharge stops at 12 % and starts again from 15 %. In between, and when the Venus went to standby by itself at its own floor (14 % on a Venus A), the reason read *No condition met* although the house drew power and only the empty Venus kept it from discharging. It now reads *Venus SoC too low* when the SoC is the only thing in the way. The decisions are unchanged.
 - **README:** the highlight on parallel charging names all three ways to "Venus first", including the threshold on today's forecast that you set.
