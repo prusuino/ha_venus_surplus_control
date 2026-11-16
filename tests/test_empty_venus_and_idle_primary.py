@@ -101,3 +101,22 @@ def test_venus_above_the_stop_limit_waiting_for_the_first_battery_says_so():
 def test_no_first_battery_never_reports_waiting_for_it():
     d = decide(_inputs(surplus_mean=50.0, surplus_instant=50.0, primary_soc=None, primary_power=None, venus_soc=11.0), Params(has_primary=False), State())
     assert d.reason != "primary_first"
+
+
+def test_venus_at_its_own_floor_names_the_low_soc():
+    # seen on a real system: the Venus went to standby by itself at 14 % while
+    # the house drew 1.2 kW and the first battery delivered; the reason read
+    # "No condition met"
+    d = decide(_inputs(surplus_mean=-1240.0, surplus_instant=-1240.0, primary_soc=32.0, primary_power=1270.0, venus_soc=14.0), Params(), State())
+    assert d.target_mode == "stop" and d.command is None
+    assert d.reason == "venus_soc_protect"
+
+
+def test_low_venus_without_demand_is_not_reported_as_protection():
+    d = decide(_inputs(surplus_mean=-20.0, surplus_instant=-20.0, primary_soc=32.0, primary_power=0.0, venus_soc=14.0), Params(), State())
+    assert d.target_mode == "stop" and d.reason != "venus_soc_protect"
+
+
+def test_from_the_resume_level_on_the_venus_discharges_again():
+    d = decide(_inputs(surplus_mean=-1240.0, surplus_instant=-1240.0, primary_soc=32.0, primary_power=1270.0, venus_soc=15.0), Params(), State())
+    assert d.target_mode == "discharge"

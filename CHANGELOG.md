@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **The reason names a low Venus SoC at the bottom end as well.** A discharge stops at 12 % and starts again from 15 %. In between, and when the Venus went to standby by itself at its own floor (14 % on a Venus A), the reason read *No condition met* although the house drew power and only the empty Venus kept it from discharging. It now reads *Venus SoC too low* when the SoC is the only thing in the way. The decisions are unchanged.
+- **README:** the highlight on parallel charging names all three ways to "Venus first", including the threshold on today's forecast that you set.
+
 ## 0.9.12 — 2026-11-16
 
 - **Removing an entry removes its stored state.** The file under `.storage` with the controller state and the values set on the device page stayed behind when an entry was deleted. It is now removed with the entry.

@@ -508,16 +508,21 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         p.has_primary and not charge_wanted and not s.full_latched and charge_cmd >= p.charge_min_w and primary_discharge == 0
         and ms_soc_ctrl < p.venus_soc_max_charge and not block_charge
     )
+    discharge_wanted = False
     if mode == "discharge":
         discharge_ok = ms_soc_ctrl > p.venus_soc_stop and pv_corr < p.pv_block_discharge_w and target_discharge >= mn and not block_discharge
     else:
-        discharge_ok = (
-            ms_soc_ctrl >= p.venus_soc_resume_discharge
-            and pv_corr < p.pv_block_discharge_w
+        discharge_wanted = (
+            pv_corr < p.pv_block_discharge_w
             and target_discharge >= mn
             and (primary_discharge >= p.primary_discharge_start_w or primary_help or primary_soc <= primary_empty_soc or direct_pv_use or primary_rest or not p.has_primary)
             and not block_discharge
         )
+        discharge_ok = ms_soc_ctrl >= p.venus_soc_resume_discharge and discharge_wanted
+    # The Venus would discharge, but it stands below the level from which a
+    # discharge starts again (often at its own floor, where it goes to standby
+    # by itself): the reason names the low SoC, not "no condition".
+    held_by_soc = mode != "discharge" and ms_soc_ctrl < p.venus_soc_resume_discharge and discharge_wanted
     cross_trip = (mode == "charge" and primary_discharge > p.cross_trip_w) or (mode == "discharge" and primary_charge > p.cross_trip_w)
 
     # The SoC protection only keeps the Venus from discharging; an empty Venus
@@ -547,7 +552,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     elif charge_wanted and s.full_latched:
         target_mode, reason = "stop", "venus_full"
     else:
-        target_mode, reason = "stop", "primary_first" if waits_for_primary else "no_condition"
+        target_mode, reason = "stop", "primary_first" if waits_for_primary else ("venus_soc_protect" if held_by_soc else "no_condition")
 
     # ---- counters ---------------------------------------------------------
     s.low_headroom_count = min(10, s.low_headroom_count + 1) if (mode == "charge" and charge_headroom < p.charge_hold_headroom_w) else 0
