@@ -141,6 +141,7 @@
           "charge_ok": "Excedente, primera batería llena",
           "charge_parallel": "Excedente, carga en paralelo",
           "charge_primary_idle": "Excedente, la primera batería no absorbe nada",
+          "charge_primary_limited": "Excedente, primera batería en su límite de carga",
           "discharge_ok": "Demanda de la casa",
           "discharge_primary_idle": "Demanda de la casa, la primera batería no entrega nada",
           "direct_pv_use": "FV propia usada directamente",

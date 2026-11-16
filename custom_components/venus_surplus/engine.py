@@ -144,6 +144,9 @@ class Params:
     venus_pv_direct_use_min_w: float = 80
     pv_unknown_hold_ticks: int = 4
     primary_idle_confirm_ticks: int = 6
+    primary_limit_confirm_ticks: int = 6  # first battery charges at a steady power while surplus is left
+    primary_limit_tolerance_w: float = 100
+    primary_limit_tolerance_share: float = 0.1
     primary_rest_confirm_ticks: int = 6  # first battery delivers nothing although the house imports
 
 
@@ -160,6 +163,8 @@ class State:
     cross_count: int = 0
     pv_low_count: int = 0
     primary_idle_count: int = 0
+    primary_limit_count: int = 0  # ticks the first battery has charged at a steady power with surplus left
+    primary_limit_ref: float = 0.0  # that steady power [W]
     primary_rest_count: int = 0  # ticks the first battery has delivered nothing while the house imports
     primary_help_count: int = 0  # ticks the first battery has been delivering a small load
     full_count: int = 0  # ticks the Venus has stood at 100 % without taking anything
@@ -305,22 +310,47 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         block_charge = block_charge_soft
     block_discharge = primary_charge > p.block_discharge_w
 
+    # ---- first battery at its charge limit ---------------------------------
+    # The surplus is PV minus house, so it includes what the first battery
+    # takes. A first battery that charges at a steady power for several ticks
+    # while more surplus stands than it takes is at its limit (rated power,
+    # cold or nearly full cells): the rest would be exported, so the Venus may
+    # have it, and only that rest. The reference is the highest steady power
+    # seen; once the first battery takes clearly more or less than that, it is
+    # not at a limit any more, the count starts over and it goes first again.
+    left_after_primary = max(0.0, pv_corr - primary_charge - p.charge_reserve_w)
+    limit_left_thr = p.charge_hold_headroom_w if mode == "charge" else p.charge_start_headroom_w
+    limit_tol = max(p.primary_limit_tolerance_w, p.primary_limit_tolerance_share * s.primary_limit_ref)
+    if not (p.has_primary and primary_charge > p.primary_absorbing_start_w and left_after_primary >= limit_left_thr):
+        s.primary_limit_count, s.primary_limit_ref = 0, 0.0
+    elif s.primary_limit_ref > 0 and abs(primary_charge - s.primary_limit_ref) <= limit_tol:
+        s.primary_limit_count = min(10, s.primary_limit_count + 1)
+        s.primary_limit_ref = max(s.primary_limit_ref, primary_charge)
+    else:
+        s.primary_limit_count, s.primary_limit_ref = 0, primary_charge
+    primary_limited = s.primary_limit_count >= p.primary_limit_confirm_ticks
+    soc_thr = p.soc_min_charge_hold if mode == "charge" else p.soc_min_charge_start
+    charge_soc_allowed = primary_soc >= soc_thr
+    # Charging on this rule alone leaves the first battery its share.
+    limited_only = primary_limited and not charge_soc_allowed and not charge_allowed_parallel
+    charge_headroom = left_after_primary if limited_only else headroom
+
     # ---- charge target with hysteresis ------------------------------------
-    raw = min(p.ac_charge_limit_w, _floor_step(headroom, 100))
+    raw = min(p.ac_charge_limit_w, _floor_step(charge_headroom, 100))
     last_t = s.last_charge_target
     if mode != "charge":
         target_charge = raw if raw >= p.charge_start_headroom_w else 0
     else:
-        if headroom < p.charge_hold_headroom_w and s.low_headroom_count >= p.charge_low_headroom_ticks - 1:
+        if charge_headroom < p.charge_hold_headroom_w and s.low_headroom_count >= p.charge_low_headroom_ticks - 1:
             target_charge = 0
-        elif headroom < p.charge_hold_headroom_w:
+        elif charge_headroom < p.charge_hold_headroom_w:
             target_charge = last_t
         elif last_t <= 0:
             target_charge = raw if raw >= p.charge_start_headroom_w else 0
-        elif raw > last_t and headroom >= last_t + p.charge_upshift_margin_w:
+        elif raw > last_t and charge_headroom >= last_t + p.charge_upshift_margin_w:
             target_charge = raw
-        elif raw < last_t and headroom < last_t - p.charge_downshift_margin_w:
-            target_charge = raw if raw >= 200 else (200 if headroom >= p.charge_hold_headroom_w else 0)
+        elif raw < last_t and charge_headroom < last_t - p.charge_downshift_margin_w:
+            target_charge = raw if raw >= 200 else (200 if charge_headroom >= p.charge_hold_headroom_w else 0)
         else:
             target_charge = last_t
 
@@ -425,8 +455,6 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
 
     direct_pv_use = ms_pv >= p.venus_pv_direct_use_min_w and safe_cap >= mn and pv_corr < p.pv_block_discharge_w and not block_discharge
 
-    soc_thr = p.soc_min_charge_hold if mode == "charge" else p.soc_min_charge_start
-    charge_soc_allowed = primary_soc >= soc_thr
     # The first battery goes first only while it takes the surplus. One that
     # takes nothing for several ticks although there is headroom (standby,
     # charge limit, fault) leaves the surplus to the grid: then the Venus may
@@ -444,7 +472,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         s.full_latched = True
     elif ms_soc_ctrl < p.venus_full_resume_soc:
         s.full_latched = False
-    charge_wanted = (charge_soc_allowed or charge_allowed_parallel or primary_idle) and charge_cmd >= p.charge_min_w and ms_soc_ctrl < p.venus_soc_max_charge and not block_charge
+    charge_wanted = (charge_soc_allowed or charge_allowed_parallel or primary_idle or primary_limited) and charge_cmd >= p.charge_min_w and ms_soc_ctrl < p.venus_soc_max_charge and not block_charge
     charge_ok = charge_wanted and not s.full_latched
     # There is surplus the Venus could take, and only the first battery's
     # turn keeps it waiting. This changes no decision, only the reason shown.
@@ -474,6 +502,8 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
             reason = "charge_ok"
         elif charge_allowed_parallel:
             reason = "charge_parallel"
+        elif primary_limited:
+            reason = "charge_primary_limited"
         else:
             reason = "charge_primary_idle"
     elif ms_soc_ctrl <= p.venus_soc_stop:
@@ -492,7 +522,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         target_mode, reason = "stop", "primary_first" if waits_for_primary else "no_condition"
 
     # ---- counters ---------------------------------------------------------
-    s.low_headroom_count = min(10, s.low_headroom_count + 1) if (mode == "charge" and headroom < p.charge_hold_headroom_w) else 0
+    s.low_headroom_count = min(10, s.low_headroom_count + 1) if (mode == "charge" and charge_headroom < p.charge_hold_headroom_w) else 0
     s.cross_count = min(10, s.cross_count + 1) if (mode == "charge" and block_charge_soft and not block_charge_hard) else 0
     s.pv_low_count = min(10, s.pv_low_count + 1) if pv_low else 0
     if ms_pv_filtered >= 50:
@@ -533,6 +563,9 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         "primary_empty_below_soc": round(primary_empty_soc, 1),
         "parallel_allowed": charge_allowed_parallel,
         "primary_idle": primary_idle,
+        "primary_limited": primary_limited,
+        "primary_limit_count": s.primary_limit_count,
+        "left_after_primary_w": round(left_after_primary),
         "primary_rest": primary_rest,
         "primary_help": primary_help,
         "venus_full": s.full_latched,

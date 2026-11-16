@@ -141,6 +141,7 @@
           "charge_ok": "Überschuss, erste Batterie voll",
           "charge_parallel": "Überschuss, paralleles Laden",
           "charge_primary_idle": "Überschuss, erste Batterie nimmt nichts",
+          "charge_primary_limited": "Überschuss, erste Batterie an ihrer Ladegrenze",
           "discharge_ok": "Hausbedarf",
           "discharge_primary_idle": "Hausbedarf, erste Batterie liefert nichts",
           "direct_pv_use": "Eigene PV direkt genutzt",

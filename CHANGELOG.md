@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.9 — 2026-11-16
+
+- **A first battery at its charge limit leaves the rest to the Venus.** A first battery can only take so much: its rated power, or less with cold or nearly full cells. Surplus above that was exported on an ordinary day, because the Venus waited for the first battery to reach its level. The controller now recognises the limit by itself, without a setting: the first battery charges at a steady power for six ticks while at least 400 W more surplus stands than it takes. The Venus then charges with that rest only (reason *Surplus, first battery at its charge limit*). As soon as the first battery takes clearly more or less than before, it is not at a limit any more and goes first again. Worked out and covered by tests, not yet seen on a real system with a small first battery.
+
 ## 0.9.8 — 2026-11-16
 
 - **New reason *Surplus, first battery charges first*.** While there was surplus and the Venus waited for the first battery to fill, the reason read *No condition met*, or *Venus SoC too low* when the Venus was empty as well. The second one applies to discharging and pointed the wrong way. Both cases now say that the first battery has its turn. The decisions themselves are unchanged. Thanks to @VIMVa for the report (#5).
