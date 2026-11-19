@@ -79,7 +79,7 @@ def test_discharges_at_night_when_the_first_battery_is_empty():
     d = decide(_inputs(surplus_mean=-700.0, surplus_instant=-700.0, primary_soc=10.0, primary_power=0.0, venus_soc=60.0), p, State())
     assert d.target_mode == "discharge" and d.reason == "discharge_ok"
     assert d.command == "discharge"
-    assert d.power == 680  # the only source now: the demand minus the export guard
+    assert d.power == 690  # the only source now: the demand minus the export guard
     assert d.state.last_discharge_power == d.power
 
 

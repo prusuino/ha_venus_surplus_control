@@ -59,6 +59,7 @@ from .const import (
     DEFAULT_AC_CHARGE_LIMIT,
     DEFAULT_BASE_LOAD_KW,
     DEFAULT_CHARGE_RESERVE,
+    DEFAULT_EXPORT_GUARD,
     DEFAULT_CHARGE_START_W,
     DEFAULT_REST_START_W,
     DEFAULT_REACTION,
@@ -126,6 +127,7 @@ class Settings:
     discharge_cap_w: int = DEFAULT_DISCHARGE_CAP
     discharge_min_w: int = DEFAULT_DISCHARGE_MIN  # smallest discharge command, 0 = automatic
     charge_reserve_w: int = DEFAULT_CHARGE_RESERVE
+    export_guard_w: int = DEFAULT_EXPORT_GUARD  # kept below the demand while the Venus is the only source
     charge_start_w: int = DEFAULT_CHARGE_START_W  # headroom from which charging starts
     rest_start_w: int = DEFAULT_REST_START_W  # surplus the remaining-forecast rule asks for
     reaction: str = DEFAULT_REACTION  # calm / normal / fast: how long the surplus is averaged
@@ -273,6 +275,7 @@ class VenusController:
             venus_capacity_fallback_kwh=float(self.settings.venus_capacity_kwh),
             house_base_load_kw=float(self.settings.house_base_load_kw),
             charge_reserve_w=float(self.settings.charge_reserve_w),
+            sole_export_guard_w=float(self.settings.export_guard_w),
             charge_start_headroom_w=float(self.settings.charge_start_w),
             rest_start_surplus_w=float(self.settings.rest_start_w),
             soc_min_charge_start=float(self.settings.primary_first_soc),
@@ -347,6 +350,7 @@ class VenusController:
                     "discharge_cap_w": self.settings.discharge_cap_w,
                     "discharge_min_w": self.settings.discharge_min_w,
                     "charge_reserve_w": self.settings.charge_reserve_w,
+                    "export_guard_w": self.settings.export_guard_w,
                     "charge_start_w": self.settings.charge_start_w,
                     "rest_start_w": self.settings.rest_start_w,
                     "reaction": self.settings.reaction,

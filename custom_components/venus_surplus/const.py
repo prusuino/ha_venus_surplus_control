@@ -76,6 +76,7 @@ DISCHARGE_MIN_AUTO = 100  # what automatic means
 NIGHT_LOAD_NIGHTS = 7  # nights the learned value is taken from
 NIGHT_LOAD_MIN_HOURS = 2.0  # shorter nights (a restart in the small hours) are not counted
 DEFAULT_CHARGE_RESERVE = 200
+DEFAULT_EXPORT_GUARD = 10  # W the Venus stays below the demand as the only source
 DEFAULT_TARGET_SOC = 50
 DEFAULT_REACTION = "normal"
 # how quickly the controller follows the surplus: minutes the surplus is averaged over

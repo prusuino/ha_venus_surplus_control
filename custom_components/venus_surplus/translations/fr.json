@@ -246,6 +246,9 @@
       "charge_reserve_w": {
         "name": "Marge de charge"
       },
+      "export_guard_w": {
+        "name": "Marge anti-injection (Venus seule)"
+      },
       "charge_start_w": {
         "name": "Charge à partir d'un surplus de"
       },

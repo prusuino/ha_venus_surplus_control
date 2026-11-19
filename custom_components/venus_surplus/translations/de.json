@@ -246,6 +246,9 @@
       "charge_reserve_w": {
         "name": "Puffer beim Laden"
       },
+      "export_guard_w": {
+        "name": "Einspeiseschutz (Venus allein)"
+      },
       "charge_start_w": {
         "name": "Laden ab Überschuss"
       },

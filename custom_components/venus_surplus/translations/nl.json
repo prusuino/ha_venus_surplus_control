@@ -246,6 +246,9 @@
       "charge_reserve_w": {
         "name": "Laadbuffer"
       },
+      "export_guard_w": {
+        "name": "Teruglevermarge (alleen Venus)"
+      },
       "charge_start_w": {
         "name": "Laden vanaf overschot van"
       },

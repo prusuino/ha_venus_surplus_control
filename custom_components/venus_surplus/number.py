@@ -23,6 +23,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             SettingNumber(c, "charge_start_w", 100, 1500, 50, UnitOfPower.WATT, "mdi:battery-charging-low", NumberDeviceClass.POWER, category=cfg),
             SettingNumber(c, "rest_start_w", 500, 5000, 100, UnitOfPower.WATT, "mdi:weather-partly-cloudy", NumberDeviceClass.POWER, category=cfg),
             SettingNumber(c, "charge_reserve_w", 0, 500, 10, UnitOfPower.WATT, "mdi:battery-arrow-up-outline", NumberDeviceClass.POWER, category=cfg),
+            SettingNumber(c, "export_guard_w", 0, 50, 5, UnitOfPower.WATT, "mdi:transmission-tower-export", NumberDeviceClass.POWER, category=cfg),
             SettingNumber(c, "primary_first_soc", 0, 100, 5, PERCENTAGE, "mdi:battery-sync", None, category=cfg),
             SettingNumber(c, "first_forecast_kwh", 0, 200, 1, UnitOfEnergy.KILO_WATT_HOUR, "mdi:weather-sunny", None, category=cfg),
             SettingNumber(c, "primary_capacity_kwh", 0, 100, 0.1, UnitOfEnergy.KILO_WATT_HOUR, "mdi:battery-high", None, category=cfg),
@@ -54,5 +55,5 @@ class SettingNumber(VenusEntity, NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         value = value / self._scale
-        v: float | int = int(value) if self._key in ("discharge_cap_w", "discharge_min_w", "charge_reserve_w", "charge_start_w", "rest_start_w", "primary_first_soc", "target_soc") else round(value, 2)
+        v: float | int = int(value) if self._key in ("discharge_cap_w", "discharge_min_w", "charge_reserve_w", "export_guard_w", "charge_start_w", "rest_start_w", "primary_first_soc", "target_soc") else round(value, 2)
         await self.controller.async_set_setting(self._key, v)

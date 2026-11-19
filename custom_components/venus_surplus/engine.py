@@ -152,11 +152,10 @@ class Params:
     # The Venus as the only source: no first battery, or one that is empty or
     # at rest. Nobody else covers what the Venus leaves, so every watt it holds
     # back is imported. The command then moves in fine steps with a small
-    # export guard; a rise smaller than the dead band is not worth a write.
+    # export guard (a setting: what a house needs depends on its loads and
+    # its meter); a rise smaller than the dead band is not worth a write.
     sole_discharge_step_w: int = 10
-    sole_export_guard_w: float = 15
-    sole_export_guard_share: float = 0.03
-    sole_export_guard_min_w: float = 5
+    sole_export_guard_w: float = 10
     sole_deadband_w: int = 10
     venus_pv_direct_use_min_w: float = 80
     pv_unknown_hold_ticks: int = 4
@@ -183,6 +182,7 @@ class State:
     cross_count: int = 0
     cross_trim_w: float = 0.0  # held back from the charge command because the first battery discharged
     import_cap_w: float = -1.0  # charge power the grid import allows; negative = no cap
+    sole_guard_w: float = -1.0  # export guard the standing command was decided with; negative = unknown
     pv_low_count: int = 0
     primary_idle_count: int = 0
     primary_limit_count: int = 0  # ticks the first battery has charged at a steady power with surplus left
@@ -466,12 +466,16 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     # rest. A Venus that is the only source follows the demand closely instead.
     sole_source = (not p.has_primary) or primary_soc <= primary_empty_soc or primary_rest
     if sole_source:
-        export_guard = min(p.sole_export_guard_w, max(p.sole_export_guard_min_w, p.sole_export_guard_share * house_need))
+        export_guard = max(0.0, p.sole_export_guard_w)
+        # a changed setting takes effect now, not at the next move of the demand
+        guard_changed = s.sole_guard_w >= 0 and s.sole_guard_w != export_guard
+        s.sole_guard_w = export_guard
         reserve = export_guard
         st = p.sole_discharge_step_w
     else:
         reserve = min(p.discharge_reserve_w, max(p.discharge_reserve_min_w, p.discharge_reserve_share * house_need))
         export_guard = min(p.discharge_export_guard_w, max(p.discharge_export_guard_min_w, p.discharge_export_guard_share * house_need))
+        guard_changed = False
         st = p.discharge_step_w
     need = max(0.0, house_need - reserve)
     last_d = s.last_discharge_power
@@ -526,7 +530,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         # stays where it is as long as it does not export.
         if last_d < target_discharge < last_d + p.sole_deadband_w:
             target_discharge = last_d
-        elif target_discharge < last_d <= min(user_cap, feed_in_cap) and last_d <= house_need and target_discharge >= mn:
+        elif not guard_changed and target_discharge < last_d <= min(user_cap, feed_in_cap) and last_d <= house_need and target_discharge >= mn:
             target_discharge = last_d
 
     direct_pv_use = ms_pv >= p.venus_pv_direct_use_min_w and safe_cap >= mn and pv_corr < p.pv_block_discharge_w and not block_discharge

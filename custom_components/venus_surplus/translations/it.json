@@ -246,6 +246,9 @@
       "charge_reserve_w": {
         "name": "Margine di carica"
       },
+      "export_guard_w": {
+        "name": "Margine anti-immissione (solo Venus)"
+      },
       "charge_start_w": {
         "name": "Carica da un'eccedenza di"
       },

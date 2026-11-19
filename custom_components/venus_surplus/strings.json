@@ -246,6 +246,9 @@
       "charge_reserve_w": {
         "name": "Charging buffer"
       },
+      "export_guard_w": {
+        "name": "Export guard (Venus alone)"
+      },
       "charge_start_w": {
         "name": "Charge from surplus of"
       },

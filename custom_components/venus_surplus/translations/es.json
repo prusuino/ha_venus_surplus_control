@@ -246,6 +246,9 @@
       "charge_reserve_w": {
         "name": "Margen de carga"
       },
+      "export_guard_w": {
+        "name": "Margen antivertido (solo Venus)"
+      },
       "charge_start_w": {
         "name": "Cargar a partir de un excedente de"
       },

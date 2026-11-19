@@ -33,15 +33,15 @@ def test_a_house_drawing_220_w_is_served():
     # the only source: nobody else covers the rest, so the Venus goes close
     d = decide(_night(220), P, State())
     assert d.command == "discharge" and d.power == 210
-    assert d.values["sole_source"] is True and d.values["discharge_reserve_w"] == 7
+    assert d.values["sole_source"] is True and d.values["discharge_reserve_w"] == 10
     # next to a first battery that delivers: the reserve follows the demand (20 %, at least 40 W)
     d = decide(_helping(220), HELPER, State())
     assert d.command == "discharge" and d.power == 150
     assert d.values["sole_source"] is False and d.values["discharge_reserve_w"] == 44
 
 
-def test_the_only_source_leaves_5_to_25_w_to_the_grid():
-    for house, power in ((130, 120), (160, 150), (210, 200), (330, 320), (560, 540), (900, 880)):
+def test_the_only_source_leaves_10_to_20_w_to_the_grid():
+    for house, power in ((130, 120), (160, 150), (210, 200), (330, 320), (560, 550), (900, 890)):
         assert decide(_night(house), P, State()).power == power, house
     # an empty first battery is the same case
     empty = decide(_night(330, primary_power=0.0, primary_soc=8.0), HELPER, State())
@@ -84,7 +84,7 @@ def test_never_commands_more_than_the_house_needs():
 def test_a_large_demand_keeps_the_full_reserve():
     d = decide(_helping(900), HELPER, State())
     assert d.values["discharge_reserve_w"] == 120
-    assert decide(_night(900), P, State()).values["discharge_reserve_w"] == 15  # the only source: the guard alone
+    assert decide(_night(900), P, State()).values["discharge_reserve_w"] == 10  # the only source: the guard alone
 
 
 def test_running_discharge_holds_through_a_dip():
