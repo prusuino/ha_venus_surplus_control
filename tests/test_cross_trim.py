@@ -9,7 +9,7 @@ def _charging(**over) -> Inputs:
     # a good day ("Venus first"): both batteries charge in parallel, the
     # Venus at 1000 W; the averaged surplus is 1147 W
     base = dict(
-        surplus_mean=147.0, surplus_instant=147.0, surplus_ex_venus_mean=1147.0, venus_soc=40.0, venus_ac=-1000.0, venus_pv=0.0,
+        surplus_mean=447.0, surplus_instant=447.0, surplus_ex_venus_mean=1147.0, venus_soc=40.0, venus_ac=-1000.0, venus_pv=0.0,
         venus_state="charging", venus_capacity_kwh=5.12, primary_power=-300.0, primary_soc=26.0,
         forecast_today_kwh=100.0, forecast_remaining_kwh=0.0, sun_hours_left=0.0,
     )

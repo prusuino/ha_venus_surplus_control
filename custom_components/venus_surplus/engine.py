@@ -92,7 +92,7 @@ class Params:
     # the value above, and the Venus would stand by fully charged until the
     # first battery is empty. The wait keeps a passing cloud from starting it.
     primary_help_start_w: float = 150
-    primary_help_confirm_ticks: int = 6
+    primary_help_confirm_s: float = 90
     primary_soc_empty_bypass: float = 12
     primary_reserve_margin: float = 3
     venus_soc_resume_discharge: float = 15
@@ -122,6 +122,19 @@ class Params:
     cross_trip_w: float = 500
     cross_trim_margin_w: float = 50  # taken off the charge command on top of what the first battery discharges
     cross_trim_decay_w: float = 50  # given back per tick once the first battery no longer discharges
+    # The same for the grid: a load that switches on while the Venus charges
+    # on the old average is drawn from the grid when no first battery covers
+    # it. Import above this value caps the charge command at what it was,
+    # less the import and a margin; the cap rises again per tick once the
+    # grid no longer delivers, until the average is below it.
+    import_trim_start_w: float = 100
+    import_cap_margin_w: float = 50
+    import_cap_rise_w: float = 100
+    # A large load that nobody covers starts the discharge after two ticks,
+    # without waiting for the average or for the first battery; while the
+    # house needs that much, the average does not stop it either.
+    fast_start_w: float = 400
+    fast_start_confirm_ticks: int = 2
     charge_start_headroom_w: float = 400
     charge_hold_headroom_w: float = 80
     charge_low_headroom_ticks: int = 3
@@ -141,17 +154,20 @@ class Params:
     # back is imported. The command then moves in fine steps with a small
     # export guard; a rise smaller than the dead band is not worth a write.
     sole_discharge_step_w: int = 10
-    sole_export_guard_w: float = 30
-    sole_export_guard_share: float = 0.05
-    sole_export_guard_min_w: float = 10
-    sole_deadband_w: int = 20
+    sole_export_guard_w: float = 15
+    sole_export_guard_share: float = 0.03
+    sole_export_guard_min_w: float = 5
+    sole_deadband_w: int = 10
     venus_pv_direct_use_min_w: float = 80
     pv_unknown_hold_ticks: int = 4
     primary_idle_confirm_ticks: int = 6
     primary_limit_confirm_ticks: int = 6  # first battery charges at a steady power while surplus is left
     primary_limit_tolerance_w: float = 100
     primary_limit_tolerance_share: float = 0.1
-    primary_rest_confirm_ticks: int = 6  # first battery delivers nothing although the house imports
+    primary_rest_confirm_s: float = 90  # first battery delivers nothing although the house imports
+    # The two waits above are times, not ticks: with a tick of 15 s they are
+    # six ticks, with 30 s three. Never less than two ticks.
+    tick_seconds: int = 30
 
 
 @dataclass
@@ -166,12 +182,14 @@ class State:
     low_headroom_count: int = 0
     cross_count: int = 0
     cross_trim_w: float = 0.0  # held back from the charge command because the first battery discharged
+    import_cap_w: float = -1.0  # charge power the grid import allows; negative = no cap
     pv_low_count: int = 0
     primary_idle_count: int = 0
     primary_limit_count: int = 0  # ticks the first battery has charged at a steady power with surplus left
     primary_limit_ref: float = 0.0  # that steady power [W]
     primary_rest_count: int = 0  # ticks the first battery has delivered nothing while the house imports
     primary_help_count: int = 0  # ticks the first battery has been delivering a small load
+    fast_count: int = 0  # ticks a large load has stood that nobody covers
     full_count: int = 0  # ticks the Venus has stood at 100 % without taking anything
     full_latched: bool = False
     last_primary_reserve: float | None = None
@@ -199,6 +217,11 @@ class Decision:
 
 def _floor_step(value: float, step: int) -> int:
     return int(value // step) * step if value > 0 else 0
+
+
+def _ticks(seconds: float, tick_seconds: int) -> int:
+    """A wait in seconds as a number of ticks, at least two."""
+    return max(2, -(-int(seconds) // max(1, int(tick_seconds))))
 
 
 def current_mode(state_text: str | None) -> str:
@@ -260,6 +283,13 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     pv_corr = i.surplus_ex_venus_mean if i.surplus_ex_venus_mean is not None else pv_raw - ms_export + ms_import
     d_corr = d_raw - ms_export + ms_import
     house_need = max(0.0, -d_corr)
+    # What the grid delivers at this moment: the surplus as measured (the
+    # Venus counts as a load in it) plus what the first battery adds or
+    # takes. Behind a grid meter that is the meter itself.
+    grid_import = max(0.0, -(d_raw + (primary_w if p.has_primary else 0.0)))
+    fast_now = house_need >= p.fast_start_w and (mode == "discharge" or grid_import >= p.fast_start_w)
+    s.fast_count = min(10, s.fast_count + 1) if fast_now else 0
+    fast = s.fast_count >= p.fast_start_confirm_ticks
 
     headroom = max(0.0, pv_corr - p.charge_reserve_w)
 
@@ -354,6 +384,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     # what the first battery discharges plus a margin, and given back in
     # small steps once it no longer does. The cross-charging guards still
     # stop a discharge that is large or stays.
+    import_over = grid_import if grid_import > p.import_trim_start_w else 0.0
     if mode == "charge" and s.last_charge_power > 0:
         if primary_discharge > 0:
             s.cross_trim_w = min(float(p.ac_charge_limit_w), s.cross_trim_w + primary_discharge + p.cross_trim_margin_w)
@@ -362,14 +393,31 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     else:
         s.cross_trim_w = 0.0
     charge_headroom = max(0.0, charge_headroom - s.cross_trim_w)
+    # Import while charging: the command is capped at what it was, less the
+    # import. The cap is a power, not a part of the average, so it holds
+    # while the average still comes down and is gone once that is below it.
+    if mode == "charge" and s.last_charge_power > 0:
+        if import_over > 0:
+            base = s.import_cap_w if s.import_cap_w >= 0 else float(s.last_charge_power)
+            s.import_cap_w = max(0.0, min(base, float(s.last_charge_power)) - import_over - p.import_cap_margin_w)
+        elif s.import_cap_w >= 0:
+            s.import_cap_w += p.import_cap_rise_w
+            if s.import_cap_w >= charge_headroom:
+                s.import_cap_w = -1.0
+    else:
+        s.import_cap_w = -1.0
+    if s.import_cap_w >= 0:
+        charge_headroom = min(charge_headroom, s.import_cap_w)
 
     # ---- charge target with hysteresis ------------------------------------
     raw = min(p.ac_charge_limit_w, _floor_step(charge_headroom, 100))
     last_t = s.last_charge_target
     if mode != "charge":
-        target_charge = raw if raw >= p.charge_start_headroom_w else 0
+        # no start on the average alone while the grid delivers at this moment
+        target_charge = raw if raw >= p.charge_start_headroom_w and import_over == 0 else 0
     else:
-        if charge_headroom < p.charge_hold_headroom_w and s.low_headroom_count >= p.charge_low_headroom_ticks - 1:
+        if charge_headroom < p.charge_hold_headroom_w and (import_over > 0 or s.low_headroom_count >= p.charge_low_headroom_ticks - 1):
+            # measured import is a fact, not a dip of the average: no waiting
             target_charge = 0
         elif charge_headroom < p.charge_hold_headroom_w:
             target_charge = last_t
@@ -409,10 +457,10 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     # to deliver. Waiting for it would leave a charged Venus standing by.
     primary_rest_now = p.has_primary and primary_charge == 0 and primary_discharge == 0 and house_need >= mn and pv_corr < p.pv_block_discharge_w
     s.primary_rest_count = min(10, s.primary_rest_count + 1) if primary_rest_now else 0
-    primary_rest = s.primary_rest_count >= p.primary_rest_confirm_ticks
+    primary_rest = s.primary_rest_count >= _ticks(p.primary_rest_confirm_s, p.tick_seconds)
     primary_help_now = p.has_primary and primary_discharge >= p.primary_help_start_w and pv_corr < p.pv_block_discharge_w
     s.primary_help_count = min(10, s.primary_help_count + 1) if primary_help_now else 0
-    primary_help = s.primary_help_count >= p.primary_help_confirm_ticks
+    primary_help = s.primary_help_count >= _ticks(p.primary_help_confirm_s, p.tick_seconds)
     # Two batteries cover the house together: the Venus stays a step below
     # the demand and the first battery, which follows the meter, takes the
     # rest. A Venus that is the only source follows the demand closely instead.
@@ -510,12 +558,12 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     )
     discharge_wanted = False
     if mode == "discharge":
-        discharge_ok = ms_soc_ctrl > p.venus_soc_stop and pv_corr < p.pv_block_discharge_w and target_discharge >= mn and not block_discharge
+        discharge_ok = ms_soc_ctrl > p.venus_soc_stop and (pv_corr < p.pv_block_discharge_w or fast) and target_discharge >= mn and not block_discharge
     else:
         discharge_wanted = (
-            pv_corr < p.pv_block_discharge_w
+            (pv_corr < p.pv_block_discharge_w or fast)
             and target_discharge >= mn
-            and (primary_discharge >= p.primary_discharge_start_w or primary_help or primary_soc <= primary_empty_soc or direct_pv_use or primary_rest or not p.has_primary)
+            and (primary_discharge >= p.primary_discharge_start_w or primary_help or primary_soc <= primary_empty_soc or direct_pv_use or primary_rest or fast or not p.has_primary)
             and not block_discharge
         )
         discharge_ok = ms_soc_ctrl >= p.venus_soc_resume_discharge and discharge_wanted
@@ -601,6 +649,8 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         "left_after_primary_w": round(left_after_primary),
         "primary_rest": primary_rest,
         "primary_help": primary_help,
+        "grid_import_w": round(grid_import),
+        "fast_start": fast,
         "venus_full": s.full_latched,
         "discharge_reserve_w": round(reserve),
         "sole_source": sole_source,
@@ -626,6 +676,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         "low_headroom_count": s.low_headroom_count,
         "cross_count": s.cross_count,
         "cross_trim_w": round(s.cross_trim_w),
+        "import_cap_w": round(s.import_cap_w),
         "block_charge": block_charge,
         "block_discharge": block_discharge,
         "cross_trip": cross_trip,

@@ -1,6 +1,6 @@
 """Discharging into a small house load: the Venus starts at a demand it can
 serve, follows it, and does not switch off and on with every dip. As the only
-source it follows closely (10 W steps, a small export guard); next to a first
+source it follows closely (10 W steps, a very small export guard); next to a first
 battery that delivers it stays a step below and leaves a reserve."""
 from __future__ import annotations
 
@@ -32,27 +32,29 @@ HELPER = Params(has_primary=True, discharge_min_w=100)
 def test_a_house_drawing_220_w_is_served():
     # the only source: nobody else covers the rest, so the Venus goes close
     d = decide(_night(220), P, State())
-    assert d.command == "discharge" and d.power == 200
-    assert d.values["sole_source"] is True and d.values["discharge_reserve_w"] == 11
+    assert d.command == "discharge" and d.power == 210
+    assert d.values["sole_source"] is True and d.values["discharge_reserve_w"] == 7
     # next to a first battery that delivers: the reserve follows the demand (20 %, at least 40 W)
     d = decide(_helping(220), HELPER, State())
     assert d.command == "discharge" and d.power == 150
     assert d.values["sole_source"] is False and d.values["discharge_reserve_w"] == 44
 
 
-def test_the_only_source_leaves_10_to_30_w_to_the_grid():
-    for house, power in ((130, 120), (160, 150), (210, 190), (330, 310), (560, 530), (900, 870)):
+def test_the_only_source_leaves_5_to_25_w_to_the_grid():
+    for house, power in ((130, 120), (160, 150), (210, 200), (330, 320), (560, 540), (900, 880)):
         assert decide(_night(house), P, State()).power == power, house
     # an empty first battery is the same case
     empty = decide(_night(330, primary_power=0.0, primary_soc=8.0), HELPER, State())
-    assert empty.power == 310 and empty.values["sole_source"] is True
+    assert empty.power == 320 and empty.values["sole_source"] is True
 
 
 def test_the_only_source_does_not_write_for_a_few_watts():
     running = State(last_discharge_power=190)
-    for house in (195, 205, 215):  # up to 19 W more, and less without exporting: no new command
+    for house in (192, 199, 205):  # a few watts more, and less without exporting: no new command
         d = decide(_night(house, venus_ac=190.0, state="discharging"), P, running)
         assert d.target_mode == "discharge" and d.command is None, house
+    d = decide(_night(215, venus_ac=190.0, state="discharging"), P, running)
+    assert d.command == "discharge" and d.power == 200
     d = decide(_night(260, venus_ac=190.0, state="discharging"), P, running)
     assert d.command == "discharge" and d.power == 240
     d = decide(_night(180, venus_ac=190.0, state="discharging"), P, running)  # would export: down at once
@@ -74,7 +76,7 @@ def test_follows_the_demand_in_50_w_steps():
 def test_never_commands_more_than_the_house_needs():
     for house in (130, 180, 220, 260, 350, 480, 700, 950):
         d = decide(_night(house), P, State())
-        assert d.command == "discharge" and house - 40 <= d.power <= house - 10, house
+        assert d.command == "discharge" and house - 25 <= d.power <= house - 5, house
         d = decide(_helping(house), HELPER, State())
         assert d.command == "discharge" and d.power <= house - 30, house
 
@@ -82,7 +84,7 @@ def test_never_commands_more_than_the_house_needs():
 def test_a_large_demand_keeps_the_full_reserve():
     d = decide(_helping(900), HELPER, State())
     assert d.values["discharge_reserve_w"] == 120
-    assert decide(_night(900), P, State()).values["discharge_reserve_w"] == 30  # the only source: the guard alone
+    assert decide(_night(900), P, State()).values["discharge_reserve_w"] == 15  # the only source: the guard alone
 
 
 def test_running_discharge_holds_through_a_dip():
@@ -109,9 +111,9 @@ def _paused(house_w: float, **over) -> Inputs:
     return _night(house_w, primary_power=0.0, primary_soc=35.0, **over)
 
 
-def test_a_paused_first_battery_lets_the_venus_take_over_after_three_minutes():
+def test_a_paused_first_battery_lets_the_venus_take_over_after_90_seconds():
     state = State()
-    for n in range(5):
+    for n in range(2):  # three ticks of 30 s
         d = decide(_paused(240), WITH_FIRST, state)
         assert d.target_mode == "stop", n  # it might just be between two readings
         state = d.state
@@ -122,7 +124,7 @@ def test_a_paused_first_battery_lets_the_venus_take_over_after_three_minutes():
 def test_the_venus_helps_with_a_small_load_once_the_first_battery_has_delivered_for_a_while():
     # a house with a small base load never reaches the 500 W that start the Venus at once
     state = State()
-    for n in range(5):
+    for n in range(2):
         d = decide(_night(240, primary_power=230.0, primary_soc=35.0), WITH_FIRST, state)
         assert d.target_mode == "stop", n  # a passing cloud does not start it
         state = d.state
@@ -141,7 +143,7 @@ def test_a_first_battery_that_delivers_next_to_nothing_keeps_its_turn():
 
 def test_the_wait_starts_again_when_the_first_battery_pauses():
     state = State()
-    for power in (230.0, 230.0, 230.0, 230.0, 230.0, 100.0, 230.0):
+    for power in (230.0, 230.0, 100.0, 230.0):
         d = decide(_night(240, primary_power=power, primary_soc=35.0), WITH_FIRST, state)
         state = d.state
     assert d.target_mode == "stop" and state.primary_help_count == 1
@@ -195,4 +197,4 @@ def test_a_venus_that_still_discharges_without_a_command_starts_at_the_demand():
     d = decide(_helping(1500, venus_ac=1380.0, state="discharging"), HELPER, State())
     assert d.command == "discharge" and d.power == 1000  # the limit, at once, not the minimum
     d = decide(_night(260, venus_ac=1380.0, state="discharging"), P, State())
-    assert d.command == "discharge" and d.power == 240
+    assert d.command == "discharge" and d.power == 250

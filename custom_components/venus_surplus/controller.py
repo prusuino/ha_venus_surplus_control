@@ -280,6 +280,7 @@ class VenusController:
             has_primary=self.has_primary,
             has_venus_pv=bool(self._cfg(CONF_VENUS_PV)),
             has_primary_reserve=bool(self._cfg(CONF_PRIMARY_RESERVE)),
+            tick_seconds=self.tick_seconds,
         )
 
     def card_sources(self) -> dict[str, Any]:

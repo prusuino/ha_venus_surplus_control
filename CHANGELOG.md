@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.0 — 2026-11-19
+
+Faster on large loads, calm on small ones as before. Thanks to @VIMVa for the observations (#4).
+
+- **A large load starts the discharge within two ticks.** The discharge waited for the surplus mean to fall below 100 W, and next to a first battery that delivers nothing (full, empty reserve, not allowed to cover peaks) for another six ticks. With a washing machine heating up that was one to two minutes of import. Now: when the house needs 400 W or more and that much comes from the grid for two ticks in a row, the Venus starts at once, whatever the mean still says. While the house needs that much, the mean does not stop it either. Smaller loads take the calm way as before, so a ping-pong of a few hundred watts is still smoothed out.
+- **A charging Venus no longer charges from the grid when a load switches on.** The charge command follows the mean; when a load switched on, the Venus kept charging on the old mean for up to a minute. A first battery that covered the load already lowered the command (0.9.10). Now grid import does the same: more than 100 W of import while charging takes that import plus 50 W off the command in the same tick (and stops the charge at once when nothing is left); the command comes back by up to 100 W per tick. A charge does not start on the mean alone either while the grid delivers at that moment.
+- **The waits before a discharge are times, not ticks.** *First battery has been delivering 150 W* and *first battery delivers nothing although the house imports* waited six ticks: 90 seconds with a tick of 15 s, three minutes with the default of 30 s. Both are now 90 seconds on every tick length (never less than two ticks).
+- **Less import when the Venus is the only source.** At night with an empty first battery the Venus stayed 10–30 W below the demand and left out rises of less than 20 W, which added up to 30–40 W of steady import. The export guard is now 3 % of the demand (5 to 15 W) and rises from 10 W are followed. Expect about half the import, and a few watts of export for a tick when a load switches off.
+- The attributes of the status sensor show `grid_import_w` and `fast_start`.
+
 ## 1.0.1 — 2026-11-16
 
 - **The integration is now called *Marstek Venus Surplus Control*.** "Venus" alone is also the name of other products in the Home Assistant world; the full name says which battery this is for. Only the displayed name changes: the domain `venus_surplus`, the entities, the card and the repository stay as they are, so nothing has to be set up again.
