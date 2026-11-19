@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.2.0 — 2026-11-19
 
 - **The export guard of a Venus that is the only source is a setting.** New number *Export guard (Venus alone)*, 0–50 W, default 10 W: how far the Venus stays below the house demand when no first battery covers the rest. Until now the guard was 3 % of the demand (5 to 15 W), which with the 10 W steps came to the same at night loads; a house that draws 900 W now gets 890 W instead of 880 W. Set it to 0 for the least import, higher if nothing may be exported. Suggested by @VIMVa (#4).
 
