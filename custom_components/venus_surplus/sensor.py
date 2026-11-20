@@ -14,6 +14,9 @@ from .quality import STATES as QUALITY_STATES, WINDOW as QUALITY_WINDOW
 TARGET_MODES = ["charge", "discharge", "stop", "no_data", "paused", "unknown"]
 REASONS = ["charge_ok", "charge_parallel", "charge_primary_idle", "charge_primary_limited", "discharge_ok", "discharge_primary_idle", "direct_pv_use", "venus_soc_protect", "primary_first", "cross_trip", "venus_full", "no_condition", "data_not_ready", "manual_override", "manual_charge", "manual_discharge", "manual_discharge_target", "manual_standby", "target_soc_reached", "unknown"]
 
+# Read from the controller; nothing is requested per entity.
+PARALLEL_UPDATES = 0
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     c: VenusController = entry.runtime_data

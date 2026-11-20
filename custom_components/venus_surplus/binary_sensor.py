@@ -9,6 +9,9 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .controller import VenusController
 from .entity import VenusEntity
 
+# Read from the controller; nothing is requested per entity.
+PARALLEL_UPDATES = 0
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     c: VenusController = entry.runtime_data

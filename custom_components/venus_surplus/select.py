@@ -11,6 +11,9 @@ from .const import DEFAULT_REACTION, REACTION_MINUTES
 from .controller import VenusController
 from .entity import VenusEntity
 
+# One command at a time.
+PARALLEL_UPDATES = 1
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     async_add_entities([ReactionSelect(entry.runtime_data)])

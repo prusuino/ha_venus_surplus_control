@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **Quality scale: Silver.** The tests now cover more than 95 % of the code (watchdog, discharge cap guard, Modbus self-heal, diagnostics), and the test workflow fails below that; every platform declares its parallel updates. Nothing changes in how the controller decides.
+
 ## 1.2.1 — 2026-11-19
 
 - The Home Assistant Marketplace lists the integration under *Energy → Solar & batteries*. Nothing changes in how the integration works.

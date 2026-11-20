@@ -14,7 +14,7 @@
   "integration_type": "service",
   "iot_class": "calculated",
   "issue_tracker": "https://github.com/prusuino/ha_venus_surplus_control/issues",
-  "quality_scale": "bronze",
+  "quality_scale": "silver",
   "requirements": [],
   "version": "1.2.1"
 }

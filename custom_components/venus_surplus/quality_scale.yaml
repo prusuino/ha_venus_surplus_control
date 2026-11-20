@@ -46,12 +46,14 @@ rules:
   integration-owner: done
   log-when-unavailable: done
   parallel-updates:
-    status: exempt
-    comment: No polling platform.
+    status: done
+    comment: The sensors read what the controller holds (0); buttons, numbers, selects and switches act one at a time (1).
   reauthentication-flow:
     status: exempt
     comment: No credentials.
-  test-coverage: todo
+  test-coverage:
+    status: done
+    comment: Above 95 % of statements and branches; the test workflow fails below that.
 
   # Gold
   devices: done
