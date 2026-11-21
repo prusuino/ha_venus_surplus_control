@@ -142,6 +142,14 @@ class Params:
     charge_upshift_margin_w: float = 150
     charge_step_w: int = 100
     charge_min_w: int = 100
+    # Next to a first battery that is still charging, the Venus does not
+    # jump to the whole surplus: that surplus is what the first battery
+    # takes at this moment. It follows the meter and needs a few seconds to
+    # give way; until then it discharges into the Venus, the charge stops,
+    # the surplus is back and it starts again. So the charge power starts
+    # with this much (on top of what the first battery leaves anyway) and
+    # rises by as much per tick.
+    charge_soft_rise_w: int = 200
     discharge_min_w: int = 200
     discharge_step_w: int = 50
     # How far the discharge power may rise in one tick. The power itself stays
@@ -430,6 +438,15 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         else:
             target_charge = last_t
 
+    # ---- soft start next to a charging first battery -----------------------
+    # Not when the Venus only takes what the first battery leaves (it is at
+    # its limit): nothing is taken away from it there.
+    charge_soft = p.has_primary and primary_charge > p.primary_absorbing_start_w and not limited_only
+    if charge_soft:
+        soft_base = last_t if (mode == "charge" and s.last_charge_power > 0) else 0
+        soft_cap = max(_floor_step(left_after_primary, 100), soft_base + p.charge_soft_rise_w)
+        target_charge = min(target_charge, soft_cap)
+
     remaining = max(0.0, p.total_charge_limit_w - ms_pv)
     cmd_raw = min(float(target_charge), remaining)
     if pv_unknown:
@@ -651,6 +668,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         "primary_limited": primary_limited,
         "primary_limit_count": s.primary_limit_count,
         "left_after_primary_w": round(left_after_primary),
+        "charge_soft_start": charge_soft,
         "primary_rest": primary_rest,
         "primary_help": primary_help,
         "grid_import_w": round(grid_import),

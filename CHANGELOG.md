@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **The Venus takes over from a charging first battery step by step.** When the Venus was allowed to charge while the first battery was still charging itself – with *Venus charges from first battery SoC* set low, for example – it asked for the whole surplus at once. That surplus was what the first battery was taking, and a battery that follows the meter needs a few seconds to give way: for a moment it discharged into the Venus, the charge stopped, the surplus was back and it started again, several times in a row. The Venus now starts with what the first battery leaves, at least 200 W, and adds 200 W per tick while the first battery is still charging. A first battery that takes nothing, or is at its charge limit, changes nothing: the Venus gets its power in one step as before. The decision attributes show it as `charge_soft_start`.
 - **Quality scale: Silver.** The tests now cover more than 95 % of the code (watchdog, discharge cap guard, Modbus self-heal, diagnostics), and the test workflow fails below that; every platform declares its parallel updates. Nothing changes in how the controller decides.
 
 ## 1.2.1 — 2026-11-19

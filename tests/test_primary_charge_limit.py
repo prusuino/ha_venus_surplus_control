@@ -93,5 +93,10 @@ def test_first_battery_taking_more_ends_the_limit_charge():
 
 
 def test_full_first_battery_still_gives_the_venus_the_whole_headroom():
-    d = decide(_inputs(primary_soc=96.0, primary_power=-300.0, surplus_mean=1500.0, surplus_instant=1500.0), Params(), State())
+    p = Params()
+    d = decide(_inputs(primary_soc=96.0, primary_power=-300.0, surplus_mean=1500.0, surplus_instant=1500.0), p, State())
+    # what the first battery leaves at once (1500 - 300 - 200 W reserve) ...
+    assert d.reason == "charge_ok" and d.power == 1000
+    # ... and its 300 W a tick later, once it has given way (soft start)
+    d = decide(_charging(primary_soc=96.0, primary_power=-100.0, venus_ac=-1000.0, surplus_mean=500.0, surplus_instant=500.0, surplus_ex_venus_mean=1500.0), p, d.state)
     assert d.reason == "charge_ok" and d.power == 1200
