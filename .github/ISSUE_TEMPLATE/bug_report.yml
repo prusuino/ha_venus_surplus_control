@@ -18,7 +18,7 @@ body:
     attributes:
       label: Version of Marstek Venus Surplus Control
       description: Settings → Devices & services → Marstek Venus Surplus Control, or the Marketplace / HACS entry.
-      placeholder: "1.2.1"
+      placeholder: "1.3.0"
     validations:
       required: true
   - type: input
