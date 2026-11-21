@@ -68,7 +68,7 @@ If you have a first battery but switch it off now and then, keep its sensors and
 | Entity | Meaning |
 |---|---|
 | `sensor.<name>_target_mode` | charge / discharge / standby / no data / paused, with the reason, the last command and the dry-run flag as attributes |
-| `sensor.<name>_reason` | why: surplus with first battery full, parallel charging, first battery at its charge limit, house demand, own PV used directly, Venus SoC protection, first battery charges first, cross-charging trip, Venus is full, no condition, incomplete data, manual |
+| `sensor.<name>_reason` | why: surplus with the first battery at its set SoC, parallel charging, first battery at its charge limit, house demand, own PV used directly, Venus SoC protection, first battery charges first, cross-charging trip, Venus is full, no condition, incomplete data, manual |
 | `sensor.<name>_last_decision` | the decision in words; every value behind it (surplus, headroom, house demand, first battery, forecast, latches, counters) as attributes |
 | `sensor.<name>_surplus_mean`, `…_surplus_without_venus_mean` | what the controller decides on |
 | `sensor.<name>_charge_headroom`, `…_house_demand` | surplus minus the charging buffer; grid import corrected for the Venus |

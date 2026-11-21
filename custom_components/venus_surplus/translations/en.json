@@ -141,7 +141,7 @@
       "reason": {
         "name": "Reason",
         "state": {
-          "charge_ok": "Surplus, first battery full",
+          "charge_ok": "Surplus, first battery at the set SoC",
           "charge_parallel": "Surplus, charging in parallel",
           "charge_primary_idle": "Surplus, first battery takes nothing",
           "charge_primary_limited": "Surplus, first battery at its charge limit",

@@ -141,7 +141,7 @@
       "reason": {
         "name": "Reden",
         "state": {
-          "charge_ok": "Overschot, eerste batterij vol",
+          "charge_ok": "Overschot, eerste batterij op de ingestelde laadtoestand",
           "charge_parallel": "Overschot, parallel laden",
           "charge_primary_idle": "Overschot, eerste batterij neemt niets op",
           "charge_primary_limited": "Overschot, eerste batterij op haar laadlimiet",

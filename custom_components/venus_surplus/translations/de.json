@@ -141,7 +141,7 @@
       "reason": {
         "name": "Grund",
         "state": {
-          "charge_ok": "Überschuss, erste Batterie voll",
+          "charge_ok": "Überschuss, erste Batterie auf dem eingestellten Ladestand",
           "charge_parallel": "Überschuss, paralleles Laden",
           "charge_primary_idle": "Überschuss, erste Batterie nimmt nichts",
           "charge_primary_limited": "Überschuss, erste Batterie an ihrer Ladegrenze",

@@ -141,7 +141,7 @@
       "reason": {
         "name": "Raison",
         "state": {
-          "charge_ok": "Surplus, première batterie pleine",
+          "charge_ok": "Surplus, première batterie au niveau de charge réglé",
           "charge_parallel": "Surplus, charge en parallèle",
           "charge_primary_idle": "Surplus, la première batterie ne prend rien",
           "charge_primary_limited": "Surplus, première batterie à sa limite de charge",

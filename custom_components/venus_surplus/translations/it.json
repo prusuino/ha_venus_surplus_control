@@ -141,7 +141,7 @@
       "reason": {
         "name": "Motivo",
         "state": {
-          "charge_ok": "Eccedenza, prima batteria piena",
+          "charge_ok": "Eccedenza, prima batteria al livello di carica impostato",
           "charge_parallel": "Eccedenza, carica in parallelo",
           "charge_primary_idle": "Eccedenza, la prima batteria non assorbe nulla",
           "charge_primary_limited": "Surplus, prima batteria al limite di carica",
