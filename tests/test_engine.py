@@ -53,6 +53,30 @@ def test_incomplete_data_sends_standby_after_two_bad_ticks():
     assert second.state.bad_data_count == 2
 
 
+def test_standby_is_not_repeated_to_an_idle_venus():
+    p = Params()
+
+    def run(**kw):
+        state, out = State(), []
+        for _ in range(14):
+            d = decide(_inputs(surplus_mean=None, surplus_instant=None, **kw), p, state)
+            out.append(d.command)
+            state = d.state
+        return out
+
+    assert run(venus_state="standby") == [None, "standby"] + [None] * 12
+    # still running: the write did not arrive
+    assert run(venus_state="charging") == [None] + ["standby"] * 13
+    assert run(venus_state="discharging") == [None] + ["standby"] * 13
+    # nothing known about it
+    assert run(venus_state=None) == [None] + ["standby"] * 13
+    assert run(venus_state="unavailable") == [None] + ["standby"] * 13
+    # it starts again later
+    idle = decide(_inputs(surplus_mean=None, venus_state="standby"), p, State(bad_data_count=10))
+    assert idle.command is None
+    assert decide(_inputs(surplus_mean=None, venus_state="charging"), p, idle.state).command == "standby"
+
+
 def test_charges_from_surplus_when_the_first_battery_is_full():
     p = Params()
     d = decide(_inputs(surplus_mean=1500.0, surplus_instant=1500.0, primary_soc=96.0, venus_state="standby"), p, State())

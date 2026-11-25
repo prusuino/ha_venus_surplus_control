@@ -259,7 +259,11 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         cmd = None
         if s.bad_data_count >= 2:
             s.last_charge_power = s.last_charge_target = s.last_discharge_power = 0
-            cmd = "standby"
+            # Sent once, and again while the Venus does not say that it idles:
+            # it still runs (the write got lost), or its state is unknown too.
+            known = (i.venus_state or "").lower().strip() not in ("", "unknown", "unavailable", "none")
+            if s.bad_data_count == 2 or not known or current_mode(i.venus_state) != "stop":
+                cmd = "standby"
         return Decision("no_data", "data_not_ready", cmd, 0, s, f"No decision: input values incomplete (bad ticks {s.bad_data_count}).", {"bad_data_count": s.bad_data_count})
     s.bad_data_count = 0
 
