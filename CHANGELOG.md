@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.1 — 2026-11-25
+
+- **Standby is not repeated to a Venus that is already idle.** While readings were incomplete, the controller sent standby on every tick, several thousand times a day in a longer outage. It now sends it once, and again only while the Venus still charges or discharges or its state is unknown.
+
 ## 1.3.0 — 2026-11-21
 
 - **The Venus takes over from a charging first battery step by step.** When the Venus was allowed to charge while the first battery was still charging itself – with *Venus charges from first battery SoC* set low, for example – it asked for the whole surplus at once. That surplus was what the first battery was taking, and a battery that follows the meter needs a few seconds to give way: for a moment it discharged into the Venus, the charge stopped, the surplus was back and it started again, several times in a row. The Venus now starts with what the first battery leaves, at least 200 W, and adds 200 W per tick while the first battery is still charging. A first battery that takes nothing, or is at its charge limit, changes nothing: the Venus gets its power in one step as before. The decision attributes show it as `charge_soft_start`. Thanks to @VIMVa for the screenshots (#4).
