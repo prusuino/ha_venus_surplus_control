@@ -37,7 +37,11 @@ This is the control logic that has run on my Venus A next to an inverter-coupled
 
 ## Installation
 
-Through the **Marketplace** (Settings → Marketplace → Add from link → `prusuino/ha_venus_surplus_control`, category Integration) or HACS as a custom repository, then restart Home Assistant. Manual: copy `custom_components/venus_surplus` into your `custom_components` folder.
+**Marketplace (Home Assistant 2026.11 or newer)**: Settings → Marketplace, search for **Marstek Venus Surplus Control**, download it and restart Home Assistant. Home Assistant 2026.10 or older: search for it in HACS the same way.
+
+If it does not show up yet, add it by link instead: Marketplace → ⋮ → *Add from link* → `https://github.com/prusuino/ha_venus_surplus_control`, category Integration (HACS: ⋮ → *Custom repositories*).
+
+**By hand**: copy `custom_components/venus_surplus` into your `custom_components` folder and restart.
 
 ## Setup
 
