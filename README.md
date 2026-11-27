@@ -295,7 +295,7 @@ Both this limit and *Maximum discharge command* also stop at the maximum of the 
 
 ### What is fixed
 
-Some values are part of the control behaviour and not adjustable, because changing them makes the Venus hunt back and forth: charging moves in 100 W steps, discharging in 50 W steps, or 10 W steps when the Venus is the only source (how far it climbs per tick follows *Reaction*); the charge power goes up when the headroom is 150 W above the current target and down when it is 120 W below; discharging leaves a reserve of 20 % of the house demand to the grid (40 to 120 W) and steps down before the house would export; the Venus does not discharge below 12 % and resumes at 15 %.
+Some values are part of the control behaviour and not adjustable, because changing them makes the Venus hunt back and forth: charging moves in 100 W steps, discharging in 50 W steps, or 10 W steps when the Venus is the only source (how far it climbs per tick follows *Reaction*); the charge power goes up when the headroom is 150 W above the current target and down when it is 120 W below; discharging leaves a reserve of 20 % of the house demand to the grid (40 to 120 W) and steps down before the house would export; the Venus does not discharge below 12 % and resumes at 15 %. A Venus that delivers nothing for four ticks although a discharge command stands, at 25 % or less, is at its own floor: the command is taken back (reason *Venus SoC too low*) and comes again once the SoC has risen by two points.
 
 ## Feed-in limit at the plug
 
