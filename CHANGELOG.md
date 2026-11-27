@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.2 — unreleased
+
+- **A Venus at its own floor no longer raises "Venus is not responding".** The discharge may start again from 15 %, but a Venus can stand by at exactly that level (a Venus A did). The discharge command was then written on every tick, nothing came out, and after ten minutes the repair issue appeared. Now a discharge command that brings nothing for four ticks at a low SoC (25 % or less) is taken back, the reason reads "Venus SoC too low", and the discharge comes again once the SoC has risen by two points. A Venus that stays silent at a higher SoC is still reported.
+
 ## 1.3.1 — 2026-11-25
 
 - **Standby is not repeated to a Venus that is already idle.** While readings were incomplete, the controller sent standby on every tick, several thousand times a day in a longer outage. It now sends it once, and again only while the Venus still charges or discharges or its state is unknown.

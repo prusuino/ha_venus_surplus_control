@@ -97,6 +97,14 @@ class Params:
     primary_reserve_margin: float = 3
     venus_soc_resume_discharge: float = 15
     venus_soc_stop: float = 12
+    # A Venus has a floor of its own, and where it lies depends on the model
+    # and its settings (a Venus A stood by at 15 %, exactly the resume value
+    # above). One that delivers nothing for a few ticks although a discharge
+    # command stands, at a low SoC, is at that floor: the command is taken
+    # back and comes again once the SoC has risen by the value below.
+    venus_empty_soc: float = 25
+    venus_empty_confirm_ticks: int = 4
+    venus_empty_resume_rise: float = 2
     pv_block_discharge_w: float = 100
     # What the Venus leaves to the grid while discharging, so that a load
     # switching off does not turn into export. Both grow with the house
@@ -200,6 +208,9 @@ class State:
     fast_count: int = 0  # ticks a large load has stood that nobody covers
     full_count: int = 0  # ticks the Venus has stood at 100 % without taking anything
     full_latched: bool = False
+    empty_count: int = 0  # ticks a discharge command has stood at a low SoC without the Venus delivering
+    empty_latched: bool = False
+    empty_soc: float = 0.0  # SoC at which the Venus was found at its floor
     last_primary_reserve: float | None = None
     rest_latched: bool = False
     proj_latched: bool = False
@@ -581,6 +592,15 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         p.has_primary and not charge_wanted and not s.full_latched and charge_cmd >= p.charge_min_w and primary_discharge == 0
         and ms_soc_ctrl < p.venus_soc_max_charge and not block_charge
     )
+    # An empty Venus: a discharge command stands, the SoC is low and nothing
+    # comes out. It reports standby then, so the command would be written
+    # again on every tick and never answered.
+    unanswered = s.last_discharge_power >= mn and ms_export == 0 and ms_soc_ctrl <= p.venus_empty_soc
+    s.empty_count = min(10, s.empty_count + 1) if unanswered else 0
+    if s.empty_count >= p.venus_empty_confirm_ticks and not s.empty_latched:
+        s.empty_latched, s.empty_soc = True, ms_soc_ctrl
+    elif s.empty_latched and ms_soc_ctrl >= s.empty_soc + p.venus_empty_resume_rise:
+        s.empty_latched = False
     discharge_wanted = False
     if mode == "discharge":
         discharge_ok = ms_soc_ctrl > p.venus_soc_stop and (pv_corr < p.pv_block_discharge_w or fast) and target_discharge >= mn and not block_discharge
@@ -596,6 +616,9 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
     # discharge starts again (often at its own floor, where it goes to standby
     # by itself): the reason names the low SoC, not "no condition".
     held_by_soc = mode != "discharge" and ms_soc_ctrl < p.venus_soc_resume_discharge and discharge_wanted
+    if s.empty_latched:
+        held_by_soc = held_by_soc or discharge_ok
+        discharge_ok = False
     cross_trip = (mode == "charge" and primary_discharge > p.cross_trip_w) or (mode == "discharge" and primary_charge > p.cross_trip_w)
 
     # The SoC protection only keeps the Venus from discharging; an empty Venus
@@ -678,6 +701,7 @@ def decide(i: Inputs, p: Params, s: State) -> Decision:
         "grid_import_w": round(grid_import),
         "fast_start": fast,
         "venus_full": s.full_latched,
+        "venus_empty": s.empty_latched,
         "discharge_reserve_w": round(reserve),
         "sole_source": sole_source,
         "primary_idle_count": s.primary_idle_count,
